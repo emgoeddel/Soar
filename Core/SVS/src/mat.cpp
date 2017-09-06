@@ -473,6 +473,14 @@ transform3::transform3(const vec3& p, const vec3& r, const vec3& s)
             Eigen::Scaling(s);
 }
 
+transform3::transform3(const vec3& p, const vec3& r)
+{
+    trans = Eigen::Translation<double, 3>(p) *
+            Eigen::AngleAxisd(r(2), Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(r(1), Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(r(0), Eigen::Vector3d::UnitX());
+}
+
 void transform3::to_prs(vec3& p, vec4& r, vec3& s) const
 {
     Eigen::Matrix3d rm, sm;

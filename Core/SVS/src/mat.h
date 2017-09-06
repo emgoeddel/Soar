@@ -432,6 +432,7 @@ class transform3
         transform3(const transform3& t);
         transform3(char type, const vec3& v);
         transform3(const vec3& p, const vec3& r, const vec3& s);
+        transform3(const vec3& p, const vec3& r);
         void to_prs(vec3& p, vec4& r, vec3& s) const;
         
         vec3 operator()(const vec3& v) const
@@ -445,7 +446,14 @@ class transform3
             r.trans = trans * t.trans;
             return r;
         }
-        
+
+        transform3 inverse() const
+        {
+          transform3 i;
+          i.trans = trans.inverse();
+          return i;
+        }
+
         void get_matrix(mat& m) const
         {
             m = trans.matrix();
