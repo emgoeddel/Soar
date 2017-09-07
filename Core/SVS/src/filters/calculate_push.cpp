@@ -49,7 +49,6 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
   // min - 3
   vector<float> line1;
   line1.push_back((corner3[1] - bb_min_rel[1]) / (corner3[0] - bb_min_rel[0]));
-  cout << "Line 1 slope: " << line1[0] << endl;
   line1.push_back(bb_min_rel[0]);
   line1.push_back(bb_min_rel[1]);
   line1.push_back(corner3[0]);
@@ -58,7 +57,6 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
   // min - 4
   vector<float> line2;
   line2.push_back((corner4[1] - bb_min_rel[1]) / (corner4[0] - bb_min_rel[0]));
-  cout << "Line 2 slope: " << line2[0] << endl;
   line2.push_back(bb_min_rel[0]);
   line2.push_back(bb_min_rel[1]);
   line2.push_back(corner4[0]);
@@ -67,7 +65,6 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
   // max - 3
   vector<float> line3;
   line3.push_back((corner3[1] - bb_max_rel[1]) / (corner3[0] - bb_max_rel[0]));
-  cout << "Line 3 slope: " << line3[0] << endl;
   line3.push_back(bb_max_rel[0]);
   line3.push_back(bb_max_rel[1]);
   line3.push_back(corner3[0]);
@@ -76,7 +73,6 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
   // max - 4
   vector<float> line4;
   line4.push_back((corner4[1] - bb_max_rel[1]) / (corner4[0] - bb_max_rel[0]));
-  cout << "Line 4 slope: " << line4[0] << endl;
   line4.push_back(bb_max_rel[0]);
   line4.push_back(bb_max_rel[1]);
   line4.push_back(corner4[0]);
@@ -94,15 +90,15 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
         (line_x_int > lines[i][2] && line_x_int < lines[i][4]))
       {
         cout << "Valid x intercept found: " << line_x_int << endl;
-        if (line_x_int - pa[1] < y_push)
-          y_push = line_x_int - pa[1];
+        if (fabs(line_x_int - pa[1]) < fabs(y_push))
+          y_push = line_x_int;
       }
     if ((line_y_int < lines[i][1] && line_y_int > lines[i][3]) ||
         (line_y_int > lines[i][1] && line_y_int < lines[i][3]))
       {
         cout << "Valid y intercept found: " << line_y_int << endl;
-        if (line_y_int - pa[0] < x_push)
-          x_push = line_y_int - pa[0];
+        if (fabs(line_y_int - pa[0]) < fabs(x_push))
+          x_push = line_y_int;
       }
   }
 
