@@ -29,6 +29,7 @@ using namespace std;
 
 vec3 calculate_push(const sgnode* a, const sgnode* b){
   vec3 pa = a->get_centroid();
+  vec3 sa = a->get_trans('s');
   vec3 pb = b->get_centroid();
   bbox bbb = b->get_bounds();
   vec3 bb_min, bb_max;
@@ -42,8 +43,6 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
   vec3 bb_max_rel = obj_to_world(bb_max);
   vec3 corner3 = obj_to_world(cor3);
   vec3 corner4 = obj_to_world(cor4);
-  cout << "Location min: " << bb_min_rel[0] << ", " << bb_min_rel[1] << endl;
-  cout << "Location max: " << bb_max_rel[0] << ", " << bb_max_rel[1] << endl;
 
   vector<vector<float> > lines;
   // min - 3
@@ -79,8 +78,6 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
   line4.push_back(corner4[1]);
   lines.push_back(line4);
 
-  // Figure out if already on
-
   float x_push = 100;
   float y_push = 100;
   for (int i = 0; i < 4; i++) {
@@ -89,40 +86,58 @@ vec3 calculate_push(const sgnode* a, const sgnode* b){
     if ((line_x_int < lines[i][2] && line_x_int > lines[i][4]) ||
         (line_x_int > lines[i][2] && line_x_int < lines[i][4]))
       {
-        cout << "Valid x intercept found: " << line_x_int << endl;
-        if (fabs(line_x_int - pa[1]) < fabs(y_push))
-          y_push = line_x_int;
+        float valid_push = line_x_int;
+        if (valid_push < 0) valid_push -= (sa[1]/2.0 + 0.01);
+        else valid_push += (sa[1]/2.0 + 0.01);
+
+        //cout << "Found a valid y push: " << valid_push << endl;
+
+        if (fabs(valid_push) < fabs(y_push)) {
+          //cout << "Updating y push: " << valid_push << endl;
+          y_push = valid_push;
+        }
       }
-    if ((line_y_int < lines[i][1] && line_y_int > lines[i][3]) ||
+     if ((line_y_int < lines[i][1] && line_y_int > lines[i][3]) ||
         (line_y_int > lines[i][1] && line_y_int < lines[i][3]))
       {
-        cout << "Valid y intercept found: " << line_y_int << endl;
-        if (fabs(line_y_int - pa[0]) < fabs(x_push))
-          x_push = line_y_int;
+        float valid_push = line_y_int;
+        if (valid_push < 0) valid_push -= (sa[1]/2.0 + 0.01);
+        else valid_push += (sa[1]/2.0 + 0.01);
+        //cout << "Found a valid x push: " << valid_push << endl;
+
+        if (fabs(valid_push) < fabs(x_push)) {
+          //cout << "Updating x push: " << valid_push << endl;
+          x_push = valid_push;
+        }
       }
   }
 
   // No push available
   if (x_push == 100 && y_push == 100) {
+    cout << "NO push action onto target available" << endl;
     vec3 push(0, 0, -1);
     return push;
   }
 
   if (x_push == 100) {
+    cout << "Can only push in y direction: (0, " << y_push << ")" << endl;
     vec3 ypush(0, y_push, 0);
     return ypush;
   }
 
   if (y_push == 100) {
+    cout << "Can only push in x direction: (0, " << x_push << ")" << endl;
     vec3 xpush(x_push, 0, 0);
     return xpush;
   }
 
   if (fabs(y_push) < fabs(x_push)) {
+    cout << "Chosen shorter y push: (0, " << y_push << ")" << endl;
     vec3 ypush(0, y_push, 0);
     return ypush;
   }
   else {
+    cout << "Chosen shorter x push: (0, " << x_push << ")" << endl;
     vec3 xpush(x_push, 0, 0);
     return xpush;
   }
