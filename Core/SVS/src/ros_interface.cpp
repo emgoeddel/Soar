@@ -242,6 +242,9 @@ void ros_interface::pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPt
     svs_ptr->image_callback(msg);
 }
 
+// Override of proxy_get_children from cliproxy; adds enable and disable
+// methods to the svs ros command so that you can do svs ros.enable <INPUT>
+// and svs ros.disable <INPUT>
 void ros_interface::proxy_get_children(std::map<std::string, cliproxy*>& c) {
     c["enable"] = new memfunc_proxy<ros_interface>(this, &ros_interface::enable);
     c["enable"]->add_arg("INPUT", "Name of the input to enable.");
@@ -249,6 +252,8 @@ void ros_interface::proxy_get_children(std::map<std::string, cliproxy*>& c) {
     c["disable"]->add_arg("INPUT", "Name of the input to disable.");
 }
 
+// Override of proxy_use_sub from cliproxy; this prints information about inputs
+// and whether they're enabled/disabled when the user calls svs ros
 void ros_interface::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
     os << "=========== ROS INPUTS ===========" << std::endl;
     for (std::map<std::string, bool>::iterator i = update_inputs.begin();
@@ -261,6 +266,8 @@ void ros_interface::proxy_use_sub(const std::vector<std::string>& args, std::ost
     os << "==================================" << std::endl;
 }
 
+// The function called by the user command svs ros.enable; subscribes to the
+// desired input (or all inputs), which will start their callbacks
 void ros_interface::enable(const std::vector<std::string>& args, std::ostream& os) {
     if (args.empty()) {
         os << "Specify input to enable: all, ";
@@ -293,6 +300,8 @@ void ros_interface::enable(const std::vector<std::string>& args, std::ostream& o
     os << args[0] << " ROS input enabled" << std::endl;
 }
 
+// The function called by the user command svs ros.disable; unsubscribes to the
+// desired input (or all inputs), which will stop their callbacks
 void ros_interface::disable(const std::vector<std::string>& args, std::ostream& os) {
     if (args.empty()) {
         os << "Specify input to disable: all, ";
