@@ -13,6 +13,7 @@
 
 #include "mat.h"
 #include "cliproxy.h"
+#include "arm_controller.h"
 
 class svs;
 
@@ -79,6 +80,9 @@ private:
     ros::Subscriber pc_sub;
     std::string image_source;
     ros::AsyncSpinner* spinner;
+
+    arm_controller arm;
+    std::vector<double> last_joints;
 
     svs* svs_ptr;
     std::map<std::string, transform3> last_objs;
