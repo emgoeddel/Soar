@@ -22,6 +22,10 @@ ros_interface::ros_interface(svs* sp)
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
 
+    joints_timer = n.createTimer(ros::Duration(0.1),
+                                 &ros_interface::check_joints, this);
+    joints_timer.stop();
+
     // Set up the maps needed to track which inputs are enabled/disabled
     // and change this via command line
     update_inputs[IMAGE_NAME] = false;
@@ -30,11 +34,11 @@ ros_interface::ros_interface(svs* sp)
 
     enable_fxns[IMAGE_NAME] = std::bind(&ros_interface::subscribe_image, this);
     enable_fxns[SG_NAME] = std::bind(&ros_interface::subscribe_sg, this);
-    enable_fxns[JOINTS_NAME] = std::bind(&ros_interface::subscribe_joints, this);
+    enable_fxns[JOINTS_NAME] = std::bind(&ros_interface::start_joints, this);
 
     disable_fxns[IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_image, this);
     disable_fxns[SG_NAME] = std::bind(&ros_interface::unsubscribe_sg, this);
-    disable_fxns[JOINTS_NAME] = std::bind(&ros_interface::unsubscribe_joints, this);
+    disable_fxns[JOINTS_NAME] = std::bind(&ros_interface::stop_joints, this);
 }
 
 ros_interface::~ros_interface() {
@@ -116,18 +120,16 @@ void ros_interface::unsubscribe_sg() {
     objects_callback(empty);
 }
 
-// Subscribes to the Fetch's joint states
-void ros_interface::subscribe_joints() {
-    joints_sub = n.subscribe("joint_states", 5, &ros_interface::joints_callback, this);
+// Sets up the timer to check the arm state via MoveIt
+void ros_interface::start_joints() {
     update_inputs[JOINTS_NAME] = true;
+    joints_timer.start();
 }
 
-// Unsubscribes joint state
-void ros_interface::unsubscribe_joints() {
-    joints_sub.shutdown();
+// Stops checking the joint poses
+void ros_interface::stop_joints() {
     update_inputs[JOINTS_NAME] = false;
-    //gazebo_msgs::ModelStates::ConstPtr empty(new gazebo_msgs::ModelStates);
-    //objects_callback(empty);
+    joints_timer.stop();
 }
 
 // Adds relevant commands to the input list in the main SVS class
@@ -232,14 +234,15 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
     }
 }
 
-// (Will do something?) when a new arm position is received
-void ros_interface::joints_callback(const sensor_msgs::JointState::ConstPtr& msg) {
-    //std::cout << "Received joints!" << std::endl;
-}
-
 // Updates the images in SVS states when a new point cloud is received
 void ros_interface::pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg) {
     svs_ptr->image_callback(msg);
+}
+
+// Checks the joint status in MoveIt when the timer goes off
+void ros_interface::check_joints(const ros::TimerEvent& e) {
+    std::map<std::string, transform3> cur_joints = arm.get_link_transforms();
+    //std::cout << "Received joints!" << std::endl;
 }
 
 // Override of proxy_get_children from cliproxy; adds enable and disable

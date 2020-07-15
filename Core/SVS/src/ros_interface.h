@@ -60,11 +60,11 @@ private:
     void unsubscribe_image();
     void subscribe_sg();
     void unsubscribe_sg();
-    void subscribe_joints();
-    void unsubscribe_joints();
+    void start_joints();
+    void stop_joints();
     void objects_callback(const gazebo_msgs::ModelStates::ConstPtr& msg);
-    void joints_callback(const sensor_msgs::JointState::ConstPtr & msg);
     void pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg);
+    void check_joints(const ros::TimerEvent& e);
 
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
     void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
@@ -76,7 +76,7 @@ private:
     std::map<std::string, std::function<void()> > enable_fxns;
     std::map<std::string, std::function<void()> > disable_fxns;
     ros::Subscriber objects_sub;
-    ros::Subscriber joints_sub;
+    ros::Timer joints_timer;
     ros::Subscriber pc_sub;
     std::string image_source;
     ros::AsyncSpinner* spinner;
