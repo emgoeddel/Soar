@@ -52,19 +52,26 @@ private:
     bool t_diff(vec3& p1, vec3& p2);
     bool t_diff(Eigen::Quaterniond& q1, Eigen::Quaterniond& q2);
 
+    static std::string add_cmd(std::string name, std::string parent, vec3 p, vec3 r);
+    static std::string change_cmd(std::string name, vec3 p, vec3 r);
+    static std::string del_cmd(std::string name);
+
     static const std::string IMAGE_NAME;
     static const std::string SG_NAME;
-    static const std::string JOINTS_NAME;
+    static const std::string ROBOT_NAME;
 
     void subscribe_image();
     void unsubscribe_image();
-    void subscribe_sg();
-    void unsubscribe_sg();
-    void start_joints();
-    void stop_joints();
+    void subscribe_models();
+    void unsubscribe_models();
+    void start_robot();
+    void stop_robot();
+    void start_objects();
+    void stop_objects();
     void objects_callback(const gazebo_msgs::ModelStates::ConstPtr& msg);
+    void update_robot(transform3 fetch_xform);
+    void update_objects(std::map<std::string, transform3> objs);
     void pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg);
-    void check_joints(const ros::TimerEvent& e);
 
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
     void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
@@ -75,14 +82,16 @@ private:
     std::map<std::string, bool> update_inputs;
     std::map<std::string, std::function<void()> > enable_fxns;
     std::map<std::string, std::function<void()> > disable_fxns;
-    ros::Subscriber objects_sub;
-    ros::Timer joints_timer;
+    ros::Subscriber models_sub;
+    bool models_subscribed;
     ros::Subscriber pc_sub;
     std::string image_source;
     ros::AsyncSpinner* spinner;
 
     arm_controller arm;
-    std::vector<double> last_joints;
+    transform3 last_fetch;
+    bool fetch_added;
+    std::map<std::string, transform3> last_arm_links;
 
     svs* svs_ptr;
     std::map<std::string, transform3> last_objs;

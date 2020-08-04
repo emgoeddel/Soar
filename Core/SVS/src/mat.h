@@ -432,6 +432,7 @@ class transform3
         transform3(const transform3& t);
         transform3(char type, const vec3& v);
         transform3(const vec3& p, const vec3& r, const vec3& s);
+        transform3(Eigen::Transform<double, 3, Eigen::Affine> t);
         void to_prs(vec3& p, vec4& r, vec3& s) const;
         void position(vec3& p) const;
         void rotation(vec4& r) const;

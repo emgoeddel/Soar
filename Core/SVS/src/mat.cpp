@@ -473,6 +473,11 @@ transform3::transform3(const vec3& p, const vec3& r, const vec3& s)
             Eigen::Scaling(s);
 }
 
+transform3::transform3(Eigen::Transform<double, 3, Eigen::Affine> t)
+{
+    trans = t;
+}
+
 void transform3::to_prs(vec3& p, vec4& r, vec3& s) const
 {
     Eigen::Matrix3d rm, sm;

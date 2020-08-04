@@ -20,8 +20,11 @@ std::map<std::string, transform3> arm_controller::get_link_transforms() {
 
     for (std::vector<std::string>::iterator i = names.begin();
          i != names.end(); i++) {
-        std::cout << *i << std::endl;
+        std::string link_name = *i;
+        xforms[link_name] = transform3(rs->getFrameTransform(link_name));
     }
+
+    return xforms;
 }
 
 #endif

@@ -15,30 +15,28 @@ const double ros_interface::ROT_THRESH = 0.017; // approx 1 deg
 
 const std::string ros_interface::IMAGE_NAME = "image";
 const std::string ros_interface::SG_NAME = "scene_graph";
-const std::string ros_interface::JOINTS_NAME = "arm_pose";
+const std::string ros_interface::ROBOT_NAME = "fetch";
 
 ros_interface::ros_interface(svs* sp)
-    : image_source("none") {
+    : models_subscribed(false),
+      image_source("none"),
+      fetch_added(false) {
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
-
-    joints_timer = n.createTimer(ros::Duration(0.1),
-                                 &ros_interface::check_joints, this);
-    joints_timer.stop();
 
     // Set up the maps needed to track which inputs are enabled/disabled
     // and change this via command line
     update_inputs[IMAGE_NAME] = false;
     update_inputs[SG_NAME] = false;
-    update_inputs[JOINTS_NAME] = false;
+    update_inputs[ROBOT_NAME] = false;
 
     enable_fxns[IMAGE_NAME] = std::bind(&ros_interface::subscribe_image, this);
-    enable_fxns[SG_NAME] = std::bind(&ros_interface::subscribe_sg, this);
-    enable_fxns[JOINTS_NAME] = std::bind(&ros_interface::start_joints, this);
+    enable_fxns[SG_NAME] = std::bind(&ros_interface::start_objects, this);
+    enable_fxns[ROBOT_NAME] = std::bind(&ros_interface::start_robot, this);
 
     disable_fxns[IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_image, this);
-    disable_fxns[SG_NAME] = std::bind(&ros_interface::unsubscribe_sg, this);
-    disable_fxns[JOINTS_NAME] = std::bind(&ros_interface::stop_joints, this);
+    disable_fxns[SG_NAME] = std::bind(&ros_interface::stop_objects, this);
+    disable_fxns[ROBOT_NAME] = std::bind(&ros_interface::stop_robot, this);
 }
 
 ros_interface::~ros_interface() {
@@ -89,6 +87,31 @@ bool ros_interface::t_diff(Eigen::Quaterniond& q1, Eigen::Quaterniond& q2) {
     return false;
 }
 
+// SGEL helper functions
+std::string ros_interface::add_cmd(std::string name, std::string parent, vec3 p, vec3 r) {
+    std::stringstream cmd;
+    cmd << "add " << name << " " << parent;
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string ros_interface::change_cmd(std::string name, vec3 p, vec3 r) {
+    std::stringstream cmd;
+    cmd << "change " << name;
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string ros_interface::del_cmd(std::string name) {
+    std::stringstream cmd;
+    cmd << "delete " << name << std::endl;
+    return cmd.str();
+}
+
 // Subscribes to the Fetch's point cloud topic
 void ros_interface::subscribe_image() {
     pc_sub = n.subscribe("head_camera/depth_registered/points", 5, &ros_interface::pc_callback, this);
@@ -106,30 +129,50 @@ void ros_interface::unsubscribe_image() {
     pc_callback(empty);
 }
 
-// Subscribes to the Gazebo object models
-void ros_interface::subscribe_sg() {
-    objects_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::objects_callback, this);
+// Subscribes to the Gazebo object models if not already subscribed
+void ros_interface::subscribe_models() {
+    if (models_subscribed) return;
+
+    models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::objects_callback, this);
+    models_subscribed = true;
+}
+
+// Unsubscribes from Gazebo models if currently subscribed
+void ros_interface::unsubscribe_models() {
+    if (!models_subscribed) return;
+
+    models_sub.shutdown();
+    models_subscribed = false;
+}
+
+// Subscribes to the models if needed (to get the location of the Fetch from gazebo)
+// and turns on the robot update part of the callback
+void ros_interface::start_robot() {
+    subscribe_models();
+    update_inputs[ROBOT_NAME] = true;
+}
+
+// Stops the robot update part of the callback and removes the link objects from SG
+void ros_interface::stop_robot() {
+    update_inputs[ROBOT_NAME] = false;
+    // XXX Unsubscribe if needed
+    // XXX How to remove robot?
+    fetch_added = false;
+}
+
+// Subscribes to the models if needed and turns on the object update part
+// of the callback
+void ros_interface::start_objects() {
+    subscribe_models();
     update_inputs[SG_NAME] = true;
 }
 
-// Unsubscribes from Gazebo models and updates Soar with an empty scene graph
-void ros_interface::unsubscribe_sg() {
-    objects_sub.shutdown();
+// Stops the object update part of the callback
+void ros_interface::stop_objects() {
+    // XXX How to remove everything but the robot?
+    //gazebo_msgs::ModelStates::ConstPtr empty(new gazebo_msgs::ModelStates);
+    //objects_callback(empty);
     update_inputs[SG_NAME] = false;
-    gazebo_msgs::ModelStates::ConstPtr empty(new gazebo_msgs::ModelStates);
-    objects_callback(empty);
-}
-
-// Sets up the timer to check the arm state via MoveIt
-void ros_interface::start_joints() {
-    update_inputs[JOINTS_NAME] = true;
-    joints_timer.start();
-}
-
-// Stops checking the joint poses
-void ros_interface::stop_joints() {
-    update_inputs[JOINTS_NAME] = false;
-    joints_timer.stop();
 }
 
 // Adds relevant commands to the input list in the main SVS class
@@ -137,6 +180,8 @@ void ros_interface::stop_joints() {
 void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& msg) {
     // First translate the message into a map of object names->xforms
     std::map<std::string, transform3> current_objs;
+    // Save the Fetch transform separately
+    transform3 fetch_loc;
 
     for (int i = 0; i <  msg->name.size(); i++) {
         geometry_msgs::Pose pose = msg->pose[i];
@@ -153,13 +198,99 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
         vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
 
         transform3 t(p, r, vec3(1, 1, 1));
-        current_objs.insert(std::pair<std::string, transform3>(n, t));
+        if (n == ROBOT_NAME) {
+            fetch_loc = t;
+        } else {
+            current_objs.insert(std::pair<std::string, transform3>(n, t));
+        }
     }
 
-    // XXX: Eventually want to use the map to directly update the scene graph
-    //      instead of going through SGEL. Will require threadsafe scene
-    //      graphs.
+    if (update_inputs[SG_NAME]) update_objects(current_objs);
+    if (update_inputs[ROBOT_NAME]) update_robot(fetch_loc);
+}
 
+void ros_interface::update_robot(transform3 fetch_xform) {
+    // Build up a string of commands in the stringsream
+    std::stringstream cmds;
+    // But only bother sending the update to SVS if something changed
+    bool robot_changed = false;
+
+    vec3 fetch_pose;
+    fetch_xform.position(fetch_pose);
+    Eigen::Quaterniond rq;
+    fetch_xform.rotation(rq);
+    vec3 fetch_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
+
+    std::map<std::string, transform3> links = arm.get_link_transforms();
+
+    // If this is the first update with the Fetch, add it to the scene
+    if (!fetch_added) {
+        robot_changed = true;
+        // Add the Fetch base
+        cmds << add_cmd(ROBOT_NAME, "world", fetch_pose, fetch_rot);
+
+        // Add all the Fetch links as children of the above node
+        for (std::map<std::string, transform3>::iterator i = links.begin();
+             i != links.end(); i++) {
+            std::string n = i->first;
+            vec3 link_pose;
+            i->second.position(link_pose);
+            Eigen::Quaterniond lq;
+            i->second.rotation(lq);
+            vec3 link_rot = lq.toRotationMatrix().eulerAngles(0, 1, 2);
+
+            cmds << add_cmd(n, ROBOT_NAME, link_pose, link_rot);
+        }
+        fetch_added = true;
+    } else {
+        // Check if the Fetch base has moved and update if so
+        vec3 last_pose;
+        last_fetch.position(last_pose);
+        Eigen::Quaterniond pq;
+        last_fetch.rotation(pq);
+        vec3 last_rot = pq.toRotationMatrix().eulerAngles(0, 1, 2);
+
+        if (t_diff(last_pose, fetch_pose) || t_diff(last_rot, fetch_rot)) {
+            robot_changed = true;
+            cmds << change_cmd(ROBOT_NAME, fetch_pose, fetch_rot);
+        }
+
+        // Check if the links have moved and update if so
+        for (std::map<std::string, transform3>::iterator i = links.begin();
+             i != links.end(); i++) {
+            std::string n = i->first;
+            vec3 link_pose;
+            i->second.position(link_pose);
+            Eigen::Quaterniond lq;
+            i->second.rotation(lq);
+            vec3 link_rot = lq.toRotationMatrix().eulerAngles(0, 1, 2);
+
+            vec3 last_link_pose;
+            last_arm_links[n].position(last_link_pose);
+            Eigen::Quaterniond llq;
+            last_arm_links[n].rotation(llq);
+            vec3 last_link_rot = llq.toRotationMatrix().eulerAngles(0, 1, 2);
+
+            if (t_diff(last_link_pose, link_pose) || t_diff(last_link_rot, link_rot)) {
+                robot_changed = true;
+                cmds << change_cmd(n, link_pose, link_rot);
+            }
+        }
+    }
+
+    last_fetch = fetch_xform;
+    last_arm_links = links;
+    if (robot_changed) {
+        // Send the compiled commands to the SVS input processor
+        svs_ptr->add_input(cmds.str());
+    }
+}
+
+// Create SVS commands for objects besides the Fetch
+// XXX: Eventually want to use the map to directly update the scene graph
+//      instead of going through SGEL. Will require threadsafe scene
+//      graphs.
+void ros_interface::update_objects(std::map<std::string, transform3> objs) {
     // Build up a string of commands in the stringsream
     std::stringstream cmds;
     // But only bother sending the update to SVS if something changed
@@ -167,8 +298,8 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
 
     // ADD commands for NEW objects that are present in the current msg
     // but are not present in SVS's scene graph
-    for (std::map<std::string, transform3>::iterator i = current_objs.begin();
-         i != current_objs.end(); i++) {
+    for (std::map<std::string, transform3>::iterator i = objs.begin();
+         i != objs.end(); i++) {
         if (last_objs.count(i->first) == 0) {
             objs_changed = true;
             std::string n = i->first;
@@ -178,11 +309,7 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
             i->second.rotation(rq);
             vec3 cur_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
 
-            // SGEL
-            cmds << "add " << n << " world ";
-            cmds << "p " << cur_pose.x() << " " << cur_pose.y() << " " << cur_pose.z();
-            cmds << " r " << cur_rot.x() << " " << cur_rot.y() << " " << cur_rot.z();
-            cmds << std::endl;
+            cmds << add_cmd(n, "world", cur_pose, cur_rot);
         }
     }
 
@@ -190,11 +317,10 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
          i != last_objs.end(); i++) {
         // DELETE commands for objects that are NOT present in the msg but
         // are still present in SVS's scene graph
-        if (current_objs.count(i->first) == 0) {
+        if (objs.count(i->first) == 0) {
             objs_changed = true;
 
-            // SGEL
-            cmds << "delete " << i->first << " " << std::endl;
+            cmds << del_cmd(i->first);
             continue;
         }
 
@@ -204,30 +330,21 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
         vec3 last_pose;
         i->second.position(last_pose);
         vec3 cur_pose;
-        current_objs[n].position(cur_pose);
+        objs[n].position(cur_pose);
         Eigen::Quaterniond last_rot;
         i->second.rotation(last_rot);
         Eigen::Quaterniond cur_rot;
-        current_objs[n].rotation(cur_rot);
+        objs[n].rotation(cur_rot);
+        vec3 cur_rot_rpy = cur_rot.toRotationMatrix().eulerAngles(0, 1, 2);
 
         // Check that at least one of the differences is above the thresholds
         if (t_diff(last_pose, cur_pose) || t_diff(last_rot, cur_rot)) {
             objs_changed = true;
-
-            // SGEL
-            cmds << "change " << n;
-            if (t_diff(last_pose, cur_pose)) {
-                cmds << " p " << cur_pose.x() << " " << cur_pose.y() << " " << cur_pose.z();
-            }
-            if (t_diff(last_rot, cur_rot)) {
-                vec3 rpy = cur_rot.toRotationMatrix().eulerAngles(0, 1, 2);
-                cmds << " r " << rpy.x() << " " << rpy.y() << " " << rpy.z();
-            }
-            cmds << std::endl;
+            cmds << change_cmd(n, cur_pose, cur_rot_rpy);
         }
     }
 
-    last_objs = current_objs;
+    last_objs = objs;
     if (objs_changed) {
         // Send the compiled commands to the SVS input processor
         svs_ptr->add_input(cmds.str());
@@ -237,12 +354,6 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
 // Updates the images in SVS states when a new point cloud is received
 void ros_interface::pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg) {
     svs_ptr->image_callback(msg);
-}
-
-// Checks the joint status in MoveIt when the timer goes off
-void ros_interface::check_joints(const ros::TimerEvent& e) {
-    std::map<std::string, transform3> cur_joints = arm.get_link_transforms();
-    //std::cout << "Received joints!" << std::endl;
 }
 
 // Override of proxy_get_children from cliproxy; adds enable and disable
