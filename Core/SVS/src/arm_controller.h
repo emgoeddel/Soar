@@ -12,6 +12,7 @@ class arm_controller {
 public:
     arm_controller();
     std::map<std::string, transform3> get_link_transforms();
+    std::vector<std::string> get_link_names();
 
 private:
     moveit::planning_interface::MoveGroupInterface group;

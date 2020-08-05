@@ -57,13 +57,11 @@ private:
     static std::string del_cmd(std::string name);
 
     static const std::string IMAGE_NAME;
-    static const std::string SG_NAME;
+    static const std::string OBJECTS_NAME;
     static const std::string ROBOT_NAME;
 
     void subscribe_image();
     void unsubscribe_image();
-    void subscribe_models();
-    void unsubscribe_models();
     void start_robot();
     void stop_robot();
     void start_objects();
@@ -83,7 +81,6 @@ private:
     std::map<std::string, std::function<void()> > enable_fxns;
     std::map<std::string, std::function<void()> > disable_fxns;
     ros::Subscriber models_sub;
-    bool models_subscribed;
     ros::Subscriber pc_sub;
     std::string image_source;
     ros::AsyncSpinner* spinner;

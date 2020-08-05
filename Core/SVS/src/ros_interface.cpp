@@ -14,12 +14,11 @@ const double ros_interface::POS_THRESH = 0.001; // 1 mm
 const double ros_interface::ROT_THRESH = 0.017; // approx 1 deg
 
 const std::string ros_interface::IMAGE_NAME = "image";
-const std::string ros_interface::SG_NAME = "scene_graph";
+const std::string ros_interface::OBJECTS_NAME = "objects";
 const std::string ros_interface::ROBOT_NAME = "fetch";
 
 ros_interface::ros_interface(svs* sp)
-    : models_subscribed(false),
-      image_source("none"),
+    : image_source("none"),
       fetch_added(false) {
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
@@ -27,16 +26,18 @@ ros_interface::ros_interface(svs* sp)
     // Set up the maps needed to track which inputs are enabled/disabled
     // and change this via command line
     update_inputs[IMAGE_NAME] = false;
-    update_inputs[SG_NAME] = false;
+    update_inputs[OBJECTS_NAME] = false;
     update_inputs[ROBOT_NAME] = false;
 
     enable_fxns[IMAGE_NAME] = std::bind(&ros_interface::subscribe_image, this);
-    enable_fxns[SG_NAME] = std::bind(&ros_interface::start_objects, this);
+    enable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::start_objects, this);
     enable_fxns[ROBOT_NAME] = std::bind(&ros_interface::start_robot, this);
 
     disable_fxns[IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_image, this);
-    disable_fxns[SG_NAME] = std::bind(&ros_interface::stop_objects, this);
+    disable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::stop_objects, this);
     disable_fxns[ROBOT_NAME] = std::bind(&ros_interface::stop_robot, this);
+
+    models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::objects_callback, this);
 }
 
 ros_interface::~ros_interface() {
@@ -129,50 +130,26 @@ void ros_interface::unsubscribe_image() {
     pc_callback(empty);
 }
 
-// Subscribes to the Gazebo object models if not already subscribed
-void ros_interface::subscribe_models() {
-    if (models_subscribed) return;
-
-    models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::objects_callback, this);
-    models_subscribed = true;
-}
-
-// Unsubscribes from Gazebo models if currently subscribed
-void ros_interface::unsubscribe_models() {
-    if (!models_subscribed) return;
-
-    models_sub.shutdown();
-    models_subscribed = false;
-}
-
 // Subscribes to the models if needed (to get the location of the Fetch from gazebo)
 // and turns on the robot update part of the callback
 void ros_interface::start_robot() {
-    subscribe_models();
     update_inputs[ROBOT_NAME] = true;
 }
 
 // Stops the robot update part of the callback and removes the link objects from SG
 void ros_interface::stop_robot() {
     update_inputs[ROBOT_NAME] = false;
-    // XXX Unsubscribe if needed
-    // XXX How to remove robot?
-    fetch_added = false;
 }
 
 // Subscribes to the models if needed and turns on the object update part
 // of the callback
 void ros_interface::start_objects() {
-    subscribe_models();
-    update_inputs[SG_NAME] = true;
+    update_inputs[OBJECTS_NAME] = true;
 }
 
-// Stops the object update part of the callback
+// Stops the object update part of the callback and delete objects from SG
 void ros_interface::stop_objects() {
-    // XXX How to remove everything but the robot?
-    //gazebo_msgs::ModelStates::ConstPtr empty(new gazebo_msgs::ModelStates);
-    //objects_callback(empty);
-    update_inputs[SG_NAME] = false;
+    update_inputs[OBJECTS_NAME] = false;
 }
 
 // Adds relevant commands to the input list in the main SVS class
@@ -205,15 +182,19 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
         }
     }
 
-    if (update_inputs[SG_NAME]) update_objects(current_objs);
-    if (update_inputs[ROBOT_NAME]) update_robot(fetch_loc);
+    update_objects(current_objs);
+    update_robot(fetch_loc);
 }
 
 void ros_interface::update_robot(transform3 fetch_xform) {
+    // Nothing to do if the robot input is off and it's not in the scene
+    if (!update_inputs[ROBOT_NAME] && !fetch_added) return;
+
     // Build up a string of commands in the stringsream
     std::stringstream cmds;
     // But only bother sending the update to SVS if something changed
     bool robot_changed = false;
+
 
     vec3 fetch_pose;
     fetch_xform.position(fetch_pose);
@@ -223,8 +204,13 @@ void ros_interface::update_robot(transform3 fetch_xform) {
 
     std::map<std::string, transform3> links = arm.get_link_transforms();
 
-    // If this is the first update with the Fetch, add it to the scene
-    if (!fetch_added) {
+    if (!update_inputs[ROBOT_NAME] && fetch_added) {
+        // If we've turned off the robot updates and it's still in the scene, remove it
+        robot_changed = true;
+        cmds << del_cmd(ROBOT_NAME);
+        fetch_added = false;
+    } else if (!fetch_added) {
+        // If this is the first update with the Fetch, add it to the scene
         robot_changed = true;
         // Add the Fetch base
         cmds << add_cmd(ROBOT_NAME, "world", fetch_pose, fetch_rot);
@@ -291,6 +277,11 @@ void ros_interface::update_robot(transform3 fetch_xform) {
 //      instead of going through SGEL. Will require threadsafe scene
 //      graphs.
 void ros_interface::update_objects(std::map<std::string, transform3> objs) {
+    // If the input is off and we cleared the objects previously, nothing to do
+    if (!update_inputs[OBJECTS_NAME] && last_objs.empty()) return;
+    // IF the input is off and we HAVEN'T cleared the objects, delete them
+    if (!update_inputs[OBJECTS_NAME]) objs.clear();
+
     // Build up a string of commands in the stringsream
     std::stringstream cmds;
     // But only bother sending the update to SVS if something changed

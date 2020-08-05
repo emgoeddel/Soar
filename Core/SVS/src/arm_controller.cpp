@@ -27,4 +27,15 @@ std::map<std::string, transform3> arm_controller::get_link_transforms() {
     return xforms;
 }
 
+std::vector<std::string> arm_controller::get_link_names() {
+    robot_state::RobotStatePtr rs = group.getCurrentState();
+    if (!rs) {
+        std::cout << "Unable to get robot link names." << std::endl;
+        std::vector<std::string> empty;
+        return empty;
+    }
+
+    return rs->getRobotModel()->getLinkModelNames();
+}
+
 #endif
