@@ -69,7 +69,7 @@ private:
     void stop_robot();
     void start_objects();
     void stop_objects();
-    void objects_callback(const gazebo_msgs::ModelStates::ConstPtr& msg);
+    void models_callback(const gazebo_msgs::ModelStates::ConstPtr& msg);
     void update_robot(transform3 fetch_xform);
     void update_objects(std::map<std::string, transform3> objs);
     void pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg);

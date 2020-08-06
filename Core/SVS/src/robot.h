@@ -8,6 +8,13 @@
 
 #include "mat.h"
 
+/*
+ * robot class
+ *
+ * Provides an interface to control the Fetch through MoveIt!
+ *
+ */
+
 class robot {
 public:
     robot();

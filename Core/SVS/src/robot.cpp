@@ -7,6 +7,7 @@ robot::robot() : group("arm") {
     group.setEndEffectorLink("gripper_link");
 }
 
+// Query for the current link positions through MoveIt!
 std::map<std::string, transform3> robot::get_link_transforms() {
     std::map<std::string, transform3> xforms;
 

@@ -51,7 +51,8 @@ ros_interface::ros_interface(svs* sp)
     disable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::stop_objects, this);
     disable_fxns[ROBOT_NAME] = std::bind(&ros_interface::stop_robot, this);
 
-    models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::objects_callback, this);
+    // Stay subscribed to the gazebo models for the entire runtime
+    models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::models_callback, this);
 }
 
 ros_interface::~ros_interface() {
@@ -144,31 +145,29 @@ void ros_interface::unsubscribe_image() {
     pc_callback(empty);
 }
 
-// Subscribes to the models if needed (to get the location of the Fetch from gazebo)
-// and turns on the robot update part of the callback
+// Turns on the robot update part of the model callback
 void ros_interface::start_robot() {
     update_inputs[ROBOT_NAME] = true;
 }
 
-// Stops the robot update part of the callback and removes the link objects from SG
+// Turns off the robot update part of the model callback
 void ros_interface::stop_robot() {
     update_inputs[ROBOT_NAME] = false;
 }
 
-// Subscribes to the models if needed and turns on the object update part
-// of the callback
+// Turns on the non-robot object part of the model callback
 void ros_interface::start_objects() {
     update_inputs[OBJECTS_NAME] = true;
 }
 
-// Stops the object update part of the callback and delete objects from SG
+// Turns off the non-robot object part of the model callback
 void ros_interface::stop_objects() {
     update_inputs[OBJECTS_NAME] = false;
 }
 
-// Adds relevant commands to the input list in the main SVS class
-// when a new world state is received from Gazebo
-void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& msg) {
+// Callback for the incoming gazebo models, handles calling the robot and
+// object update functions with the right input if they are turned on
+void ros_interface::models_callback(const gazebo_msgs::ModelStates::ConstPtr& msg) {
     // First translate the message into a map of object names->xforms
     std::map<std::string, transform3> current_objs;
     // Save the Fetch transform separately
@@ -185,7 +184,6 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
                              pose.orientation.x,
                              pose.orientation.y,
                              pose.orientation.z);
-        // XXX: Is this right? Euler order in exsiting SVS?
         vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
 
         transform3 t(p, r, vec3(1, 1, 1));
@@ -200,6 +198,14 @@ void ros_interface::objects_callback(const gazebo_msgs::ModelStates::ConstPtr& m
     update_robot(fetch_loc);
 }
 
+// Updates the fetch model in the SG through SGEL commands; only requres
+// Fetch's position because it queries MoveIt! for the arm position (see
+// robot class). If we ever hook up this system to SLAM, this function could
+// be called by that subsystem instead of getting the position from the
+// gazebo model locations
+// XXX: Eventually want to use the map to directly update the scene graph
+//      instead of going through SGEL. Will require threadsafe scene
+//      graphs.
 void ros_interface::update_robot(transform3 fetch_xform) {
     // Nothing to do if the robot input is off and it's not in the scene
     if (!update_inputs[ROBOT_NAME] && !fetch_added) return;
@@ -208,7 +214,6 @@ void ros_interface::update_robot(transform3 fetch_xform) {
     std::stringstream cmds;
     // But only bother sending the update to SVS if something changed
     bool robot_changed = false;
-
 
     vec3 fetch_pose;
     fetch_xform.position(fetch_pose);
@@ -292,7 +297,10 @@ void ros_interface::update_robot(transform3 fetch_xform) {
     }
 }
 
-// Create SVS commands for objects besides the Fetch
+// Updates the positions of objects besides the fetch in the scene graph
+// via SGEL commands. This function could be called by perception
+// instead of getting these locations from the simulator in a more complete
+// system in the future.
 // XXX: Eventually want to use the map to directly update the scene graph
 //      instead of going through SGEL. Will require threadsafe scene
 //      graphs.
