@@ -8,9 +8,9 @@
 
 #include "mat.h"
 
-class arm_controller {
+class robot {
 public:
-    arm_controller();
+    robot();
     std::map<std::string, transform3> get_link_transforms();
     std::vector<std::string> get_link_names();
 

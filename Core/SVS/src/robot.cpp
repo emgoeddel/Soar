@@ -1,13 +1,13 @@
 #ifdef ENABLE_ROS
 
-#include "arm_controller.h"
+#include "robot.h"
 
-arm_controller::arm_controller() : group("arm") {
+robot::robot() : group("arm") {
     group.setMaxVelocityScalingFactor(0.4);
     group.setEndEffectorLink("gripper_link");
 }
 
-std::map<std::string, transform3> arm_controller::get_link_transforms() {
+std::map<std::string, transform3> robot::get_link_transforms() {
     std::map<std::string, transform3> xforms;
 
     robot_state::RobotStatePtr rs = group.getCurrentState();
@@ -27,7 +27,7 @@ std::map<std::string, transform3> arm_controller::get_link_transforms() {
     return xforms;
 }
 
-std::vector<std::string> arm_controller::get_link_names() {
+std::vector<std::string> robot::get_link_names() {
     robot_state::RobotStatePtr rs = group.getCurrentState();
     if (!rs) {
         std::cout << "Unable to get robot link names." << std::endl;

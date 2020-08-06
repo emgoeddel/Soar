@@ -202,7 +202,7 @@ void ros_interface::update_robot(transform3 fetch_xform) {
     fetch_xform.rotation(rq);
     vec3 fetch_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
 
-    std::map<std::string, transform3> links = arm.get_link_transforms();
+    std::map<std::string, transform3> links = fetch.get_link_transforms();
 
     if (!update_inputs[ROBOT_NAME] && fetch_added) {
         // If we've turned off the robot updates and it's still in the scene, remove it
@@ -252,9 +252,9 @@ void ros_interface::update_robot(transform3 fetch_xform) {
             vec3 link_rot = lq.toRotationMatrix().eulerAngles(0, 1, 2);
 
             vec3 last_link_pose;
-            last_arm_links[n].position(last_link_pose);
+            last_links[n].position(last_link_pose);
             Eigen::Quaterniond llq;
-            last_arm_links[n].rotation(llq);
+            last_links[n].rotation(llq);
             vec3 last_link_rot = llq.toRotationMatrix().eulerAngles(0, 1, 2);
 
             if (t_diff(last_link_pose, link_pose) || t_diff(last_link_rot, link_rot)) {
@@ -265,7 +265,7 @@ void ros_interface::update_robot(transform3 fetch_xform) {
     }
 
     last_fetch = fetch_xform;
-    last_arm_links = links;
+    last_links = links;
     if (robot_changed) {
         // Send the compiled commands to the SVS input processor
         svs_ptr->add_input(cmds.str());

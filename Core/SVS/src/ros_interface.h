@@ -13,7 +13,7 @@
 
 #include "mat.h"
 #include "cliproxy.h"
-#include "arm_controller.h"
+#include "robot.h"
 
 class svs;
 
@@ -85,10 +85,10 @@ private:
     std::string image_source;
     ros::AsyncSpinner* spinner;
 
-    arm_controller arm;
+    robot fetch;
     transform3 last_fetch;
     bool fetch_added;
-    std::map<std::string, transform3> last_arm_links;
+    std::map<std::string, transform3> last_links;
 
     svs* svs_ptr;
     std::map<std::string, transform3> last_objs;
