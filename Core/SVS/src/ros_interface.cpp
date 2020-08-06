@@ -23,6 +23,20 @@ ros_interface::ros_interface(svs* sp)
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
 
+    // We don't want all of the robot links in the SG (we don't need
+    // to know where the e-stop is, for example). This holds the links
+    // we actually need
+    LINKS_OF_INTEREST.insert("elbow_flex_link");
+    LINKS_OF_INTEREST.insert("forearm_roll_link");
+    LINKS_OF_INTEREST.insert("gripper_link");
+    LINKS_OF_INTEREST.insert("l_gripper_finger_link");
+    LINKS_OF_INTEREST.insert("r_gripper_finger_link");
+    LINKS_OF_INTEREST.insert("shoulder_lift_link");
+    LINKS_OF_INTEREST.insert("shoulder_pan_link");
+    LINKS_OF_INTEREST.insert("upperarm_roll_link");
+    LINKS_OF_INTEREST.insert("wrist_flex_link");
+    LINKS_OF_INTEREST.insert("wrist_roll_link");
+
     // Set up the maps needed to track which inputs are enabled/disabled
     // and change this via command line
     update_inputs[IMAGE_NAME] = false;
@@ -219,6 +233,9 @@ void ros_interface::update_robot(transform3 fetch_xform) {
         for (std::map<std::string, transform3>::iterator i = links.begin();
              i != links.end(); i++) {
             std::string n = i->first;
+            // Ignore the links we don't want
+            if (LINKS_OF_INTEREST.count(n) == 0) continue;
+
             vec3 link_pose;
             i->second.position(link_pose);
             Eigen::Quaterniond lq;
@@ -245,6 +262,9 @@ void ros_interface::update_robot(transform3 fetch_xform) {
         for (std::map<std::string, transform3>::iterator i = links.begin();
              i != links.end(); i++) {
             std::string n = i->first;
+            // Ignore the links we don't want
+            if (LINKS_OF_INTEREST.count(n) == 0) continue;
+
             vec3 link_pose;
             i->second.position(link_pose);
             Eigen::Quaterniond lq;
