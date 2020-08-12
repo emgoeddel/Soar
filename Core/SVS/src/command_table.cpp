@@ -31,6 +31,7 @@ command_table_entry* delete_node_command_entry();
 command_table_entry* set_tag_command_entry();
 command_table_entry* delete_tag_command_entry();
 
+command_table_entry* find_trajectories_command_entry();
 
 command_table::command_table()
 {
@@ -47,7 +48,8 @@ command_table::command_table()
     
     add(set_tag_command_entry());
     add(delete_tag_command_entry());
-    
+
+    add(find_trajectories_command_entry());
 }
 
 command* command_table::make_command(svs_state* state, wme* w)

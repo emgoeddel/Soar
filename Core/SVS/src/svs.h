@@ -22,6 +22,7 @@ class image_descriptor;
 
 #ifdef ENABLE_ROS
 class pcl_image;
+class trajectory_set;
 #else
 class basic_image;
 #endif
@@ -153,6 +154,8 @@ class svs_state : public cliproxy
         soar_interface* si;
 #ifdef ENABLE_ROS
         pcl_image*      img;
+        trajectory_set* ts;
+        robot*          rif;
 #else
         basic_image*    img;
 #endif
@@ -192,6 +195,10 @@ class svs : public svs_interface, public cliproxy
         {
             return si;
         }
+#ifdef ENABLE_ROS
+       ros_interface* get_ros_interface() { return ri; }
+#endif
+
         drawer* get_drawer() const
         {
             return draw;

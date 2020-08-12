@@ -21,6 +21,10 @@
 
 #include "symbol.h"
 
+#ifdef ENABLE_ROS
+#include "trajectory_set.h"
+#endif
+
 using namespace std;
 
 typedef map<string, command*>::iterator cmd_iter;
@@ -169,6 +173,9 @@ void sgwme::delete_tag(const string& tag_name)
 svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
     : svsp(svsp), parent(NULL), state(state), si(si), level(0),
       scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL),
+#ifdef ENABLE_ROS
+      ts(NULL), rif(svsp->get_ros_interface()->get_robot_ptr()),
+#endif
       scene_link(NULL)
 {
     assert(state->is_top_state());
@@ -180,6 +187,9 @@ svs_state::svs_state(Symbol* state, svs_state* parent)
     : parent(parent), state(state), svsp(parent->svsp), si(parent->si),
       level(parent->level + 1), scene_num(-1),
       scene_num_wme(NULL), scn(NULL), img(NULL),
+#ifdef ENABLE_ROS
+      ts(NULL), rif(svsp->get_ros_interface()->get_robot_ptr()),
+#endif
       scene_link(NULL)
 {
     assert(state->get_parent_state() == parent->state);
@@ -200,12 +210,16 @@ svs_state::~svs_state()
         svsp->get_drawer()->delete_scene(scn->get_name());
         delete scn; // results in root being deleted also
     }
+
+    if (img) {
+        delete img;
+    }
 }
 
 void svs_state::init()
 {
     common_syms& cs = si->get_common_syms();
-    
+
     state->get_id_name(name);
     svs_link = si->get_wme_val(si->make_svs_wme(state));
     cmd_link = si->get_wme_val(si->make_id_wme(svs_link, cs.cmd));
@@ -225,6 +239,7 @@ void svs_state::init()
             scn->set_draw(true);
         }
     }
+
     if (!img) {
 #ifdef ENABLE_ROS
         img = new pcl_image();
@@ -235,6 +250,12 @@ void svs_state::init()
             img->copy_from(parent->img);
         }
     }
+
+#ifdef ENABLE_ROS
+    if (!ts) {
+        ts = new trajectory_set();
+    }
+#endif
 
     scn->refresh_draw();
     root = new sgwme(si, scene_link, (sgwme*) NULL, scn->get_root());

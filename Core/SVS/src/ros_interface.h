@@ -47,6 +47,8 @@ public:
 
     std::string get_image_source() { return image_source; }
 
+    robot* get_robot_ptr() { return &fetch; }
+
 private:
     static const double POS_THRESH;
     static const double ROT_THRESH;
