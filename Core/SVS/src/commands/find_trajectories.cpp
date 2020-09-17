@@ -45,6 +45,8 @@ public:
     static const int LIM_INF = -1;
 
     find_trajectories_command(svs_state* state, Symbol* root) : command(state, root),
+                                                                root(root),
+                                                                parsed(false),
                                                                 min_num(LIM_INF),
                                                                 max_num(LIM_INF),
                                                                 min_time(LIM_INF),
@@ -55,7 +57,14 @@ public:
     std::string description() { return "find-trajectories"; }
     int command_type() { return SVS_WRITE_COMMAND; }
 
-    bool update_sub() { return true; }
+    bool update_sub() {
+        // When command is first put on the link, parse it
+        if (!parsed) {
+            parsed = true;
+            return parse();
+        }
+        return true;
+    }
 
 private:
     bool parse() {
@@ -117,11 +126,20 @@ private:
         } else {
             use_orientation_flex = false;
         }
+
+        std::cout << "Min num: " << min_num << " Max num: " << max_num << std::endl
+                  << "Min time: " << min_time << " Max time: " << max_time << std::endl
+                  << "Target: " << target_center[0] << ", " << target_center[1] << ", "
+                  << target_center[2] << std::endl << "Target type: " << target_type
+                  << std::endl;
+
         return true;
     }
 
     soar_interface* si;
     Symbol* root;
+
+    bool parsed;
 
     int min_num;
     int max_num;
