@@ -61,7 +61,13 @@ public:
         // When command is first put on the link, parse it
         if (!parsed) {
             parsed = true;
-            return parse();
+            // If parsed successfully, set the status to "working"
+            if (parse()) {
+                set_status("running");
+            } else {
+                // Error message already set in parse() method
+                return false;
+            }
         }
         return true;
     }
