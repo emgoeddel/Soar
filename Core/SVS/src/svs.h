@@ -115,6 +115,11 @@ class svs_state : public cliproxy
             return scn;
         }
 #ifdef ENABLE_ROS
+        trajectory_set*    get_trajectory_set() const
+        {
+            return ts;
+        }
+
         pcl_image*         get_image() const
 #else
         basic_image*       get_image() const

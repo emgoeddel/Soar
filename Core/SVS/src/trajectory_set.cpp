@@ -35,4 +35,9 @@ void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to) {
 
 trajectory_set::trajectory_set() {}
 
+bool trajectory_set::new_command(int id, query query_info) {
+    std::cout << "Starting the search for command " << id << std::endl;
+    query_map[id] = query_info;
+}
+
 #endif

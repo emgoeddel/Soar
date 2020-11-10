@@ -33,25 +33,28 @@
  *    search will stop and be marked complete.
  */
 
-enum TargetType{
-    POINT_TARGET,
-    BOX_TARGET,
-    SPHERE_TARGET
-};
-
 class find_trajectories_command : public command
 {
 public:
     static const int LIM_INF = -1;
+    static int next_id;
 
     find_trajectories_command(svs_state* state, Symbol* root) : command(state, root),
                                                                 root(root),
-                                                                parsed(false),
-                                                                min_num(LIM_INF),
-                                                                max_num(LIM_INF),
-                                                                min_time(LIM_INF),
-                                                                max_time(LIM_INF) {
+                                                                parsed(false) {
         si = state->get_svs()->get_soar_interface();
+        ts = state->get_trajectory_set();
+
+        // All data about target and search limits are stored in query struct,
+        // will be updated with actual values when command is parsed
+        search_query.min_num = LIM_INF;
+        search_query.max_num = LIM_INF;
+        search_query.min_time = LIM_INF;
+        search_query.max_time = LIM_INF;
+
+        // Each command will have its own unique int ID
+        id = next_id;
+        next_id++;
     }
 
     std::string description() { return "find-trajectories"; }
@@ -63,6 +66,7 @@ public:
             parsed = true;
             // If parsed successfully, set the status to "working"
             if (parse()) {
+                ts->new_command(id, search_query);
                 set_status("running");
             } else {
                 // Error message already set in parse() method
@@ -80,12 +84,12 @@ private:
         double min_d, max_d;
         si->get_const_attr(root, "min-number", min_d);
         si->get_const_attr(root, "max-number", max_d);
-        if (min_d > 0) min_num = (int) min_d;
-        if (max_d > 0) max_num = (int) max_d;
+        if (min_d > 0) search_query.min_num = (int) min_d;
+        if (max_d > 0) search_query.max_num = (int) max_d;
 
         // ^min-time and ^max-time
-        si->get_const_attr(root, "min-time", min_time);
-        si->get_const_attr(root, "max-time", max_time);
+        si->get_const_attr(root, "min-time", search_query.min_time);
+        si->get_const_attr(root, "max-time", search_query.max_time);
 
         // ^target <t>
         wme* target_wme;
@@ -96,7 +100,7 @@ private:
         target_root = si->get_wme_val(target_wme);
 
         // <t> ^center
-        if (!si->get_vec3(target_root, "center", target_center)) {
+        if (!si->get_vec3(target_root, "center", search_query.target_center)) {
             set_status("no target center found");
             return false;
         }
@@ -107,63 +111,52 @@ private:
             Symbol* size_root = si->get_wme_val(size_wme);
             wme* x;
             if (si->find_child_wme(size_root, "x", x)) {
-                target_type = BOX_TARGET;
-                si->get_vec3(target_root, "size", target_box_size);
+                search_query.target_type = BOX_TARGET;
+                si->get_vec3(target_root, "size", search_query.target_box_size);
             } else {
-                target_type = SPHERE_TARGET;
-                si->get_const_attr(target_root, "size", target_sphere_radius);
+                search_query.target_type = SPHERE_TARGET;
+                si->get_const_attr(target_root, "size", search_query.target_sphere_radius);
             }
         } else {
-            target_type = POINT_TARGET;
+            search_query.target_type = POINT_TARGET;
         }
 
         // <t> ^orientation and orientation-flex
-        if (si->get_vec3(target_root, "orientation", orientation)) {
-            use_orientation = true;
+        if (si->get_vec3(target_root, "orientation", search_query.orientation)) {
+            search_query.use_orientation = true;
         } else {
-            use_orientation = false;
+            search_query.use_orientation = false;
         }
-        if (si->get_vec3(target_root, "orientation-flex", orientation_flex)) {
-            if (!use_orientation) {
+        if (si->get_vec3(target_root, "orientation-flex", search_query.orientation_flex)) {
+            if (!search_query.use_orientation) {
                 set_status("orientation-flex used without orientation");
                 return false;
             }
-            use_orientation_flex = true;
+            search_query.use_orientation_flex = true;
         } else {
-            use_orientation_flex = false;
+            search_query.use_orientation_flex = false;
         }
 
-        std::cout << "Min num: " << min_num << " Max num: " << max_num << std::endl
-                  << "Min time: " << min_time << " Max time: " << max_time << std::endl
-                  << "Target: " << target_center[0] << ", " << target_center[1] << ", "
-                  << target_center[2] << std::endl << "Target type: " << target_type
-                  << std::endl;
+        std::cout << "--- COMMAND WITH ID " << id << " ---" << std::endl
+                  << search_query.to_str() << std::endl
+                  << "--------------------------" << std::endl;
 
         return true;
     }
 
     soar_interface* si;
+    trajectory_set* ts;
     Symbol* root;
 
     bool parsed;
+    query search_query;
 
-    int min_num;
-    int max_num;
-    double min_time;
-    double max_time;
+    int id;
 
     Symbol* target_root;
-
-    vec3 target_center;
-    TargetType target_type;
-    vec3 target_box_size; // used for BOX_TARGET
-    double target_sphere_radius; // used for SPHERE_TARGET
-
-    bool use_orientation;
-    vec3 orientation;
-    bool use_orientation_flex;
-    vec3 orientation_flex;
 };
+
+int find_trajectories_command::next_id = 0;
 
 command* _make_find_trajectories_command_(svs_state* state, Symbol* root)
 {
