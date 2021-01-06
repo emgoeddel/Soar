@@ -2,41 +2,57 @@
 
 #include "robot.h"
 
-robot::robot() : group("arm") {
-    group.setMaxVelocityScalingFactor(0.4);
-    group.setEndEffectorLink("gripper_link");
+const std::string robot::ROBOT_NAME = "fetch";
+
+robot::robot() : listener(tf_buffer) {
+    // We don't want all of the robot links in the SG (we don't need
+    // to know where the e-stop is, for example). This holds the links
+    // we actually need.
+    // XXX: Obviously hard-coded to the fetch. Should eventually load
+    //      from the robot model or something.
+    LINKS_OF_INTEREST.insert("torso_lift_link");
+    LINKS_OF_INTEREST.insert("head_pan_link");
+    LINKS_OF_INTEREST.insert("head_tilt_link");
+    LINKS_OF_INTEREST.insert("shoulder_pan_link");
+    LINKS_OF_INTEREST.insert("shoulder_lift_link");
+    LINKS_OF_INTEREST.insert("upperarm_roll_link");
+    LINKS_OF_INTEREST.insert("elbow_flex_link");
+    LINKS_OF_INTEREST.insert("forearm_roll_link");
+    LINKS_OF_INTEREST.insert("wrist_flex_link");
+    LINKS_OF_INTEREST.insert("wrist_roll_link");
+    LINKS_OF_INTEREST.insert("gripper_link");
+    LINKS_OF_INTEREST.insert("l_gripper_finger_link");
+    LINKS_OF_INTEREST.insert("r_gripper_finger_link");
 }
 
-// Query for the current link positions through MoveIt!
+// Query for current link positions through tf2
 std::map<std::string, transform3> robot::get_link_transforms() {
     std::map<std::string, transform3> xforms;
 
-    robot_state::RobotStatePtr rs = group.getCurrentState();
-    if (!rs) {
-        std::cout << "Unable to get robot link transforms." << std::endl;
-        return xforms;
-    }
-
-    std::vector<std::string> names = rs->getRobotModel()->getLinkModelNames();
-
-    for (std::vector<std::string>::iterator i = names.begin();
-         i != names.end(); i++) {
-        std::string link_name = *i;
-        xforms[link_name] = transform3(rs->getFrameTransform(link_name));
+    for (std::set<std::string>::iterator i = LINKS_OF_INTEREST.begin();
+         i != LINKS_OF_INTEREST.end(); i++) {
+        std::string cur_link = *i;
+        geometry_msgs::TransformStamped xf;
+        try {
+            xf = tf_buffer.lookupTransform("base_link", cur_link, ros::Time(0));
+            xforms[cur_link] = transform3(tf2::transformToEigen(xf));
+        } catch (tf2::TransformException &e) {
+            ROS_WARN("%s", e.what());
+        }
     }
 
     return xforms;
 }
 
 std::vector<std::string> robot::get_link_names() {
-    robot_state::RobotStatePtr rs = group.getCurrentState();
-    if (!rs) {
-        std::cout << "Unable to get robot link names." << std::endl;
-        std::vector<std::string> empty;
-        return empty;
+    std::vector<std::string> link_names;
+
+    for (std::set<std::string>::iterator i = LINKS_OF_INTEREST.begin();
+         i != LINKS_OF_INTEREST.end(); i++) {
+        link_names.push_back(*i);
     }
 
-    return rs->getRobotModel()->getLinkModelNames();
+    return link_names;
 }
 
 #endif

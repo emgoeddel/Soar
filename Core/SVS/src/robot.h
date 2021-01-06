@@ -4,14 +4,16 @@
 #ifdef ENABLE_ROS
 
 #include <map>
-#include <moveit/move_group_interface/move_group_interface.h>
+#include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 #include "mat.h"
 
 /*
  * robot class
  *
- * Provides an interface to control the Fetch through MoveIt!
+ * Provides an interface to control the Fetch
  *
  */
 
@@ -21,8 +23,13 @@ public:
     std::map<std::string, transform3> get_link_transforms();
     std::vector<std::string> get_link_names();
 
+    static const std::string ROBOT_NAME;
+
 private:
-    moveit::planning_interface::MoveGroupInterface group;
+    std::set<std::string> LINKS_OF_INTEREST;
+
+    tf2_ros::Buffer tf_buffer;
+    tf2_ros::TransformListener listener;
 };
 
 #endif

@@ -61,9 +61,6 @@ private:
 
     static const std::string IMAGE_NAME;
     static const std::string OBJECTS_NAME;
-    static const std::string ROBOT_NAME;
-
-    std::set<std::string> LINKS_OF_INTEREST;
 
     void subscribe_image();
     void unsubscribe_image();

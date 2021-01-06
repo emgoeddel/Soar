@@ -217,7 +217,7 @@ if compiler == 'g++':
         cflags.append('-DNO_SVS')
     if GetOption('useros'):
         cflags.append('-DENABLE_ROS')
-        libs += ['roscpp', 'pcl_common', "moveit_move_group_interface"]
+        libs += ['roscpp', 'pcl_common', 'tf2_ros']
     if GetOption('defflags'):
         cflags.append('-Wreturn-type')
         if GetOption('dbg'):
