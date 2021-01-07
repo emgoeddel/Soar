@@ -7,6 +7,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_eigen/tf2_eigen.h>
+#include <ompl/geometric/SimpleSetup.h>
+#include <ompl/base/spaces/SE3StateSpace.h>
 
 #include "mat.h"
 
@@ -30,6 +32,8 @@ private:
 
     tf2_ros::Buffer tf_buffer;
     tf2_ros::TransformListener listener;
+
+    ompl::geometric::SimpleSetup ompl_ss;
 };
 
 #endif

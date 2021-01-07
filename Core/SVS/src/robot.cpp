@@ -4,7 +4,8 @@
 
 const std::string robot::ROBOT_NAME = "fetch";
 
-robot::robot() : listener(tf_buffer) {
+robot::robot() : listener(tf_buffer),
+                 ompl_ss(std::make_shared<ompl::base::SE3StateSpace>()) {
     // We don't want all of the robot links in the SG (we don't need
     // to know where the e-stop is, for example). This holds the links
     // we actually need.
