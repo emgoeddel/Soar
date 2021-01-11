@@ -2,10 +2,21 @@
 
 #include "robot.h"
 
+bool robot_model::init(std::string robot_desc) {
+    urdf::Model urdf_model;
+    if (!urdf_model.initString(robot_desc)) {
+        ROS_WARN("Failed to parse URDF.");
+        return false;
+    }
+
+    return true;
+}
+
 const std::string robot::ROBOT_NAME = "fetch";
 
-robot::robot() : listener(tf_buffer),
-                 ompl_ss(std::make_shared<ompl::base::SE3StateSpace>()) {
+robot::robot(ros::NodeHandle& nh) : n(nh),
+                                    listener(tf_buffer),
+                                    ompl_ss(std::make_shared<ompl::base::SE3StateSpace>()) {
     // We don't want all of the robot links in the SG (we don't need
     // to know where the e-stop is, for example). This holds the links
     // we actually need.
@@ -24,6 +35,13 @@ robot::robot() : listener(tf_buffer),
     LINKS_OF_INTEREST.insert("gripper_link");
     LINKS_OF_INTEREST.insert("l_gripper_finger_link");
     LINKS_OF_INTEREST.insert("r_gripper_finger_link");
+
+    std::string rd = "";
+    if (!n.getParam("/robot_description", rd)) {
+        ROS_WARN("Can't find the robot_description parameter.");
+    } else {
+        model.init(rd);
+    }
 }
 
 // Query for current link positions through tf2

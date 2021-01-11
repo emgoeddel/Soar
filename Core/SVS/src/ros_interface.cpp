@@ -18,6 +18,7 @@ const std::string ros_interface::OBJECTS_NAME = "objects";
 
 ros_interface::ros_interface(svs* sp)
     : image_source("none"),
+      fetch(n),
       fetch_added(false) {
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
