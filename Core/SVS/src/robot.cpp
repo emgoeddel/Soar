@@ -193,8 +193,7 @@ std::string robot_model::robot_info() {
 }
 
 robot::robot(ros::NodeHandle& nh) : n(nh),
-                                    listener(tf_buffer),
-                                    ompl_ss(std::make_shared<ompl::base::SE3StateSpace>()) {
+                                    listener(tf_buffer) {
     std::string rd = "";
     if (!n.getParam("/robot_description", rd)) {
         ROS_WARN("Can't find the robot_description parameter.");
@@ -202,7 +201,29 @@ robot::robot(ros::NodeHandle& nh) : n(nh),
         model.init(rd);
     }
 
-    std::cout << model.robot_info();
+    //std::cout << model.robot_info();
+
+    // construct vector state space based on default joint group
+    int dof = model.joint_groups[model.default_joint_group].size();
+    ompl::base::StateSpacePtr space(new ompl::base::RealVectorStateSpace(dof));
+
+    // set the bounds for state space based on joint limits
+    ompl::base::RealVectorBounds bounds(dof);
+    std::set<std::string>::iterator i = model.joint_groups[model.default_joint_group].begin();
+    int b = 0;
+    for (; i != model.joint_groups[model.default_joint_group].end(); i++)
+    {
+        std::string j = *i;
+        bounds.setLow(b, model.all_joints[j].min_pos);
+        bounds.setHigh(b, model.all_joints[j].max_pos);
+        b++;
+    }
+
+    space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
+    ompl_ss = new ompl::geometric::SimpleSetup(space);
+
+    ROS_INFO("Set up to plan for joint group %s, DOF = %i",
+             model.default_joint_group.c_str(), dof);
 }
 
 // Query for current link positions through tf2

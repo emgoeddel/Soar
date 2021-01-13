@@ -49,6 +49,14 @@ struct link_info {
     std::string mesh_file;
 };
 
+/*
+ * robot_model struct
+ *
+ * Imports and stores necessary information about links and joints
+ * from URDF
+ *
+ */
+
 struct robot_model {
     robot_model() : name("none") {};
 
@@ -89,7 +97,7 @@ private:
     tf2_ros::TransformListener listener;
 
     robot_model model;
-    ompl::geometric::SimpleSetup ompl_ss;
+    ompl::geometric::SimpleSetup* ompl_ss;
 };
 
 #endif
