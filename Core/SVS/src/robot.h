@@ -73,7 +73,7 @@ struct robot_model {
 
     // joint information
     std::map<std::string, joint_info> all_joints;
-    std::map<std::string, std::set<std::string> > joint_groups;
+    std::map<std::string, std::vector<std::string> > joint_groups;
 };
 
 /*

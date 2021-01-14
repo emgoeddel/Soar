@@ -18,7 +18,7 @@ bool robot_model::init(std::string robot_desc) {
     default_joint_group = "default";
 
     // Get the joint information
-    joint_groups["default"] = std::set<std::string>();
+    joint_groups["default"] = std::vector<std::string>();
     std::map<std::string, urdf::JointSharedPtr>::iterator i = urdf.joints_.begin();
     for(; i != urdf.joints_.end(); i++) {
         std::string n = i->first;
@@ -58,7 +58,7 @@ bool robot_model::init(std::string robot_desc) {
             all_joints[n].min_pos = i->second->limits->lower;
             all_joints[n].max_velocity = i->second->limits->velocity;
             all_joints[n].max_effort = i->second->limits->effort;
-            joint_groups["default"].insert(i->first);
+            joint_groups["default"].push_back(i->first);
         }
     }
 
@@ -127,24 +127,24 @@ bool robot_model::init(std::string robot_desc) {
 
     // Fetch-specific joint information
     // Groups of joints that we would actually want to plan for
-    joint_groups["arm"] = std::set<std::string>();
-    joint_groups["arm"].insert("shoulder_pan_joint");
-    joint_groups["arm"].insert("shoulder_lift_joint");
-    joint_groups["arm"].insert("upperarm_roll_joint");
-    joint_groups["arm"].insert("elbow_flex_joint");
-    joint_groups["arm"].insert("forearm_roll_joint");
-    joint_groups["arm"].insert("wrist_flex_joint");
-    joint_groups["arm"].insert("wrist_roll_joint");
+    joint_groups["arm"] = std::vector<std::string>();
+    joint_groups["arm"].push_back("shoulder_pan_joint");
+    joint_groups["arm"].push_back("shoulder_lift_joint");
+    joint_groups["arm"].push_back("upperarm_roll_joint");
+    joint_groups["arm"].push_back("elbow_flex_joint");
+    joint_groups["arm"].push_back("forearm_roll_joint");
+    joint_groups["arm"].push_back("wrist_flex_joint");
+    joint_groups["arm"].push_back("wrist_roll_joint");
 
-    joint_groups["arm_w_torso"] = std::set<std::string>();
-    joint_groups["arm_w_torso"].insert("torso_lift_joint");
-    joint_groups["arm_w_torso"].insert("shoulder_pan_joint");
-    joint_groups["arm_w_torso"].insert("shoulder_lift_joint");
-    joint_groups["arm_w_torso"].insert("upperarm_roll_joint");
-    joint_groups["arm_w_torso"].insert("elbow_flex_joint");
-    joint_groups["arm_w_torso"].insert("forearm_roll_joint");
-    joint_groups["arm_w_torso"].insert("wrist_flex_joint");
-    joint_groups["arm_w_torso"].insert("wrist_roll_joint");
+    joint_groups["arm_w_torso"] = std::vector<std::string>();
+    joint_groups["arm_w_torso"].push_back("torso_lift_joint");
+    joint_groups["arm_w_torso"].push_back("shoulder_pan_joint");
+    joint_groups["arm_w_torso"].push_back("shoulder_lift_joint");
+    joint_groups["arm_w_torso"].push_back("upperarm_roll_joint");
+    joint_groups["arm_w_torso"].push_back("elbow_flex_joint");
+    joint_groups["arm_w_torso"].push_back("forearm_roll_joint");
+    joint_groups["arm_w_torso"].push_back("wrist_flex_joint");
+    joint_groups["arm_w_torso"].push_back("wrist_roll_joint");
 
     default_joint_group = "arm";
 
@@ -178,10 +178,10 @@ std::string robot_model::robot_info() {
     info << std::endl;
     info << "---------------------------------------------------------------" << std::endl;
     info << "| JOINT GROUPS |" << std::endl;;
-    std::map<std::string, std::set<std::string> >::iterator g = joint_groups.begin();
+    std::map<std::string, std::vector<std::string> >::iterator g = joint_groups.begin();
     for (; g != joint_groups.end(); g++) {
         info << "  [" << g->first << "] ";
-        for (std::set<std::string>::iterator i = g->second.begin();
+        for (std::vector<std::string>::iterator i = g->second.begin();
              i != g->second.end(); i++) {
             info << *i << " ";
         }
@@ -209,7 +209,7 @@ robot::robot(ros::NodeHandle& nh) : n(nh),
 
     // set the bounds for state space based on joint limits
     ompl::base::RealVectorBounds bounds(dof);
-    std::set<std::string>::iterator i = model.joint_groups[model.default_joint_group].begin();
+    std::vector<std::string>::iterator i = model.joint_groups[model.default_joint_group].begin();
     int b = 0;
     for (; i != model.joint_groups[model.default_joint_group].end(); i++)
     {
