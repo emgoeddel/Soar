@@ -11,7 +11,7 @@
 #include "cliproxy.h"
 
 #ifdef ENABLE_ROS
-#include <boost/thread.hpp>
+#include <mutex>
 #include "ros_interface.h"
 #endif
 
@@ -247,7 +247,7 @@ class svs : public svs_interface, public cliproxy
 
 #ifdef ENABLE_ROS
         ros_interface*            ri;
-        boost::mutex              input_mtx;
+        std::mutex                input_mtx;
 #endif
 
         soar_interface*           si;

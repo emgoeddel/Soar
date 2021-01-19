@@ -466,7 +466,7 @@ void svs::state_deletion_callback(Symbol* state)
 void svs::proc_input(svs_state* s)
 {
 #ifdef ENABLE_ROS
-    boost::lock_guard<boost::mutex> guard(input_mtx);
+    std::lock_guard<std::mutex> guard(input_mtx);
 #endif
 
     for (size_t i = 0; i < env_inputs.size(); ++i)
@@ -550,7 +550,7 @@ void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_
 void svs::add_input(const string& in)
 {
 #ifdef ENABLE_ROS
-    boost::lock_guard<boost::mutex> guard(input_mtx);
+    std::lock_guard<std::mutex> guard(input_mtx);
 #endif
 
     split(in, "\n", env_inputs);
