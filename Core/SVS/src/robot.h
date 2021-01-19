@@ -4,6 +4,7 @@
 #ifdef ENABLE_ROS
 
 #include <map>
+#include <mutex>
 #include <ros/ros.h>
 #include <urdf/model.h>
 #include <urdf_model/model.h>
@@ -89,14 +90,24 @@ public:
     std::map<std::string, transform3> get_link_transforms();
     std::vector<std::string> get_link_names();
 
+    void set_joints(std::map<std::string, double>& joints_in, bool verify = false);
+    std::map<std::string, double> get_joints();
+
     std::string name() { return model.name;}
 
 private:
+    void calculate_link_xform(std::string link_name,
+                              std::map<std::string, transform3>& out);
+
     ros::NodeHandle& n;
     tf2_ros::Buffer tf_buffer;
     tf2_ros::TransformListener listener;
 
     robot_model model;
+
+    std::map<std::string, double> current_joints;
+    std::mutex joints_mtx;
+
     ompl::geometric::SimpleSetup* ompl_ss;
 };
 

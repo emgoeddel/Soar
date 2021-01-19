@@ -226,23 +226,38 @@ robot::robot(ros::NodeHandle& nh) : n(nh),
              model.default_joint_group.c_str(), dof);
 }
 
-// Query for current link positions through tf2
+// Calculate and return current link positions
 std::map<std::string, transform3> robot::get_link_transforms() {
     std::map<std::string, transform3> xforms;
 
     for (std::set<std::string>::iterator i = model.links_of_interest.begin();
          i != model.links_of_interest.end(); i++) {
-        std::string cur_link = *i;
-        geometry_msgs::TransformStamped xf;
-        try {
-            xf = tf_buffer.lookupTransform("base_link", cur_link, ros::Time(0));
-            xforms[cur_link] = transform3(tf2::transformToEigen(xf));
-        } catch (tf2::TransformException &e) {
-            ROS_WARN("%s", e.what());
-        }
+        calculate_link_xform(*i, xforms);
     }
 
     return xforms;
+}
+
+void robot::calculate_link_xform(std::string link_name,
+                                 std::map<std::string, transform3>& out) {
+    // Already calculated as part of a previous link
+    if (out.count(link_name) == 1) return;
+
+    // Figure out all the links on the path to the link we're looking for
+    // that have not already been calculated
+    std::vector<std::string> chain_to_link;
+    std::string parent_joint = model.all_links[link_name].parent_joint;
+    std::string parent_link = model.all_joints[parent_joint].parent_link;
+    while (out.count(parent_link) == 0 && parent_joint != "") {
+        chain_to_link.push_back(parent_link);
+        parent_joint = model.all_links[parent_link].parent_joint;
+        parent_link = model.all_joints[parent_joint].parent_link;
+    }
+
+    for (std::vector<std::string>::iterator i = chain_to_link.begin();
+         i != chain_to_link.end(); i++) {
+        // Multiply out the xforms
+    }
 }
 
 std::vector<std::string> robot::get_link_names() {
@@ -254,6 +269,32 @@ std::vector<std::string> robot::get_link_names() {
     }
 
     return link_names;
+}
+
+void robot::set_joints(std::map<std::string, double>& joints_in, bool verify) {
+    std::lock_guard<std::mutex> guard(joints_mtx);
+
+    for (std::map<std::string, double>::iterator i = joints_in.begin();
+     i != joints_in.end(); i++) {
+        if (verify && model.all_joints.count(i->first) == 0) {
+            ROS_WARN("Joint name %s not present in robot model", i->first.c_str());
+        }
+        current_joints[i->first] = i->second;
+    }
+
+    if (!verify) return;
+
+    for (std::map<std::string, joint_info>::iterator i = model.all_joints.begin();
+         i != model.all_joints.end(); i++) {
+        if (joints_in.count(i->first) == 0) {
+            ROS_WARN("Model joint %s has no value in joint message", i->first.c_str());
+        }
+    }
+}
+
+std::map<std::string, double> robot::get_joints() {
+    std::lock_guard<std::mutex> guard(joints_mtx);
+    return current_joints;
 }
 
 #endif

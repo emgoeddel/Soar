@@ -19,7 +19,8 @@ const std::string ros_interface::OBJECTS_NAME = "objects";
 ros_interface::ros_interface(svs* sp)
     : image_source("none"),
       fetch(n),
-      fetch_added(false) {
+      fetch_added(false),
+      joints_verified(true) {
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
 
@@ -40,6 +41,8 @@ ros_interface::ros_interface(svs* sp)
 
     // Stay subscribed to the gazebo models for the entire runtime
     models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::models_callback, this);
+    // Same for the joint states
+    joints_sub = n.subscribe("/joint_states", 5, &ros_interface::joints_callback, this);
 }
 
 ros_interface::~ros_interface() {
@@ -135,6 +138,8 @@ void ros_interface::unsubscribe_image() {
 // Turns on the robot update part of the model callback
 void ros_interface::start_robot() {
     update_inputs[fetch.name()] = true;
+    // Don't need to check the joint information until robot updating is on
+    joints_verified = false;
 }
 
 // Turns off the robot update part of the model callback
@@ -185,8 +190,23 @@ void ros_interface::models_callback(const gazebo_msgs::ModelStates::ConstPtr& ms
     update_robot(fetch_loc);
 }
 
+void ros_interface::joints_callback(const sensor_msgs::JointState::ConstPtr& msg) {
+    std::map<std::string, double> joints_in;
+
+    for (int i = 0; i < msg->name.size(); i++) {
+        joints_in[msg->name[i]] = msg->position[i];
+    }
+
+    if (!joints_verified) {
+        fetch.set_joints(joints_in, true);
+        joints_verified = true;
+    } else {
+        fetch.set_joints(joints_in, false);
+    }
+}
+
 // Updates the fetch model in the SG through SGEL commands; only requres
-// Fetch's position because it queries MoveIt! for the arm position (see
+// Fetch's position because it queries the robot class for the arm position (see
 // robot class). If we ever hook up this system to SLAM, this function could
 // be called by that subsystem instead of getting the position from the
 // gazebo model locations

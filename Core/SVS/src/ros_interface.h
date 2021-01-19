@@ -69,6 +69,7 @@ private:
     void start_objects();
     void stop_objects();
     void models_callback(const gazebo_msgs::ModelStates::ConstPtr& msg);
+    void joints_callback(const sensor_msgs::JointState::ConstPtr& msg);
     void update_robot(transform3 fetch_xform);
     void update_objects(std::map<std::string, transform3> objs);
     void pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg);
@@ -83,6 +84,7 @@ private:
     std::map<std::string, std::function<void()> > enable_fxns;
     std::map<std::string, std::function<void()> > disable_fxns;
     ros::Subscriber models_sub;
+    ros::Subscriber joints_sub;
     ros::Subscriber pc_sub;
     std::string image_source;
     ros::AsyncSpinner* spinner;
@@ -91,6 +93,7 @@ private:
     transform3 last_fetch;
     bool fetch_added;
     std::map<std::string, transform3> last_links;
+    bool joints_verified;
 
     svs* svs_ptr;
     std::map<std::string, transform3> last_objs;
