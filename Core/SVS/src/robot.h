@@ -89,6 +89,7 @@ class robot {
 public:
     robot(ros::NodeHandle& nh);
     std::map<std::string, transform3> get_link_transforms();
+    std::map<std::string, transform3> get_link_transforms_at(std::map<std::string, double> p);
     std::vector<std::string> get_link_names();
 
     void set_joints(std::map<std::string, double>& joints_in, bool verify = false);
@@ -98,6 +99,7 @@ public:
 
 private:
     void calculate_link_xform(std::string link_name,
+                              std::map<std::string, double> pose,
                               std::map<std::string, transform3>& out);
     transform3 compose_joint_xform(std::string joint_name, double pos);
 

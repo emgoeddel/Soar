@@ -234,24 +234,31 @@ robot::robot(ros::NodeHandle& nh) : n(nh) {
 
 // Calculate and return current link positions
 std::map<std::string, transform3> robot::get_link_transforms() {
+    std::lock_guard<std::mutex> guard(joints_mtx);
+    return get_link_transforms_at(current_joints);
+}
+
+// Calculate and return link positions for joint pose p
+std::map<std::string, transform3>
+robot::get_link_transforms_at(std::map<std::string, double> p) {
     std::map<std::string, transform3> xforms;
 
     // Put base link into the map immediately since it always starts
     // the kinematic chains as identity
     xforms[model.root_link] = transform3::identity();
 
-    std::lock_guard<std::mutex> guard(joints_mtx);
     for (std::set<std::string>::iterator i = model.links_of_interest.begin();
          i != model.links_of_interest.end(); i++) {
-        calculate_link_xform(*i, xforms);
+        calculate_link_xform(*i, p, xforms);
     }
 
     return xforms;
 }
 
-// Add the current xform for the requested link, plus any others along its
+// Add the xform for the requested link at pose p, plus any others along its
 // kinematic chain, to the xform map
 void robot::calculate_link_xform(std::string link_name,
+                                 std::map<std::string, double> pose,
                                  std::map<std::string, transform3>& out) {
     // Already calculated as part of a previous link
     if (out.count(link_name) == 1) return;
@@ -273,7 +280,7 @@ void robot::calculate_link_xform(std::string link_name,
     for (std::vector<std::string>::reverse_iterator i = chain_to_link.rbegin();
          i != chain_to_link.rend(); i++) {
         std::string j = model.all_links[*i].parent_joint;
-        transform3 j_x = compose_joint_xform(j, current_joints[j]);
+        transform3 j_x = compose_joint_xform(j, pose[j]);
         cur_xform = cur_xform*j_x;
 
         // Save xform for future if link is of interest before continuing
