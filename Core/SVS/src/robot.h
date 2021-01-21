@@ -9,7 +9,6 @@
 #include <urdf/model.h>
 #include <urdf_model/model.h>
 #include <tf2/utils.h>
-#include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <ompl/geometric/SimpleSetup.h>
@@ -32,7 +31,8 @@ struct joint_info {
     std::string child_link;
 
     joint_type type;
-    tf2::Transform origin;
+    transform3 origin;
+    vec3 axis;
 
     double max_pos;
     double min_pos;
@@ -46,7 +46,7 @@ struct link_info {
     std::string parent_joint;
     std::set<std::string> child_joints;
 
-    tf2::Transform collision_origin;
+    transform3 collision_origin;
     std::string mesh_file;
 };
 
@@ -65,6 +65,7 @@ struct robot_model {
     std::string robot_info();
 
     std::string name;
+    // root_link is assumed to be one of the links_of_interest
     std::string root_link;
     std::string default_joint_group;
 
@@ -93,15 +94,14 @@ public:
     void set_joints(std::map<std::string, double>& joints_in, bool verify = false);
     std::map<std::string, double> get_joints();
 
-    std::string name() { return model.name;}
+    std::string name() { return model.name; }
 
 private:
     void calculate_link_xform(std::string link_name,
                               std::map<std::string, transform3>& out);
+    transform3 compose_joint_xform(std::string joint_name, double pos);
 
     ros::NodeHandle& n;
-    tf2_ros::Buffer tf_buffer;
-    tf2_ros::TransformListener listener;
 
     robot_model model;
 

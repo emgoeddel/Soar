@@ -473,9 +473,25 @@ transform3::transform3(const vec3& p, const vec3& r, const vec3& s)
             Eigen::Scaling(s);
 }
 
+transform3::transform3(const vec3& p, const vec4& r_quat) {
+    trans = Eigen::Translation<double, 3>(p) *
+            Eigen::Quaterniond(r_quat);
+}
+
+transform3::transform3(const vec3& axis, double angle) {
+    trans = Eigen::AngleAxisd(angle, axis);
+}
+
 transform3::transform3(Eigen::Transform<double, 3, Eigen::Affine> t)
 {
     trans = t;
+}
+
+transform3 transform3::identity() {
+    vec3 p(0, 0, 0);
+    vec3 r(0, 0, 0);
+    vec3 s(1, 1, 1);
+    return transform3(p, r, s);
 }
 
 void transform3::to_prs(vec3& p, vec4& r, vec3& s) const
@@ -520,4 +536,18 @@ void transform3::rotation(Eigen::Quaterniond& r) const
 
     Eigen::Quaterniond q(rm);
     r = q;
+}
+
+std::string transform3::to_str() const {
+    std::stringstream ss;
+
+    vec3 p, s;
+    vec4 r;
+    to_prs(p, r, s);
+
+    ss << "P [" << p[0] << ", " << p[1] << ", " << p[2] << "]" << std::endl;
+    ss << "R [" << r[0] << ", " << r[1] << ", " << r[2] << ", " << r[3] << "]" << std::endl;
+    ss << "S [" << s[0] << ", " << s[1] << ", " << s[2] << "]" << std::endl;
+
+    return ss.str();
 }

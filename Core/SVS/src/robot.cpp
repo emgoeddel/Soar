@@ -42,18 +42,24 @@ bool robot_model::init(std::string robot_desc) {
             all_joints[n].type = UNSUPPORTED;
         }
 
-        // Convert to tf2 transform representation
-        tf2::Vector3 v(i->second->parent_to_joint_origin_transform.position.x,
-                       i->second->parent_to_joint_origin_transform.position.y,
-                       i->second->parent_to_joint_origin_transform.position.z);
-        all_joints[n].origin.setOrigin(v);
-        double q_x, q_y, q_z, q_w;
-        i->second->parent_to_joint_origin_transform.rotation.getQuaternion(q_x, q_y, q_z, q_w);
-        tf2::Quaternion q(q_x, q_y, q_z, q_w);
-        all_joints[n].origin.setRotation(q);
+        // Convert to transform3 representation
+        vec3 p(i->second->parent_to_joint_origin_transform.position.x,
+               i->second->parent_to_joint_origin_transform.position.y,
+               i->second->parent_to_joint_origin_transform.position.z);
+        vec4 r(i->second->parent_to_joint_origin_transform.rotation.x,
+               i->second->parent_to_joint_origin_transform.rotation.y,
+               i->second->parent_to_joint_origin_transform.rotation.z,
+               i->second->parent_to_joint_origin_transform.rotation.w);
+
+        all_joints[n].origin = transform3(p, r);
 
         if (all_joints[n].type != FIXED &&
             all_joints[n].type != UNSUPPORTED) {
+
+            all_joints[n].axis[0] = i->second->axis.x;
+            all_joints[n].axis[1] = i->second->axis.y;
+            all_joints[n].axis[2] = i->second->axis.z;
+
             all_joints[n].max_pos = i->second->limits->upper;
             all_joints[n].min_pos = i->second->limits->lower;
             all_joints[n].max_velocity = i->second->limits->velocity;
@@ -84,15 +90,15 @@ bool robot_model::init(std::string robot_desc) {
             continue;
         }
 
-        // Convert to tf2 transform representation
-        tf2::Vector3 v(j->second->collision->origin.position.x,
-                       j->second->collision->origin.position.y,
-                       j->second->collision->origin.position.z);
-        all_links[n].collision_origin.setOrigin(v);
-        double q_x, q_y, q_z, q_w;
-        j->second->collision->origin.rotation.getQuaternion(q_x, q_y, q_z, q_w);
-        tf2::Quaternion q(q_x, q_y, q_z, q_w);
-        all_links[n].collision_origin.setRotation(q);
+        // Convert to transform3 representation
+        vec3 c_p(j->second->collision->origin.position.x,
+                 j->second->collision->origin.position.y,
+                 j->second->collision->origin.position.z);
+        vec4 c_r(j->second->collision->origin.rotation.x,
+                 j->second->collision->origin.rotation.y,
+                 j->second->collision->origin.rotation.z,
+                 j->second->collision->origin.rotation.w);
+        all_links[n].collision_origin = transform3(c_p, c_r);
 
         // Mesh
         urdf::GeometrySharedPtr geom = j->second->collision->geometry;
@@ -111,6 +117,7 @@ bool robot_model::init(std::string robot_desc) {
     // We don't want all of the robot links in the SG (we don't need
     // to know where the e-stop is, for example). This holds the links
     // we actually need.
+    links_of_interest.insert("base_link");
     links_of_interest.insert("torso_lift_link");
     links_of_interest.insert("head_pan_link");
     links_of_interest.insert("head_tilt_link");
@@ -192,8 +199,7 @@ std::string robot_model::robot_info() {
     return info.str();
 }
 
-robot::robot(ros::NodeHandle& nh) : n(nh),
-                                    listener(tf_buffer) {
+robot::robot(ros::NodeHandle& nh) : n(nh) {
     std::string rd = "";
     if (!n.getParam("/robot_description", rd)) {
         ROS_WARN("Can't find the robot_description parameter.");
@@ -230,6 +236,11 @@ robot::robot(ros::NodeHandle& nh) : n(nh),
 std::map<std::string, transform3> robot::get_link_transforms() {
     std::map<std::string, transform3> xforms;
 
+    // Put base link into the map immediately since it always starts
+    // the kinematic chains as identity
+    xforms[model.root_link] = transform3::identity();
+
+    std::lock_guard<std::mutex> guard(joints_mtx);
     for (std::set<std::string>::iterator i = model.links_of_interest.begin();
          i != model.links_of_interest.end(); i++) {
         calculate_link_xform(*i, xforms);
@@ -238,6 +249,8 @@ std::map<std::string, transform3> robot::get_link_transforms() {
     return xforms;
 }
 
+// Add the current xform for the requested link, plus any others along its
+// kinematic chain, to the xform map
 void robot::calculate_link_xform(std::string link_name,
                                  std::map<std::string, transform3>& out) {
     // Already calculated as part of a previous link
@@ -246,17 +259,47 @@ void robot::calculate_link_xform(std::string link_name,
     // Figure out all the links on the path to the link we're looking for
     // that have not already been calculated
     std::vector<std::string> chain_to_link;
-    std::string parent_joint = model.all_links[link_name].parent_joint;
-    std::string parent_link = model.all_joints[parent_joint].parent_link;
-    while (out.count(parent_link) == 0 && parent_joint != "") {
-        chain_to_link.push_back(parent_link);
-        parent_joint = model.all_links[parent_link].parent_joint;
-        parent_link = model.all_joints[parent_joint].parent_link;
+    std::string l = link_name;
+    while (out.count(l) == 0) {
+        chain_to_link.push_back(l);
+        // parent joint -> parent link
+        std::string j = model.all_links[l].parent_joint;
+        l = model.all_joints[j].parent_link;
     }
+    // l must now have an entry in the xform map
 
-    for (std::vector<std::string>::iterator i = chain_to_link.begin();
-         i != chain_to_link.end(); i++) {
-        // Multiply out the xforms
+    // Go through the chain starting with first existing xform
+    transform3 cur_xform = out[l];
+    for (std::vector<std::string>::reverse_iterator i = chain_to_link.rbegin();
+         i != chain_to_link.rend(); i++) {
+        std::string j = model.all_links[*i].parent_joint;
+        transform3 j_x = compose_joint_xform(j, current_joints[j]);
+        cur_xform = cur_xform*j_x;
+
+        // Save xform for future if link is of interest before continuing
+        if (model.links_of_interest.count(*i) ==  1) out[*i] = cur_xform;
+    }
+}
+
+// Compose the innate and axis/angle or translation xform for the given joint
+// at a particular position
+transform3 robot::compose_joint_xform(std::string joint_name, double pos) {
+    transform3 j_o = model.all_joints[joint_name].origin;
+    vec3 j_axis = model.all_joints[joint_name].axis;
+
+    if (model.all_joints[joint_name].type == REVOLUTE ||
+        model.all_joints[joint_name].type == CONTINUOUS) {
+        transform3 aa = transform3(j_axis, pos);
+        return j_o*aa;
+    } else if (model.all_joints[joint_name].type == PRISMATIC) {
+        vec3 p(pos*j_axis[0], pos*j_axis[1], pos*j_axis[2]);
+        transform3 t = transform3('p', p);
+        return j_o*t;
+    } else if (model.all_joints[joint_name].type == FIXED) {
+        return j_o;
+    } else {
+        ROS_WARN("Unsupported joint %s needed for FK calculation", joint_name.c_str());
+        return j_o;
     }
 }
 
