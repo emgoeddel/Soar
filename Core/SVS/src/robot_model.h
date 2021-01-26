@@ -1,18 +1,11 @@
-#ifndef ARM_CONTROLLER_H
-#define ARM_CONTROLLER_H
+#ifndef ROBOT_MODEL_H
+#define ROBOT_MODEL_H
 
 #ifdef ENABLE_ROS
 
 #include <map>
-#include <mutex>
-#include <ros/ros.h>
 #include <urdf/model.h>
 #include <urdf_model/model.h>
-#include <tf2/utils.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <tf2_eigen/tf2_eigen.h>
-#include <ompl/geometric/SimpleSetup.h>
-#include <ompl/base/spaces/SE3StateSpace.h>
 
 #include "mat.h"
 
@@ -76,41 +69,6 @@ struct robot_model {
     // joint information
     std::map<std::string, joint_info> all_joints;
     std::map<std::string, std::vector<std::string> > joint_groups;
-};
-
-/*
- * robot class
- *
- * Provides an interface to control the Fetch
- *
- */
-
-class robot {
-public:
-    robot(ros::NodeHandle& nh);
-    std::map<std::string, transform3> get_link_transforms();
-    std::map<std::string, transform3> get_link_transforms_at(std::map<std::string, double> p);
-    std::vector<std::string> get_link_names();
-
-    void set_joints(std::map<std::string, double>& joints_in, bool verify = false);
-    std::map<std::string, double> get_joints();
-
-    std::string name() { return model.name; }
-
-private:
-    void calculate_link_xform(std::string link_name,
-                              std::map<std::string, double> pose,
-                              std::map<std::string, transform3>& out);
-    transform3 compose_joint_xform(std::string joint_name, double pos);
-
-    ros::NodeHandle& n;
-
-    robot_model model;
-
-    std::map<std::string, double> current_joints;
-    std::mutex joints_mtx;
-
-    ompl::geometric::SimpleSetup* ompl_ss;
 };
 
 #endif

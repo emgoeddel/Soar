@@ -1,6 +1,6 @@
 #ifdef ENABLE_ROS
 
-#include "trajectory_set.h"
+#include "trajectory.h"
 
 void to_ros_msg(trajectory& from, moveit_msgs::RobotTrajectory& to) {
     to.joint_trajectory.header.frame_id = from.frame;
@@ -31,13 +31,6 @@ void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to) {
         std::cout << "Warning: Discarding MultiDOFJointTrajectory from ROS message."
                   << std::endl;
     }
-}
-
-trajectory_set::trajectory_set() {}
-
-bool trajectory_set::new_command(int id, query query_info) {
-    std::cout << "Starting the search for command " << id << std::endl;
-    query_map[id] = query_info;
 }
 
 #endif

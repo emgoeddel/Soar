@@ -5,7 +5,7 @@
 #include "command.h"
 #include "command_table.h"
 #include "scene.h"
-#include "trajectory_set.h"
+#include "motor.h"
 
 
 /*
@@ -43,7 +43,7 @@ public:
                                                                 root(root),
                                                                 parsed(false) {
         si = state->get_svs()->get_soar_interface();
-        ts = state->get_trajectory_set();
+        mif = state->get_motor();
 
         // All data about target and search limits are stored in query struct,
         // will be updated with actual values when command is parsed
@@ -66,7 +66,7 @@ public:
             parsed = true;
             // If parsed successfully, set the status to "working"
             if (parse()) {
-                ts->new_command(id, search_query);
+                mif->new_query(id, search_query);
                 set_status("running");
             } else {
                 // Error message already set in parse() method
@@ -145,7 +145,7 @@ private:
     }
 
     soar_interface* si;
-    trajectory_set* ts;
+    motor* mif;
     Symbol* root;
 
     bool parsed;
@@ -167,7 +167,7 @@ command_table_entry* find_trajectories_command_entry()
 {
     command_table_entry* e = new command_table_entry();
     e->name = "find-trajectories";
-    e->description = "Add trajectories to the trajectory_set";
+    e->description = "Find trajectories that match the given query";
     e->parameters["target"] = "Spatial target of the trajectories { ^center ^size ^orientation ^orientation-flex }";
     e->parameters["min-number"] = "[Optional] Minimum number of trajectories to find";
     e->parameters["max-number"] = "[Optional] Maximum number of trajectories to find";

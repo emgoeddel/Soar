@@ -22,7 +22,7 @@ class image_descriptor;
 
 #ifdef ENABLE_ROS
 class pcl_image;
-class trajectory_set;
+class motor;
 #else
 class basic_image;
 #endif
@@ -115,14 +115,13 @@ class svs_state : public cliproxy
             return scn;
         }
 #ifdef ENABLE_ROS
-        trajectory_set*    get_trajectory_set() const
+        motor*         get_motor() const
         {
-            return ts;
+            return mif;
         }
-
-        pcl_image*         get_image() const
+        pcl_image*     get_image() const
 #else
-        basic_image*       get_image() const
+        basic_image*   get_image() const
 #endif
         {
             return img;
@@ -159,8 +158,7 @@ class svs_state : public cliproxy
         soar_interface* si;
 #ifdef ENABLE_ROS
         pcl_image*      img;
-        trajectory_set* ts;
-        robot*          rif;
+        motor*          mif;
 #else
         basic_image*    img;
 #endif

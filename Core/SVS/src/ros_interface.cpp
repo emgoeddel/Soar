@@ -18,7 +18,7 @@ const std::string ros_interface::OBJECTS_NAME = "objects";
 
 ros_interface::ros_interface(svs* sp)
     : image_source("none"),
-      fetch(n),
+      motor_if(n),
       fetch_added(false),
       joints_verified(true) {
     svs_ptr = sp;
@@ -29,15 +29,15 @@ ros_interface::ros_interface(svs* sp)
     // and change this via command line
     update_inputs[IMAGE_NAME] = false;
     update_inputs[OBJECTS_NAME] = false;
-    update_inputs[fetch.name()] = false;
+    update_inputs[motor_if.robot_name()] = false;
 
     enable_fxns[IMAGE_NAME] = std::bind(&ros_interface::subscribe_image, this);
     enable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::start_objects, this);
-    enable_fxns[fetch.name()] = std::bind(&ros_interface::start_robot, this);
+    enable_fxns[motor_if.robot_name()] = std::bind(&ros_interface::start_robot, this);
 
     disable_fxns[IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_image, this);
     disable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::stop_objects, this);
-    disable_fxns[fetch.name()] = std::bind(&ros_interface::stop_robot, this);
+    disable_fxns[motor_if.robot_name()] = std::bind(&ros_interface::stop_robot, this);
 
     // Stay subscribed to the gazebo models for the entire runtime
     models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::models_callback, this);
@@ -137,14 +137,14 @@ void ros_interface::unsubscribe_image() {
 
 // Turns on the robot update part of the model callback
 void ros_interface::start_robot() {
-    update_inputs[fetch.name()] = true;
+    update_inputs[motor_if.robot_name()] = true;
     // Don't need to check the joint information until robot updating is on
     joints_verified = false;
 }
 
 // Turns off the robot update part of the model callback
 void ros_interface::stop_robot() {
-    update_inputs[fetch.name()] = false;
+    update_inputs[motor_if.robot_name()] = false;
 }
 
 // Turns on the non-robot object part of the model callback
@@ -179,7 +179,7 @@ void ros_interface::models_callback(const gazebo_msgs::ModelStates::ConstPtr& ms
         vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
 
         transform3 t(p, r, vec3(1, 1, 1));
-        if (n == fetch.name()) {
+        if (n == motor_if.robot_name()) {
             fetch_loc = t;
         } else {
             current_objs.insert(std::pair<std::string, transform3>(n, t));
@@ -198,10 +198,10 @@ void ros_interface::joints_callback(const sensor_msgs::JointState::ConstPtr& msg
     }
 
     if (!joints_verified) {
-        fetch.set_joints(joints_in, true);
+        motor_if.set_joints(joints_in, true);
         joints_verified = true;
     } else {
-        fetch.set_joints(joints_in, false);
+        motor_if.set_joints(joints_in, false);
     }
 }
 
@@ -215,7 +215,7 @@ void ros_interface::joints_callback(const sensor_msgs::JointState::ConstPtr& msg
 //      graphs.
 void ros_interface::update_robot(transform3 fetch_xform) {
     // Nothing to do if the robot input is off and it's not in the scene
-    if (!update_inputs[fetch.name()] && !fetch_added) return;
+    if (!update_inputs[motor_if.robot_name()] && !fetch_added) return;
 
     // Build up a string of commands in the stringsream
     std::stringstream cmds;
@@ -228,18 +228,18 @@ void ros_interface::update_robot(transform3 fetch_xform) {
     fetch_xform.rotation(rq);
     vec3 fetch_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
 
-    std::map<std::string, transform3> links = fetch.get_link_transforms();
+    std::map<std::string, transform3> links = motor_if.get_link_transforms();
 
-    if (!update_inputs[fetch.name()] && fetch_added) {
+    if (!update_inputs[motor_if.robot_name()] && fetch_added) {
         // If we've turned off the robot updates and it's still in the scene, remove it
         robot_changed = true;
-        cmds << del_cmd(fetch.name());
+        cmds << del_cmd(motor_if.robot_name());
         fetch_added = false;
     } else if (!fetch_added) {
         // If this is the first update with the Fetch, add it to the scene
         robot_changed = true;
         // Add the Fetch base
-        cmds << add_cmd(fetch.name(), "world", fetch_pose, fetch_rot);
+        cmds << add_cmd(motor_if.robot_name(), "world", fetch_pose, fetch_rot);
 
         // Add all the Fetch links as children of the Fetch
         for (std::map<std::string, transform3>::iterator i = links.begin();
@@ -252,7 +252,7 @@ void ros_interface::update_robot(transform3 fetch_xform) {
             i->second.rotation(lq);
             vec3 link_rot = lq.toRotationMatrix().eulerAngles(0, 1, 2);
 
-            cmds << add_cmd(n, fetch.name(), link_pose, link_rot);
+            cmds << add_cmd(n, motor_if.robot_name(), link_pose, link_rot);
         }
         fetch_added = true;
     } else {
@@ -265,7 +265,7 @@ void ros_interface::update_robot(transform3 fetch_xform) {
 
         if (t_diff(last_pose, fetch_pose) || t_diff(last_rot, fetch_rot)) {
             robot_changed = true;
-            cmds << change_cmd(fetch.name(), fetch_pose, fetch_rot);
+            cmds << change_cmd(motor_if.robot_name(), fetch_pose, fetch_rot);
         }
 
         // Check if the links have moved and update if so

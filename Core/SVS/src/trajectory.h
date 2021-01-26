@@ -1,13 +1,12 @@
-#ifndef TRAJECTORY_SET_H
-#define TRAJECTORY_SET_H
+#ifndef TRAJECTORY_H
+#define TRAJECTORY_H
 
 #ifdef ENABLE_ROS
 
 #include <sstream>
-
 #include "moveit_msgs/RobotTrajectory.h"
 
-#include "robot.h"
+#include "mat.h"
 
 enum TargetType{
     POINT_TARGET,
@@ -65,25 +64,6 @@ struct trajectory {
 
 void to_ros_msg(trajectory& from, moveit_msgs::RobotTrajectory& to);
 void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to);
-
-/*
- * trajectory_set class
- *
- * Holds the currently available/valid trajectories that correspond to
- * the current scene graph in an svs_state.
- *
- */
-
-class trajectory_set {
-public:
-    trajectory_set();
-    bool new_command(int id, query query_info);
-
-private:
-    std::vector<double> start_joints;
-    std::map<int, query> query_map;
-    std::map<int, std::set<trajectory> > traj_map;
-};
 
 #endif
 #endif

@@ -14,7 +14,7 @@
 
 #include "mat.h"
 #include "cliproxy.h"
-#include "robot.h"
+#include "motor.h"
 
 class svs;
 
@@ -47,7 +47,7 @@ public:
 
     std::string get_image_source() { return image_source; }
 
-    robot* get_robot_ptr() { return &fetch; }
+    motor* get_motor_ptr() { return &motor_if; }
 
 private:
     static const double POS_THRESH;
@@ -89,7 +89,7 @@ private:
     std::string image_source;
     ros::AsyncSpinner* spinner;
 
-    robot fetch;
+    motor motor_if;
     transform3 last_fetch;
     bool fetch_added;
     std::map<std::string, transform3> last_links;

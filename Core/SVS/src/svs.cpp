@@ -22,7 +22,7 @@
 #include "symbol.h"
 
 #ifdef ENABLE_ROS
-#include "trajectory_set.h"
+#include "motor.h"
 #endif
 
 using namespace std;
@@ -174,7 +174,7 @@ svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
     : svsp(svsp), parent(NULL), state(state), si(si), level(0),
       scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL),
 #ifdef ENABLE_ROS
-      ts(NULL), rif(svsp->get_ros_interface()->get_robot_ptr()),
+      mif(svsp->get_ros_interface()->get_motor_ptr()),
 #endif
       scene_link(NULL)
 {
@@ -188,7 +188,7 @@ svs_state::svs_state(Symbol* state, svs_state* parent)
       level(parent->level + 1), scene_num(-1),
       scene_num_wme(NULL), scn(NULL), img(NULL),
 #ifdef ENABLE_ROS
-      ts(NULL), rif(svsp->get_ros_interface()->get_robot_ptr()),
+      mif(svsp->get_ros_interface()->get_motor_ptr()),
 #endif
       scene_link(NULL)
 {
@@ -250,12 +250,6 @@ void svs_state::init()
             img->copy_from(parent->img);
         }
     }
-
-#ifdef ENABLE_ROS
-    if (!ts) {
-        ts = new trajectory_set();
-    }
-#endif
 
     scn->refresh_draw();
     root = new sgwme(si, scene_link, (sgwme*) NULL, scn->get_root());

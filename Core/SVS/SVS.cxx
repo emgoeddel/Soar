@@ -32,7 +32,9 @@
 #include "src/filter_table.cpp"
 #include "src/mat.cpp"
 #include "src/scene.cpp"
-#include "src/trajectory_set.cpp"
+#include "src/trajectory.cpp"
+#include "src/robot_model.cpp"
+#include "src/motor.cpp"
 #include "src/image.cpp"
 #include "src/serialize.cpp"
 #include "src/sgnode.cpp"
@@ -40,3 +42,4 @@
 #include "src/soar_interface.cpp"
 #include "src/ros_interface.cpp"
 #include "src/svs.cpp"
+
