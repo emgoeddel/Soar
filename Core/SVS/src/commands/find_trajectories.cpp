@@ -66,7 +66,7 @@ public:
             parsed = true;
             // If parsed successfully, set the status to "working"
             if (parse()) {
-                mif->new_query(id, search_query);
+                //mif->new_query(id, search_query);
                 set_status("running");
             } else {
                 // Error message already set in parse() method

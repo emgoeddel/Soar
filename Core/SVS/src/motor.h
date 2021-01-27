@@ -33,16 +33,9 @@ public:
     void set_joints(std::map<std::string, double>& joints_in, bool verify = false);
     std::map<std::string, double> get_joints();
 
-    void new_query(int id, query q);
-
     std::string robot_name() { return model.name; }
 
 private:
-    void calculate_link_xform(std::string link_name,
-                              std::map<std::string, double> pose,
-                              std::map<std::string, transform3>& out);
-    transform3 compose_joint_xform(std::string joint_name, double pos);
-
     ros::NodeHandle& n;
 
     robot_model model;

@@ -39,79 +39,7 @@ motor::motor(ros::NodeHandle& nh) : n(nh) {
 // Calculate and return current link positions
 std::map<std::string, transform3> motor::get_link_transforms() {
     std::lock_guard<std::mutex> guard(joints_mtx);
-    return get_link_transforms_at(current_joints);
-}
-
-// Calculate and return link positions for joint pose p
-std::map<std::string, transform3>
-motor::get_link_transforms_at(std::map<std::string, double> p) {
-    std::map<std::string, transform3> xforms;
-
-    // Put base link into the map immediately since it always starts
-    // the kinematic chains as identity
-    xforms[model.root_link] = transform3::identity();
-
-    for (std::set<std::string>::iterator i = model.links_of_interest.begin();
-         i != model.links_of_interest.end(); i++) {
-        calculate_link_xform(*i, p, xforms);
-    }
-
-    return xforms;
-}
-
-// Add the xform for the requested link at pose p, plus any others along its
-// kinematic chain, to the xform map
-void motor::calculate_link_xform(std::string link_name,
-                                 std::map<std::string, double> pose,
-                                 std::map<std::string, transform3>& out) {
-    // Already calculated as part of a previous link
-    if (out.count(link_name) == 1) return;
-
-    // Figure out all the links on the path to the link we're looking for
-    // that have not already been calculated
-    std::vector<std::string> chain_to_link;
-    std::string l = link_name;
-    while (out.count(l) == 0) {
-        chain_to_link.push_back(l);
-        // parent joint -> parent link
-        std::string j = model.all_links[l].parent_joint;
-        l = model.all_joints[j].parent_link;
-    }
-    // l must now have an entry in the xform map
-
-    // Go through the chain starting with first existing xform
-    transform3 cur_xform = out[l];
-    for (std::vector<std::string>::reverse_iterator i = chain_to_link.rbegin();
-         i != chain_to_link.rend(); i++) {
-        std::string j = model.all_links[*i].parent_joint;
-        transform3 j_x = compose_joint_xform(j, pose[j]);
-        cur_xform = cur_xform*j_x;
-
-        // Save xform for future if link is of interest before continuing
-        if (model.links_of_interest.count(*i) ==  1) out[*i] = cur_xform;
-    }
-}
-
-// Compose the innate and axis/angle or translation xform for the given joint
-// at a particular position
-transform3 motor::compose_joint_xform(std::string joint_name, double pos) {
-    transform3 j_o = model.all_joints[joint_name].origin;
-    vec3 j_axis = model.all_joints[joint_name].axis;
-
-    if (model.all_joints[joint_name].type == REVOLUTE ||
-        model.all_joints[joint_name].type == CONTINUOUS) {
-        transform3 aa = transform3(j_axis, pos);
-        return j_o*aa;
-    } else if (model.all_joints[joint_name].type == PRISMATIC) {
-        vec3 p(pos*j_axis[0], pos*j_axis[1], pos*j_axis[2]);
-        transform3 t = transform3('p', p);
-        return j_o*t;
-    } else if (model.all_joints[joint_name].type == FIXED) {
-        return j_o;
-    } else {
-        ROS_WARN("Unsupported joint %s needed for FK calculation", joint_name.c_str());
-        return j_o;
-    }
+    return model.link_transforms(current_joints);
 }
 
 std::vector<std::string> motor::get_link_names() {
@@ -149,11 +77,6 @@ void motor::set_joints(std::map<std::string, double>& joints_in, bool verify) {
 std::map<std::string, double> motor::get_joints() {
     std::lock_guard<std::mutex> guard(joints_mtx);
     return current_joints;
-}
-
-void motor::new_query(int id, query q) {
-    std::cout << "Received query, what to do with it?" << std::endl;
-    return;
 }
 
 #endif

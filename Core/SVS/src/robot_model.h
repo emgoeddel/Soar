@@ -44,18 +44,20 @@ struct link_info {
 };
 
 /*
- * robot_model struct
+ * robot_model class
  *
  * Imports and stores necessary information about links and joints
- * from URDF
+ * from URDF, provides FK
  *
  */
 
-struct robot_model {
+class robot_model {
+public:
     robot_model() : name("none") {};
 
     bool init(std::string robot_desc);
     std::string robot_info();
+    std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints);
 
     std::string name;
     // root_link is assumed to be one of the links_of_interest
@@ -69,6 +71,12 @@ struct robot_model {
     // joint information
     std::map<std::string, joint_info> all_joints;
     std::map<std::string, std::vector<std::string> > joint_groups;
+
+private:
+    void calculate_link_xform(std::string link_name,
+                              std::map<std::string, double> pose,
+                              std::map<std::string, transform3>& out);
+    transform3 compose_joint_xform(std::string joint_name, double pos);
 };
 
 #endif
