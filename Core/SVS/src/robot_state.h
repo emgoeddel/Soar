@@ -13,7 +13,8 @@
 
 class robot_state {
 public:
-    robot_state(std::shared_ptr<robot_model> m);
+    robot_state(robot_model* m);
+    void copy_from(robot_state* other);
 
     void set_joints(std::map<std::string, double> j);
     std::map<std::string, double> get_joints();

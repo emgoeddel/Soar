@@ -21,9 +21,8 @@
 
 #include "symbol.h"
 
-#ifdef ENABLE_ROS
 #include "motor.h"
-#endif
+#include "robot_state.h"
 
 using namespace std;
 
@@ -172,10 +171,7 @@ void sgwme::delete_tag(const string& tag_name)
 
 svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
     : svsp(svsp), parent(NULL), state(state), si(si), level(0),
-      scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL),
-#ifdef ENABLE_ROS
-      mif(svsp->get_ros_interface()->get_motor_ptr()),
-#endif
+      scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL), rs(NULL),
       scene_link(NULL)
 {
     assert(state->is_top_state());
@@ -186,10 +182,7 @@ svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
 svs_state::svs_state(Symbol* state, svs_state* parent)
     : parent(parent), state(state), svsp(parent->svsp), si(parent->si),
       level(parent->level + 1), scene_num(-1),
-      scene_num_wme(NULL), scn(NULL), img(NULL),
-#ifdef ENABLE_ROS
-      mif(svsp->get_ros_interface()->get_motor_ptr()),
-#endif
+      scene_num_wme(NULL), scn(NULL), img(NULL), rs(NULL),
       scene_link(NULL)
 {
     assert(state->get_parent_state() == parent->state);
@@ -213,6 +206,10 @@ svs_state::~svs_state()
 
     if (img) {
         delete img;
+    }
+
+    if (rs) {
+        delete rs;
     }
 }
 
@@ -240,6 +237,10 @@ void svs_state::init()
         }
     }
 
+    scn->refresh_draw();
+    root = new sgwme(si, scene_link, (sgwme*) NULL, scn->get_root());
+    imwme = new image_descriptor(si, img_link, img);
+
     if (!img) {
 #ifdef ENABLE_ROS
         img = new pcl_image();
@@ -251,9 +252,13 @@ void svs_state::init()
         }
     }
 
-    scn->refresh_draw();
-    root = new sgwme(si, scene_link, (sgwme*) NULL, scn->get_root());
-    imwme = new image_descriptor(si, img_link, img);
+    if (!rs) {
+        rs = new robot_state(svsp->get_motor()->get_model_ptr());
+
+        if (parent) {
+            rs->copy_from(parent->rs);
+        }
+    }
 }
 
 void svs_state::update_scene_num()

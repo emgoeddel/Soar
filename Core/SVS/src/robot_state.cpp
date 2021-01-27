@@ -1,7 +1,12 @@
 #ifdef ENABLE_ROS
 #include "robot_state.h"
 
-robot_state::robot_state(std::shared_ptr<robot_model> m) : model(m) {}
+robot_state::robot_state(robot_model* m) : model(m) {}
+
+void robot_state::copy_from(robot_state* other) {
+    joints = other->get_joints();
+    base_xform = other->get_base_xform();
+}
 
 void robot_state::set_joints(std::map<std::string, double> j) {
     std::lock_guard<std::mutex> guard(joints_mtx);

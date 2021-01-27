@@ -22,10 +22,11 @@ class image_descriptor;
 
 #ifdef ENABLE_ROS
 class pcl_image;
-class motor;
 #else
 class basic_image;
 #endif
+class motor;
+class robot_state;
 
 /* working memory scene graph object - mediates between wmes and scene graph nodes */
 class sgwme : public sgnode_listener
@@ -115,10 +116,6 @@ class svs_state : public cliproxy
             return scn;
         }
 #ifdef ENABLE_ROS
-        motor*         get_motor() const
-        {
-            return mif;
-        }
         pcl_image*     get_image() const
 #else
         basic_image*   get_image() const
@@ -158,10 +155,10 @@ class svs_state : public cliproxy
         soar_interface* si;
 #ifdef ENABLE_ROS
         pcl_image*      img;
-        motor*          mif;
 #else
         basic_image*    img;
 #endif
+        robot_state*    rs;
 
         Symbol* state;
         Symbol* svs_link;
@@ -201,6 +198,11 @@ class svs : public svs_interface, public cliproxy
 #ifdef ENABLE_ROS
        ros_interface* get_ros_interface() { return ri; }
 #endif
+
+        motor* get_motor()
+        {
+            return mtr;
+        }
 
         drawer* get_drawer() const
         {
@@ -247,6 +249,7 @@ class svs : public svs_interface, public cliproxy
         ros_interface*            ri;
         std::mutex                input_mtx;
 #endif
+        motor*                    mtr;
 
         soar_interface*           si;
         std::vector<svs_state*>   state_stack;

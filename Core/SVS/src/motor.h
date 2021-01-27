@@ -26,6 +26,9 @@
 class motor {
 public:
     motor(ros::NodeHandle& nh);
+
+    robot_model* get_model_ptr() { return &model; }
+
     std::map<std::string, transform3> get_link_transforms();
     std::map<std::string, transform3> get_link_transforms_at(std::map<std::string, double> p);
     std::vector<std::string> get_link_names();

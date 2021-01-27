@@ -43,7 +43,7 @@ public:
                                                                 root(root),
                                                                 parsed(false) {
         si = state->get_svs()->get_soar_interface();
-        mif = state->get_motor();
+        //mif = state->get_motor();
 
         // All data about target and search limits are stored in query struct,
         // will be updated with actual values when command is parsed
