@@ -6,7 +6,6 @@
 motor::motor(std::string urdf) {
     model.init(urdf);
 
-
     std::cout << model.robot_info();
 
     // construct vector state space based on default joint group
