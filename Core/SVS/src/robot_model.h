@@ -4,9 +4,10 @@
 #ifdef ENABLE_ROS
 
 #include <map>
-#include <urdf/model.h>
-
+#include <set>
 #include "mat.h"
+
+#include <fcl/BVH/BVH_model.h>
 
 enum joint_type {
     REVOLUTE,
@@ -39,7 +40,8 @@ struct link_info {
     std::set<std::string> child_joints;
 
     transform3 collision_origin;
-    std::string mesh_file;
+    ptlist vertices;
+    fcl::BVHModel<fcl::OBBRSS> collision_model;
 };
 
 /*

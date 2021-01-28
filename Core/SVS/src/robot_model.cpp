@@ -2,6 +2,11 @@
 
 #include "robot_model.h"
 
+#include <urdf/model.h>
+#include "geometric_shapes/shapes.h"
+#include "geometric_shapes/mesh_operations.h"
+
+
 bool robot_model::init(std::string robot_desc) {
     urdf::Model urdf;
     if (!urdf.initString(robot_desc)) {
@@ -107,7 +112,28 @@ bool robot_model::init(std::string robot_desc) {
             continue;
         }
         std::shared_ptr<urdf::Mesh> m = std::static_pointer_cast<urdf::Mesh>(geom);
-        all_links[n].mesh_file = m->filename;
+        shapes::Mesh* mesh_obj = shapes::createMeshFromResource(m->filename);
+
+        // Save vertices for SVS and collision object for motor
+        std::vector<fcl::Vec3f> points(mesh_obj->vertex_count);
+        for (int v = 0; v < mesh_obj->vertex_count; v++) {
+            all_links[n].vertices.push_back(vec3(mesh_obj->vertices[3*v],
+                                                 mesh_obj->vertices[3*v + 1],
+                                                 mesh_obj->vertices[3*v + 2]));
+            points[v] = fcl::Vec3f(mesh_obj->vertices[3*v],
+                                   mesh_obj->vertices[3*v + 1],
+                                   mesh_obj->vertices[3*v + 2]);
+        }
+        std::vector<fcl::Triangle> triangles(mesh_obj->triangle_count);
+        for (int t = 0; t < mesh_obj->triangle_count; t++) {
+            triangles[t] = fcl::Triangle(mesh_obj->triangles[3*t],
+                                         mesh_obj->triangles[3*t + 1],
+                                         mesh_obj->triangles[3*t + 2]);
+        }
+        all_links[n].collision_model.beginModel();
+        all_links[n].collision_model.addSubModel(points, triangles);
+        all_links[n].collision_model.endModel();
+        delete mesh_obj;
     }
 
     // FETCH-SPECIFIC SETUP

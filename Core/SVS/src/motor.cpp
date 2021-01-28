@@ -27,8 +27,8 @@ motor::motor(std::string urdf) {
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
     ompl_ss = new ompl::geometric::SimpleSetup(space);
 
-    ROS_INFO("Set up to plan for joint group %s, DOF = %i",
-             model.default_joint_group.c_str(), dof);
+    std::cout << "Set up to plan for joint group " << model.default_joint_group.c_str()
+              << ", DOF = " << dof << std::endl;
 }
 
 std::vector<std::string> motor::get_link_names() {
