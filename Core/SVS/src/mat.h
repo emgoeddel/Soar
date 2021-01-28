@@ -436,6 +436,7 @@ class transform3
         transform3(const vec3& axis, double angle);
         transform3(Eigen::Transform<double, 3, Eigen::Affine> t);
         static transform3 identity();
+        static bool t_diff(const transform3& t1, const transform3& t2);
 
         void to_prs(vec3& p, vec4& r, vec3& s) const;
         void position(vec3& p) const;

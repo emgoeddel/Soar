@@ -1187,7 +1187,7 @@ bool KernelSML::HandleSVSInput(AgentSML* pAgentSML, char const* pCommandName, Co
             return InvalidArg(pConnection, pResponse, pCommandName, "Command line missing") ;
         }
 #ifndef NO_SVS
-        pAgentSML->GetSoarAgent()->svs->add_input(pLine);
+        pAgentSML->GetSoarAgent()->svs->add_sgel_input(pLine);
         return true;
     }
 #endif

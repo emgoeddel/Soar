@@ -83,6 +83,11 @@ struct command_entry
 };
 typedef std::set<command_entry> command_set;
 typedef command_set::iterator command_set_it;
+
+std::string change_cmd(std::string name, transform3 xform);
+std::string add_cmd(std::string name, transform3 xform);
+std::string del_cmd(std::string name);
+
 /*
  Each state in the state stack has its own SVS link, scene, etc.
 */
@@ -98,6 +103,7 @@ class svs_state : public cliproxy
         void           update_cmd_results(int command_type);
         void           update_scene_num();
         void           clear_scene();
+        void           sync_scene_robot();
         
         std::string    get_name() const
         {
@@ -114,6 +120,10 @@ class svs_state : public cliproxy
         scene*         get_scene() const
         {
             return scn;
+        }
+        robot_state*   get_robot_state() const
+        {
+            return rs;
         }
 #ifdef ENABLE_ROS
         pcl_image*     get_image() const
@@ -184,7 +194,10 @@ class svs : public svs_interface, public cliproxy
         void state_deletion_callback(Symbol* goal);
         void output_callback();
         void input_callback();
-        void add_input(const std::string& in);
+        void add_sgel_input(const std::string& in);
+        void add_joint_input(std::map<std::string, double>& in);
+        void add_loc_input(transform3& in);
+        
         std::string svs_query(const std::string& query);
 
 #ifdef ENABLE_ROS
@@ -247,13 +260,17 @@ class svs : public svs_interface, public cliproxy
 
 #ifdef ENABLE_ROS
         ros_interface*            ri;
-        std::mutex                input_mtx;
+        std::mutex                sgel_in_mtx;
+        std::mutex                joint_in_mtx;
+        std::mutex                loc_in_mtx;
 #endif
         motor*                    mtr;
 
         soar_interface*           si;
         std::vector<svs_state*>   state_stack;
         std::vector<std::string>  env_inputs;
+        std::map<std::string, double> joint_inputs;
+        transform3                loc_input;
         std::string               env_output;
         mutable drawer*           draw;
         scene*                    scn_cache;      // temporarily holds top-state scene during init

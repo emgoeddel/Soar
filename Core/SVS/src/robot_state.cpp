@@ -1,9 +1,14 @@
 #ifdef ENABLE_ROS
 #include "robot_state.h"
 
-robot_state::robot_state(robot_model* m) : model(m) {}
+robot_state::robot_state(robot_model* m) : model(m) {
+    base_xform = transform3::identity();
+}
 
 void robot_state::copy_from(robot_state* other) {
+    std::lock_guard<std::mutex> guard1(joints_mtx);
+    std::lock_guard<std::mutex> guard2(xform_mtx);
+
     joints = other->get_joints();
     base_xform = other->get_base_xform();
 }
@@ -21,6 +26,12 @@ std::map<std::string, double> robot_state::get_joints() {
     std::lock_guard<std::mutex> guard(joints_mtx);
 
     return joints;
+}
+
+bool robot_state::has_joints() {
+    std::lock_guard<std::mutex> guard(joints_mtx);
+
+    return (!joints.empty());
 }
 
 void robot_state::set_base_xform(transform3 t) {

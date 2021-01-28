@@ -239,7 +239,6 @@ void svs_state::init()
 
     scn->refresh_draw();
     root = new sgwme(si, scene_link, (sgwme*) NULL, scn->get_root());
-    imwme = new image_descriptor(si, img_link, img);
 
     if (!img) {
 #ifdef ENABLE_ROS
@@ -251,6 +250,7 @@ void svs_state::init()
             img->copy_from(parent->img);
         }
     }
+    imwme = new image_descriptor(si, img_link, img);
 
     if (!rs) {
         rs = new robot_state(svsp->get_motor()->get_model_ptr());
@@ -383,6 +383,101 @@ void svs_state::clear_scene()
     scn->clear();
 }
 
+std::string change_cmd(std::string name, transform3 xform) {
+    vec3 p;
+    xform.position(p);
+    Eigen::Quaterniond q;
+    xform.rotation(q);
+    vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
+
+    std::stringstream cmd;
+    cmd << "change " << name;
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string add_cmd(std::string name, std::string parent, transform3 xform) {
+    vec3 p;
+    xform.position(p);
+    Eigen::Quaterniond q;
+    xform.rotation(q);
+    vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
+
+    std::stringstream cmd;
+    cmd << "add " << name << " " << parent;
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string del_cmd(std::string name) {
+    std::stringstream cmd;
+    cmd << "delete " << name << std::endl;
+    return cmd.str();
+}
+
+void svs_state::sync_scene_robot()
+{
+    // Don't worry about syncing if we don't have joint input
+    if (!rs->has_joints()) return;
+    // XXX Delete the robot from scene if so ^
+
+    // Build up a vector of commands
+    // XXX Maybe should do this directly since have access to scn?
+    std::vector<std::string> cmds;
+    // But only bother sending the update to SVS if something changed
+    bool robot_changed = false;
+
+    // Check if Fetch is in the scene, and if not just add it
+    if (!scn->get_node(rs->name())) {
+        robot_changed = true;
+        cmds.push_back(add_cmd(rs->name(), "world", rs->get_base_xform()));
+        std::map<std::string, transform3> links = rs->get_link_transforms();
+        for (std::map<std::string, transform3>::iterator i = links.begin();
+             i != links.end(); i++) {
+            cmds.push_back(add_cmd(i->first, rs->name(), i->second));
+        }
+    } else {
+        // Check if the Fetch base has moved and update if so
+        transform3 cur_xform = rs->get_base_xform();
+        transform3 last_xform = scn->get_node(rs->name())->get_world_trans();
+        if (transform3::t_diff(cur_xform, last_xform)) {
+            robot_changed = true;
+            vec3 p;
+            cur_xform.position(p);
+            cmds.push_back(change_cmd(rs->name(), cur_xform));
+        }
+
+        // Check if the links have moved and update if so
+        // XXX Assumes robot's links don't change after it's first added!!
+        std::map<std::string, transform3> links = rs->get_link_transforms();
+        for (std::map<std::string, transform3>::iterator i = links.begin();
+             i != links.end(); i++) {
+            std::string n = i->first;
+
+            transform3 cur_link = i->second;
+            transform3 last_link = scn->get_node(n)->get_world_trans();
+
+            if (transform3::t_diff(cur_link, last_link)) {
+                robot_changed = true;
+                cmds.push_back(change_cmd(n, cur_link));
+            }
+        }
+    }
+
+    if (robot_changed) {
+        for (std::vector<std::string>::iterator i = cmds.begin();
+             i != cmds.end(); i++)
+        {
+            scn->parse_sgel(*i);
+        }
+        svs::mark_filter_dirty_bit();
+    }
+}
+
 void svs_state::proxy_get_children(map<string, cliproxy*>& c)
 {
     c["scene"]        = scn;
@@ -404,6 +499,7 @@ svs::svs(agent* a)
     ros_interface::init_ros();
     ri = new ros_interface(this);
     ri->start_ros();
+    mtr = new motor(ri->get_robot_desc());
 #endif
 }
 
@@ -421,6 +517,8 @@ svs::~svs()
     }
 
     delete si;
+    delete ri;
+    delete mtr;
     delete draw;
 }
 
@@ -465,8 +563,17 @@ void svs::state_deletion_callback(Symbol* state)
 void svs::proc_input(svs_state* s)
 {
 #ifdef ENABLE_ROS
-    std::lock_guard<std::mutex> guard(input_mtx);
+    std::lock_guard<std::mutex> guard1(sgel_in_mtx);
 #endif
+    {
+        std::lock_guard<std::mutex> guard2(loc_in_mtx);
+        s->get_robot_state()->set_base_xform(loc_input);
+    }
+    {
+        std::lock_guard<std::mutex> guard2(joint_in_mtx);
+        s->get_robot_state()->set_joints(joint_inputs);
+    }
+    s->sync_scene_robot();
 
     for (size_t i = 0; i < env_inputs.size(); ++i)
     {
@@ -546,13 +653,27 @@ void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_
  XXX: Lizzie used a mutex to lock the the env_inputs structure since
       ROS will update from a separate thread.
 */
-void svs::add_input(const string& in)
+void svs::add_sgel_input(const string& in)
 {
 #ifdef ENABLE_ROS
-    std::lock_guard<std::mutex> guard(input_mtx);
+    std::lock_guard<std::mutex> guard(sgel_in_mtx);
 #endif
 
     split(in, "\n", env_inputs);
+}
+
+void svs::add_joint_input(std::map<std::string, double>& in)
+{
+    std::lock_guard<std::mutex> guard(joint_in_mtx);
+
+    joint_inputs = in;
+}
+
+void svs::add_loc_input(transform3& in)
+{
+    std::lock_guard<std::mutex> guard(loc_in_mtx);
+
+    loc_input = in;
 }
 
 string svs::svs_query(const string& query)

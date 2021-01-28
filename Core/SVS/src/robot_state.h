@@ -18,11 +18,14 @@ public:
 
     void set_joints(std::map<std::string, double> j);
     std::map<std::string, double> get_joints();
+    bool has_joints();
 
     void set_base_xform(transform3 t);
     transform3 get_base_xform();
 
     std::map<std::string, transform3> get_link_transforms();
+
+    std::string name() { return model->name; }
 
 private:
     std::map<std::string, double> joints;

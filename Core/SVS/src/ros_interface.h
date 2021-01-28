@@ -14,7 +14,6 @@
 
 #include "mat.h"
 #include "cliproxy.h"
-#include "motor.h"
 
 class svs;
 
@@ -46,15 +45,9 @@ public:
     void stop_ros();
 
     std::string get_image_source() { return image_source; }
-
-    motor* get_motor_ptr() { return &motor_if; }
+    std::string get_robot_desc() { return robot_desc; }
 
 private:
-    static const double POS_THRESH;
-    static const double ROT_THRESH;
-    bool t_diff(vec3& p1, vec3& p2);
-    bool t_diff(Eigen::Quaterniond& q1, Eigen::Quaterniond& q2);
-
     static std::string add_cmd(std::string name, std::string parent, vec3 p, vec3 r);
     static std::string change_cmd(std::string name, vec3 p, vec3 r);
     static std::string del_cmd(std::string name);
@@ -70,7 +63,6 @@ private:
     void stop_objects();
     void models_callback(const gazebo_msgs::ModelStates::ConstPtr& msg);
     void joints_callback(const sensor_msgs::JointState::ConstPtr& msg);
-    void update_robot(transform3 fetch_xform);
     void update_objects(std::map<std::string, transform3> objs);
     void pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg);
 
@@ -89,11 +81,8 @@ private:
     std::string image_source;
     ros::AsyncSpinner* spinner;
 
-    motor motor_if;
-    transform3 last_fetch;
-    bool fetch_added;
-    std::map<std::string, transform3> last_links;
-    bool joints_verified;
+    std::string robot_desc;
+    std::string robot_name;
 
     svs* svs_ptr;
     std::map<std::string, transform3> last_objs;

@@ -7,37 +7,42 @@
 #include <sstream>
 #include <math.h>
 
-#include "svs.h"
+#include <urdf/model.h>
 
-// Thresholds for determining when to update the scene graph
-const double ros_interface::POS_THRESH = 0.001; // 1 mm
-const double ros_interface::ROT_THRESH = 0.017; // approx 1 deg
+#include "svs.h"
 
 const std::string ros_interface::IMAGE_NAME = "image";
 const std::string ros_interface::OBJECTS_NAME = "objects";
 
 ros_interface::ros_interface(svs* sp)
-    : image_source("none"),
-      motor_if(n),
-      fetch_added(false),
-      joints_verified(true) {
+    : image_source("none")
+{
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
-
 
     // Set up the maps needed to track which inputs are enabled/disabled
     // and change this via command line
     update_inputs[IMAGE_NAME] = false;
     update_inputs[OBJECTS_NAME] = false;
-    update_inputs[motor_if.robot_name()] = false;
+    update_inputs[robot_name] = false;
 
     enable_fxns[IMAGE_NAME] = std::bind(&ros_interface::subscribe_image, this);
     enable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::start_objects, this);
-    enable_fxns[motor_if.robot_name()] = std::bind(&ros_interface::start_robot, this);
+    enable_fxns[robot_name] = std::bind(&ros_interface::start_robot, this);
 
     disable_fxns[IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_image, this);
     disable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::stop_objects, this);
-    disable_fxns[motor_if.robot_name()] = std::bind(&ros_interface::stop_robot, this);
+    disable_fxns[robot_name] = std::bind(&ros_interface::stop_robot, this);
+
+    // Pull the robot description from the params server and save
+    if (!n.getParam("/robot_description", robot_desc)) {
+        ROS_WARN("Can't find the robot_description parameter.");
+    }
+    urdf::Model urdf;
+    if (!urdf.initString(robot_desc)) {
+        ROS_WARN("Failed to parse URDF.");
+    }
+    robot_name = urdf.name_;
 
     // Stay subscribed to the gazebo models for the entire runtime
     models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::models_callback, this);
@@ -70,27 +75,6 @@ void ros_interface::start_ros() {
 void ros_interface::stop_ros() {
     if (spinner) spinner->stop();
     image_source = "none";
-}
-
-// Thresholded difference between two vectors. Allows us to not
-// update the scene graph minor object movements that are below
-// the threshold.
-bool ros_interface::t_diff(vec3& p1, vec3& p2) {
-    // Euclidean distance
-    if (sqrt(pow(p1.x() - p2.x(), 2) +
-             pow(p1.y() - p2.y(), 2) +
-             pow(p1.z() - p2.z(), 2)) > POS_THRESH) return true;
-    return false;
-}
-
-// Thresholded difference between two quaterions. Allows us to not
-// update the scene graph minor object rotations that are below
-// the threshold.
-bool ros_interface::t_diff(Eigen::Quaterniond& q1, Eigen::Quaterniond& q2) {
-    // Calculating the angle between to quaternions
-    double a = 2 * acos(q1.dot(q2));
-    if (a > ROT_THRESH) return true;
-    return false;
 }
 
 // SGEL helper functions
@@ -137,14 +121,14 @@ void ros_interface::unsubscribe_image() {
 
 // Turns on the robot update part of the model callback
 void ros_interface::start_robot() {
-    update_inputs[motor_if.robot_name()] = true;
-    // Don't need to check the joint information until robot updating is on
-    joints_verified = false;
+    update_inputs[robot_name] = true;
 }
 
 // Turns off the robot update part of the model callback
 void ros_interface::stop_robot() {
-    update_inputs[motor_if.robot_name()] = false;
+    update_inputs[robot_name] = false;
+    std::map<std::string, double> empty;
+    svs_ptr->add_joint_input(empty);
 }
 
 // Turns on the non-robot object part of the model callback
@@ -179,7 +163,7 @@ void ros_interface::models_callback(const gazebo_msgs::ModelStates::ConstPtr& ms
         vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
 
         transform3 t(p, r, vec3(1, 1, 1));
-        if (n == motor_if.robot_name()) {
+        if (n == robot_name) {
             fetch_loc = t;
         } else {
             current_objs.insert(std::pair<std::string, transform3>(n, t));
@@ -187,117 +171,17 @@ void ros_interface::models_callback(const gazebo_msgs::ModelStates::ConstPtr& ms
     }
 
     update_objects(current_objs);
-    update_robot(fetch_loc);
+    if (update_inputs[robot_name]) svs_ptr->add_loc_input(fetch_loc);
 }
 
 void ros_interface::joints_callback(const sensor_msgs::JointState::ConstPtr& msg) {
-    std::map<std::string, double> joints_in;
+    if (!update_inputs[robot_name]) return;
 
+    std::map<std::string, double> joints_in;
     for (int i = 0; i < msg->name.size(); i++) {
         joints_in[msg->name[i]] = msg->position[i];
     }
-
-    if (!joints_verified) {
-        motor_if.set_joints(joints_in, true);
-        joints_verified = true;
-    } else {
-        motor_if.set_joints(joints_in, false);
-    }
-}
-
-// Updates the fetch model in the SG through SGEL commands; only requres
-// Fetch's position because it queries the robot class for the arm position (see
-// robot class). If we ever hook up this system to SLAM, this function could
-// be called by that subsystem instead of getting the position from the
-// gazebo model locations
-// XXX: Eventually want to use the map to directly update the scene graph
-//      instead of going through SGEL. Will require threadsafe scene
-//      graphs.
-void ros_interface::update_robot(transform3 fetch_xform) {
-    // Nothing to do if the robot input is off and it's not in the scene
-    if (!update_inputs[motor_if.robot_name()] && !fetch_added) return;
-
-    // Build up a string of commands in the stringsream
-    std::stringstream cmds;
-    // But only bother sending the update to SVS if something changed
-    bool robot_changed = false;
-
-    vec3 fetch_pose;
-    fetch_xform.position(fetch_pose);
-    Eigen::Quaterniond rq;
-    fetch_xform.rotation(rq);
-    vec3 fetch_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
-
-    std::map<std::string, transform3> links = motor_if.get_link_transforms();
-
-    if (!update_inputs[motor_if.robot_name()] && fetch_added) {
-        // If we've turned off the robot updates and it's still in the scene, remove it
-        robot_changed = true;
-        cmds << del_cmd(motor_if.robot_name());
-        fetch_added = false;
-    } else if (!fetch_added) {
-        // If this is the first update with the Fetch, add it to the scene
-        robot_changed = true;
-        // Add the Fetch base
-        cmds << add_cmd(motor_if.robot_name(), "world", fetch_pose, fetch_rot);
-
-        // Add all the Fetch links as children of the Fetch
-        for (std::map<std::string, transform3>::iterator i = links.begin();
-             i != links.end(); i++) {
-            std::string n = i->first;
-
-            vec3 link_pose;
-            i->second.position(link_pose);
-            Eigen::Quaterniond lq;
-            i->second.rotation(lq);
-            vec3 link_rot = lq.toRotationMatrix().eulerAngles(0, 1, 2);
-
-            cmds << add_cmd(n, motor_if.robot_name(), link_pose, link_rot);
-        }
-        fetch_added = true;
-    } else {
-        // Check if the Fetch base has moved and update if so
-        vec3 last_pose;
-        last_fetch.position(last_pose);
-        Eigen::Quaterniond pq;
-        last_fetch.rotation(pq);
-        vec3 last_rot = pq.toRotationMatrix().eulerAngles(0, 1, 2);
-
-        if (t_diff(last_pose, fetch_pose) || t_diff(last_rot, fetch_rot)) {
-            robot_changed = true;
-            cmds << change_cmd(motor_if.robot_name(), fetch_pose, fetch_rot);
-        }
-
-        // Check if the links have moved and update if so
-        for (std::map<std::string, transform3>::iterator i = links.begin();
-             i != links.end(); i++) {
-            std::string n = i->first;
-
-            vec3 link_pose;
-            i->second.position(link_pose);
-            Eigen::Quaterniond lq;
-            i->second.rotation(lq);
-            vec3 link_rot = lq.toRotationMatrix().eulerAngles(0, 1, 2);
-
-            vec3 last_link_pose;
-            last_links[n].position(last_link_pose);
-            Eigen::Quaterniond llq;
-            last_links[n].rotation(llq);
-            vec3 last_link_rot = llq.toRotationMatrix().eulerAngles(0, 1, 2);
-
-            if (t_diff(last_link_pose, link_pose) || t_diff(last_link_rot, link_rot)) {
-                robot_changed = true;
-                cmds << change_cmd(n, link_pose, link_rot);
-            }
-        }
-    }
-
-    last_fetch = fetch_xform;
-    last_links = links;
-    if (robot_changed) {
-        // Send the compiled commands to the SVS input processor
-        svs_ptr->add_input(cmds.str());
-    }
+    svs_ptr->add_joint_input(joints_in);
 }
 
 // Updates the positions of objects besides the fetch in the scene graph
@@ -360,7 +244,7 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
         vec3 cur_rot_rpy = cur_rot.toRotationMatrix().eulerAngles(0, 1, 2);
 
         // Check that at least one of the differences is above the thresholds
-        if (t_diff(last_pose, cur_pose) || t_diff(last_rot, cur_rot)) {
+        if (transform3::t_diff(i->second, objs[n])) {
             objs_changed = true;
             cmds << change_cmd(n, cur_pose, cur_rot_rpy);
         }
@@ -369,7 +253,7 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
     last_objs = objs;
     if (objs_changed) {
         // Send the compiled commands to the SVS input processor
-        svs_ptr->add_input(cmds.str());
+        svs_ptr->add_sgel_input(cmds.str());
     }
 }
 

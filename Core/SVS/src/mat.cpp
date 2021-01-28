@@ -551,3 +551,24 @@ std::string transform3::to_str() const {
 
     return ss.str();
 }
+
+bool transform3::t_diff(const transform3& t1, const transform3& t2) {
+    vec3 p1, p2;
+    t1.position(p1);
+    t2.position(p2);
+
+    // Euclidean distance for position thresh
+    if (sqrt(pow(p1.x() - p2.x(), 2) +
+             pow(p1.y() - p2.y(), 2) +
+             pow(p1.z() - p2.z(), 2)) > 0.001) return true; // 1mm
+
+    Eigen::Quaterniond q1, q2;
+    t1.rotation(q1);
+    t2.rotation(q2);
+
+    // Angle between quaternions for rotation thresh
+    double a = 2 * acos(q1.dot(q2));
+    if (a > 0.017) return true; // approx 1 deg
+
+    return false;
+}
