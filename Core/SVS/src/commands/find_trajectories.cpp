@@ -5,8 +5,7 @@
 #include "command.h"
 #include "command_table.h"
 #include "scene.h"
-#include "motor.h"
-
+#include "trajectory.h"
 
 /*
  * find_trajectories_command class
@@ -43,7 +42,7 @@ public:
                                                                 root(root),
                                                                 parsed(false) {
         si = state->get_svs()->get_soar_interface();
-        //mif = state->get_motor();
+        ts = state->get_trajectory_set();
 
         // All data about target and search limits are stored in query struct,
         // will be updated with actual values when command is parsed
@@ -64,9 +63,9 @@ public:
         // When command is first put on the link, parse it
         if (!parsed) {
             parsed = true;
-            // If parsed successfully, set the status to "working"
+            // If parsed successfully, set the status to "running"
             if (parse()) {
-                //mif->new_query(id, search_query);
+                ts->new_query(id, search_query);
                 set_status("running");
             } else {
                 // Error message already set in parse() method
@@ -145,7 +144,7 @@ private:
     }
 
     soar_interface* si;
-    motor* mif;
+    trajectory_set* ts;
     Symbol* root;
 
     bool parsed;

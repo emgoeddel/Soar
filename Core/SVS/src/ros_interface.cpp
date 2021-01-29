@@ -316,6 +316,7 @@ void ros_interface::enable(const std::vector<std::string>& args, std::ostream& o
         return;
     }
 
+    // XXX "enable fetch" does not appear to be working!
     if (!update_inputs[args[0]]) enable_fxns[args[0]]();
     os << args[0] << " ROS input enabled" << std::endl;
 }

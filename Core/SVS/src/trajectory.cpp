@@ -33,4 +33,18 @@ void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to) {
     }
 }
 
+trajectory_set::trajectory_set(motor* m) : mtr(m) {}
+
+void trajectory_set::copy_from(trajectory_set* other) {
+    queries.clear();
+    // XXX This isn't quite right
+    // How to deal with trajectories from parent state?
+    trajectories = other->trajectories;
+}
+
+void trajectory_set::new_query(int id, query q) {
+    queries[id] = q;
+    std::cout << "Added a query to a trajectory set! Need to talk to motor!" << std::endl;
+}
+
 #endif

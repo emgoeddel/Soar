@@ -23,6 +23,7 @@
 
 #include "motor.h"
 #include "robot_state.h"
+#include "trajectory.h"
 
 using namespace std;
 
@@ -171,7 +172,7 @@ void sgwme::delete_tag(const string& tag_name)
 
 svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
     : svsp(svsp), parent(NULL), state(state), si(si), level(0),
-      scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL), rs(NULL),
+      scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL), rs(NULL), ts(NULL),
       scene_link(NULL)
 {
     assert(state->is_top_state());
@@ -182,7 +183,7 @@ svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
 svs_state::svs_state(Symbol* state, svs_state* parent)
     : parent(parent), state(state), svsp(parent->svsp), si(parent->si),
       level(parent->level + 1), scene_num(-1),
-      scene_num_wme(NULL), scn(NULL), img(NULL), rs(NULL),
+      scene_num_wme(NULL), scn(NULL), img(NULL), rs(NULL), ts(NULL),
       scene_link(NULL)
 {
     assert(state->get_parent_state() == parent->state);
@@ -210,6 +211,10 @@ svs_state::~svs_state()
 
     if (rs) {
         delete rs;
+    }
+
+    if (ts) {
+        delete ts;
     }
 }
 
@@ -257,6 +262,14 @@ void svs_state::init()
 
         if (parent) {
             rs->copy_from(parent->rs);
+        }
+    }
+
+    if (!ts) {
+        ts = new trajectory_set(svsp->get_motor());
+
+        if (parent) {
+            ts->copy_from(parent->ts);
         }
     }
 }

@@ -8,7 +8,7 @@
 
 #include "mat.h"
 
-enum TargetType{
+enum TargetType {
     POINT_TARGET,
     BOX_TARGET,
     SPHERE_TARGET
@@ -17,10 +17,12 @@ enum TargetType{
 /*
  * query struct
  *
- * Holds information about a planning query
+ * Holds soar-level information about a planning query
  */
 
 struct query {
+    std::string joint_group;
+
     int min_num;
     int max_num;
     double min_time;
@@ -49,6 +51,18 @@ struct query {
 };
 
 /*
+ * motor_query struct
+ *
+ * Holds motor-level information about a planning query
+ */
+
+struct motor_query {
+    query soar_query;
+    //std::vector<obstacle> obstacles;
+    std::map<std::string, double> start_state;
+};
+
+/*
  * trajectory struct
  *
  * Holds basic information about a single trajectory
@@ -64,6 +78,30 @@ struct trajectory {
 
 void to_ros_msg(trajectory& from, moveit_msgs::RobotTrajectory& to);
 void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to);
+
+/*
+ * trajectory_set class
+ *
+ * Keeps track of the ongoing motion queries made in an SVS state and the
+ * current set of trajectories that have been returned for those queries
+ *
+ */
+
+class motor;
+
+class trajectory_set {
+public:
+    trajectory_set(motor* m);
+    void copy_from(trajectory_set* other);
+
+    void new_query(int id, query q);
+
+private:
+    motor* mtr;
+
+    std::map<int, query> queries;
+    std::map<int, std::set<trajectory> > trajectories;
+};
 
 #endif
 #endif
