@@ -1,6 +1,7 @@
 #ifdef ENABLE_ROS
 
 #include "trajectory.h"
+#include "motor.h"
 
 void to_ros_msg(trajectory& from, moveit_msgs::RobotTrajectory& to) {
     to.joint_trajectory.header.frame_id = from.frame;
@@ -33,7 +34,8 @@ void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to) {
     }
 }
 
-trajectory_set::trajectory_set(motor* m) : mtr(m) {}
+trajectory_set::trajectory_set(motor* m, std::string n) : mtr(m),
+                                                          state_name(n) {}
 
 void trajectory_set::copy_from(trajectory_set* other) {
     queries.clear();
@@ -43,8 +45,14 @@ void trajectory_set::copy_from(trajectory_set* other) {
 }
 
 void trajectory_set::new_query(int id, query q) {
-    queries[id] = q;
-    std::cout << "Added a query to a trajectory set! Need to talk to motor!" << std::endl;
+    motor_query mq;
+    mq.soar_query = q;
+    //mq.start_state = get from robot_state;
+    //mq.obstacles = get from scene;
+    queries[id] = mq;
+    if (!mtr->new_planner_query(id, mq)) {
+        std::cout << "Warning: Could not start planning for query " << id << std::endl;
+    }
 }
 
 #endif

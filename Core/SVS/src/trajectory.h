@@ -91,15 +91,19 @@ class motor;
 
 class trajectory_set {
 public:
-    trajectory_set(motor* m);
+    trajectory_set(motor* m, std::string n);
     void copy_from(trajectory_set* other);
 
     void new_query(int id, query q);
 
+    void new_trajectory_callback(int id, trajectory t);
+    void search_finished_callback(int id);
+
 private:
     motor* mtr;
 
-    std::map<int, query> queries;
+    std::string state_name;
+    std::map<int, motor_query> queries;
     std::map<int, std::set<trajectory> > trajectories;
 };
 
