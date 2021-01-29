@@ -16,9 +16,10 @@
 #include "robot_model.h"
 
 /*
- * motor class
+ * planning_problem class
  *
- * Provides an interface to motion planning and robot kinematics
+ * Holds the search space and collision info for a particular planning
+ * query and runs the search through an OMPL SimpleSetup with FCL collision
  *
  */
 
