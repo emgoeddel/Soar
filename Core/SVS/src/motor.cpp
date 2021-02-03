@@ -2,6 +2,8 @@
 
 #include "motor.h"
 
+#include <ompl/geometric/planners/rrt/RRTConnect.h>
+
 planning_problem::planning_problem(int qid, motor_query q, robot_model* m)
     : query_id(qid),
       query(q)
@@ -30,12 +32,25 @@ planning_problem::planning_problem(int qid, motor_query q, robot_model* m)
     cc = new collision_checker(ompl_ss->getSpaceInformation(), m, joint_group);
     ompl_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
 
+    ompl::base::ScopedState<> start(space);
+    std::vector<std::string>::iterator j = m->joint_groups[joint_group].begin();
+    int c = 0;
+    for (; j != m->joint_groups[joint_group].end(); j++)
+    {
+        start[c] = q.start_state[*j];
+        c++;
+    }
+    ompl_ss->setStartState(start);
+
     std::cout << "Set up to plan for joint group " << joint_group.c_str()
               << ", DOF = " << dof << std::endl;
 }
 
 trajectory planning_problem::find_one() {
-    std::cout << "Find a trajectory?" << std::endl;
+    std::cout << "Using RRT-Connect to find ONE trajectory." << std::endl;
+    ompl::geometric::RRTConnect* rrtc =
+        new ompl::geometric::RRTConnect(ompl_ss->getSpaceInformation());
+    ompl_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
     return trajectory();
 }
 
