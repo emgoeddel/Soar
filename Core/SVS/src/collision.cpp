@@ -34,9 +34,10 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
                                      robot_model* m,
                                      std::string group)
     : ompl::base::StateValidityChecker(si),
-    model(m),
-    joint_names(model->joint_groups[group])
+    model(m)
 {
+    joint_names = model->joint_groups[group];
+
     robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
 }
@@ -45,9 +46,10 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
                                      robot_model* m,
                                      std::string group)
     : ompl::base::StateValidityChecker(si),
-    model(m),
-    joint_names(model->joint_groups[group])
+    model(m)
 {
+    joint_names = model->joint_groups[group];
+
     robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
 }
