@@ -427,7 +427,7 @@ std::ostream& operator<<(std::ostream& os, const bbox& b);
 
 class transform3
 {
-    public:
+public:
         transform3();
         transform3(const transform3& t);
         transform3(char type, const vec3& v);
@@ -462,7 +462,7 @@ class transform3
 
        std::string to_str() const;
 
-    private:
+private:
         Eigen::Transform<double, 3, Eigen::Affine> trans;
 };
 
