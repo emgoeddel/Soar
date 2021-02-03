@@ -34,6 +34,7 @@
 #include "src/scene.cpp"
 #include "src/trajectory.cpp"
 #include "src/robot_model.cpp"
+#include "src/collision.cpp"
 #include "src/motor.cpp"
 #include "src/image.cpp"
 #include "src/serialize.cpp"

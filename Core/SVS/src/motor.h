@@ -8,35 +8,12 @@
 #include <mutex>
 
 #include <ompl/geometric/SimpleSetup.h>
-#include <ompl/base/spaces/SE3StateSpace.h>
-#include <fcl/broadphase/broadphase_dynamic_AABB_tree.h>
-#include <fcl/collision.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
 
 #include "mat.h"
 #include "trajectory.h"
-#include "robot_model.h"
+#include "collision.h"
 
-/*
- * collision_data struct
- *
- * Why doesn't FCL provide this?
- */
-
-struct collision_data
-{
-    collision_data()
-    {
-        done = false;
-    }
-
-    fcl::CollisionRequest request;
-    fcl::CollisionResult result;
-    bool done;
-};
-
-// Same question as above!
-bool collision_function(fcl::CollisionObject* o1,
-                        fcl::CollisionObject* o2, void* cdata);
 
 /*
  * planning_problem class
@@ -49,20 +26,15 @@ bool collision_function(fcl::CollisionObject* o1,
 class planning_problem {
 public:
     planning_problem(int qid, motor_query q, robot_model* m);
+    trajectory find_one();
 
 private:
-    bool state_valid(const ompl::base::State* state);
-
     int query_id;
     motor_query query;
-    std::vector<std::string> joint_names;
-
-    std::shared_ptr<robot_model> model;
+    std::string joint_group;
 
     ompl::geometric::SimpleSetup* ompl_ss;
-
-    fcl::BroadPhaseCollisionManager* robot;
-    fcl::BroadPhaseCollisionManager* world;
+    collision_checker* cc;
 };
 
 /*
@@ -76,7 +48,7 @@ class motor {
 public:
     motor(std::string urdf);
 
-    robot_model* get_model_ptr() { return &model; }
+    robot_model* get_model_ptr();
     std::vector<std::string> get_link_names();
 
     std::string robot_name() { return model.name; }
@@ -85,7 +57,6 @@ public:
 
 private:
     robot_model model;
-
     std::vector<planning_problem> ongoing;
 };
 
