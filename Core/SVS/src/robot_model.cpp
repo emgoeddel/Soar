@@ -2,7 +2,9 @@
 
 #include "robot_model.h"
 
+#include <cstdlib>
 #include <urdf/model.h>
+#include <kdl_parser/kdl_parser.hpp>
 #include "geometric_shapes/shapes.h"
 #include "geometric_shapes/mesh_operations.h"
 
@@ -181,6 +183,149 @@ bool robot_model::init(std::string robot_desc) {
 
     default_joint_group = "arm";
 
+    // Adapted from fetch.srdf; commented out the ones that aren't links of interest
+    //allowed["base_link"].insert("bellows_link");
+    //allowed["base_link"].insert("bellows_link2");
+    //allowed["base_link"].insert("estop_link");
+    allowed["base_link"].insert("head_pan_link");
+    allowed["base_link"].insert("head_tilt_link");
+    //allowed["base_link"].insert("l_wheel_link");
+    //allowed["base_link"].insert("laser_link");
+    //allowed["base_link"].insert("r_wheel_link");
+    allowed["base_link"].insert("shoulder_lift_link");
+    allowed["base_link"].insert("shoulder_pan_link");
+    //allowed["base_link"].insert("torso_fixed_link");
+    allowed["base_link"].insert("torso_lift_link");
+    allowed["base_link"].insert("upperarm_roll_link");
+    // allowed["bellows_link"].insert("bellows_link2");
+    // allowed["bellows_link"].insert("elbow_flex_link");
+    // allowed["bellows_link"].insert("estop_link");
+    // allowed["bellows_link"].insert("head_pan_link");
+    // allowed["bellows_link"].insert("head_tilt_link");
+    // allowed["bellows_link"].insert("l_wheel_link");
+    // allowed["bellows_link"].insert("laser_link");
+    // allowed["bellows_link"].insert("r_wheel_link");
+    // allowed["bellows_link"].insert("shoulder_lift_link");
+    // allowed["bellows_link"].insert("shoulder_pan_link");
+    // allowed["bellows_link"].insert("torso_fixed_link");
+    // allowed["bellows_link"].insert("torso_lift_link");
+    // allowed["bellows_link"].insert("upperarm_roll_link");
+    // allowed["bellows_link2"].insert("estop_link");
+    // allowed["bellows_link2"].insert("head_pan_link");
+    // allowed["bellows_link2"].insert("head_tilt_link");
+    // allowed["bellows_link2"].insert("l_wheel_link");
+    // allowed["bellows_link2"].insert("laser_link");
+    // allowed["bellows_link2"].insert("r_wheel_link");
+    // allowed["bellows_link2"].insert("shoulder_lift_link");
+    // allowed["bellows_link2"].insert("shoulder_pan_link");
+    // allowed["bellows_link2"].insert("torso_fixed_link");
+    // allowed["bellows_link2"].insert("torso_lift_link");
+    // allowed["bellows_link2"].insert("upperarm_roll_link");
+    //allowed["elbow_flex_link"].insert("estop_link");
+    allowed["elbow_flex_link"].insert("forearm_roll_link");
+    allowed["elbow_flex_link"].insert("gripper_link");
+    allowed["elbow_flex_link"].insert("l_gripper_finger_link");
+    //allowed["elbow_flex_link"].insert("l_wheel_link");
+    allowed["elbow_flex_link"].insert("r_gripper_finger_link");
+    //allowed["elbow_flex_link"].insert("r_wheel_link");
+    allowed["elbow_flex_link"].insert("shoulder_lift_link");
+    allowed["elbow_flex_link"].insert("shoulder_pan_link");
+    allowed["elbow_flex_link"].insert("upperarm_roll_link");
+    allowed["elbow_flex_link"].insert("wrist_flex_link");
+    allowed["elbow_flex_link"].insert("wrist_roll_link");
+    // allowed["estop_link"].insert("forearm_roll_link");
+    // allowed["estop_link"].insert("head_pan_link");
+    // allowed["estop_link"].insert("head_tilt_link");
+    // allowed["estop_link"].insert("l_wheel_link");
+    // allowed["estop_link"].insert("laser_link");
+    // allowed["estop_link"].insert("r_gripper_finger_link");
+    // allowed["estop_link"].insert("r_wheel_link");
+    // allowed["estop_link"].insert("shoulder_lift_link");
+    // allowed["estop_link"].insert("shoulder_pan_link");
+    // allowed["estop_link"].insert("torso_fixed_link");
+    // allowed["estop_link"].insert("torso_lift_link");
+    // allowed["estop_link"].insert("upperarm_roll_link");
+    // allowed["estop_link"].insert("wrist_roll_link");
+    allowed["forearm_roll_link"].insert("gripper_link");
+    allowed["forearm_roll_link"].insert("l_gripper_finger_link");
+    //allowed["forearm_roll_link"].insert("l_wheel_link");
+    allowed["forearm_roll_link"].insert("r_gripper_finger_link");
+    allowed["forearm_roll_link"].insert("shoulder_lift_link");
+    allowed["forearm_roll_link"].insert("shoulder_pan_link");
+    allowed["forearm_roll_link"].insert("upperarm_roll_link");
+    allowed["forearm_roll_link"].insert("wrist_flex_link");
+    allowed["forearm_roll_link"].insert("wrist_roll_link");
+    allowed["gripper_link"].insert("l_gripper_finger_link");
+    allowed["gripper_link"].insert("r_gripper_finger_link");
+    allowed["gripper_link"].insert("upperarm_roll_link");
+    allowed["gripper_link"].insert("wrist_flex_link");
+    allowed["gripper_link"].insert("wrist_roll_link");
+    allowed["head_pan_link"].insert("head_tilt_link");
+    //allowed["head_pan_link"].insert("l_wheel_link");
+    //allowed["head_pan_link"].insert("laser_link");
+    //allowed["head_pan_link"].insert("r_wheel_link");
+    allowed["head_pan_link"].insert("shoulder_lift_link");
+    allowed["head_pan_link"].insert("shoulder_pan_link");
+    //allowed["head_pan_link"].insert("torso_fixed_link");
+    allowed["head_pan_link"].insert("torso_lift_link");
+    //allowed["head_tilt_link"].insert("l_wheel_link");
+    //allowed["head_tilt_link"].insert("laser_link");
+    //allowed["head_tilt_link"].insert("r_wheel_link");
+    allowed["head_tilt_link"].insert("shoulder_lift_link");
+    allowed["head_tilt_link"].insert("shoulder_pan_link");
+    //allowed["head_tilt_link"].insert("torso_fixed_link");
+    allowed["head_tilt_link"].insert("torso_lift_link");
+    //allowed["l_gripper_finger_link"].insert("l_wheel_link");
+    allowed["l_gripper_finger_link"].insert("r_gripper_finger_link");
+    allowed["l_gripper_finger_link"].insert("upperarm_roll_link");
+    allowed["l_gripper_finger_link"].insert("wrist_flex_link");
+    allowed["l_gripper_finger_link"].insert("wrist_roll_link");
+    // allowed["l_wheel_link"].insert("laser_link");
+    // allowed["l_wheel_link"].insert("r_gripper_finger_link");
+    // allowed["l_wheel_link"].insert("r_wheel_link");
+    // allowed["l_wheel_link"].insert("shoulder_lift_link");
+    // allowed["l_wheel_link"].insert("shoulder_pan_link");
+    // allowed["l_wheel_link"].insert("torso_fixed_link");
+    // allowed["l_wheel_link"].insert("torso_lift_link");
+    // allowed["l_wheel_link"].insert("upperarm_roll_link");
+    // allowed["l_wheel_link"].insert("wrist_flex_link");
+    // allowed["l_wheel_link"].insert("wrist_roll_link");
+    // allowed["laser_link"].insert("r_gripper_finger_link");
+    // allowed["laser_link"].insert("r_wheel_link");
+    // allowed["laser_link"].insert("shoulder_lift_link");
+    // allowed["laser_link"].insert("shoulder_pan_link");
+    // allowed["laser_link"].insert("torso_fixed_link");
+    // allowed["laser_link"].insert("torso_lift_link");
+    // allowed["laser_link"].insert("upperarm_roll_link");
+    allowed["r_gripper_finger_link"].insert("upperarm_roll_link");
+    allowed["r_gripper_finger_link"].insert("wrist_flex_link");
+    allowed["r_gripper_finger_link"].insert("wrist_roll_link");
+    // allowed["r_wheel_link"].insert("shoulder_lift_link");
+    // allowed["r_wheel_link"].insert("shoulder_pan_link");
+    // allowed["r_wheel_link"].insert("torso_fixed_link");
+    // allowed["r_wheel_link"].insert("torso_lift_link");
+    // allowed["r_wheel_link"].insert("upperarm_roll_link");
+    // allowed["r_wheel_link"].insert("wrist_roll_link");
+    allowed["shoulder_lift_link"].insert("shoulder_pan_link");
+    allowed["shoulder_lift_link"].insert("torso_fixed_link");
+    allowed["shoulder_lift_link"].insert("upperarm_roll_link");
+    allowed["shoulder_lift_link"].insert("wrist_flex_link");
+    allowed["shoulder_lift_link"].insert("wrist_roll_link");
+    //allowed["shoulder_pan_link"].insert("torso_fixed_link");
+    allowed["shoulder_pan_link"].insert("torso_lift_link");
+    allowed["shoulder_pan_link"].insert("wrist_flex_link");
+    //allowed["torso_fixed_link"].insert("torso_lift_link");
+    allowed["upperarm_roll_link"].insert("wrist_flex_link");
+    allowed["upperarm_roll_link"].insert("wrist_roll_link");
+    allowed["wrist_flex_link"].insert("wrist_roll_link");
+
+    if (!kdl_parser::treeFromUrdfModel(urdf, kin_tree)){
+        ROS_ERROR("Failed to construct KDL tree");
+        return false;
+    }
+    kin_tree.getChain("torso_lift_link", "gripper_link", ik_chain);
+    ik_solver = new KDL::ChainIkSolverPos_LMA(ik_chain);
+
     return true;
 }
 
@@ -242,6 +387,44 @@ robot_model::link_transforms(std::map<std::string, double> p) {
     return xforms;
 }
 
+std::vector<double>
+robot_model::solve_ik(vec3 ee_pt) {
+    std::vector<double> out;
+    std::cout << "Trying to reach " << ee_pt[0] << ", " << ee_pt[1] << ", "
+              << ee_pt[2] << std::endl;
+
+    // XXX Baking in the assumption we are planning for the arm here, bad!
+    if (ik_chain.getNrOfJoints() != joint_groups["arm"].size()) {
+        std::cout << "Error: Kinematic chain does not represent Fetch arm!" << std::endl;
+        return out;
+    }
+
+    KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
+    KDL::Frame ee_desired(v);
+
+    for (int tries = 0; tries < 100; tries++) {
+        KDL::JntArray rnd_jnt(ik_chain.getNrOfJoints());
+        std::vector<double> rnd = random_valid_pose("arm");
+        for (int i = 0; i < rnd.size(); i++) {
+            rnd_jnt.data[i] = rnd[i];
+        }
+
+        KDL::JntArray ik_sol;
+        int result = ik_solver->CartToJnt(rnd_jnt, ee_desired, ik_sol);
+
+        if (result == KDL::SolverI::E_NOERROR) {
+            for (int i = 0; i < ik_sol.rows(); i++) {
+                out.push_back(ik_sol(i));
+                std::cout << "IK solution found on try " << tries << std::endl;
+                break;
+            }
+        }
+    }
+
+    if (out.empty()) std::cout << "Error: No IK solution found" << std::endl;
+    return out;
+}
+
 // Add the xform for the requested link at pose p, plus any others along its
 // kinematic chain, to the xform map
 void robot_model::calculate_link_xform(std::string link_name,
@@ -295,6 +478,19 @@ transform3 robot_model::compose_joint_xform(std::string joint_name, double pos) 
         ROS_WARN("Unsupported joint %s needed for FK calculation", joint_name.c_str());
         return j_o;
     }
+}
+
+std::vector<double> robot_model::random_valid_pose(std::string group) {
+    std::vector<double> out;
+
+    for (std::vector<std::string>::iterator i = joint_groups[group].begin();
+         i != joint_groups[group].end(); i++) {
+        double r = std::rand()/RAND_MAX;
+        out.push_back(all_joints[*i].min_pos + r * (all_joints[*i].max_pos -
+                                                    all_joints[*i].min_pos));
+    }
+
+    return out;
 }
 
 #endif

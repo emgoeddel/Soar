@@ -34,8 +34,9 @@ void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to) {
     }
 }
 
-trajectory_set::trajectory_set(motor* m, std::string n) : mtr(m),
-                                                          state_name(n) {}
+trajectory_set::trajectory_set(motor* m, robot_state* r, std::string n) : mtr(m),
+                                                                          state_name(n),
+                                                                          rs(r) {}
 
 void trajectory_set::copy_from(trajectory_set* other) {
     queries.clear();
@@ -47,7 +48,7 @@ void trajectory_set::copy_from(trajectory_set* other) {
 void trajectory_set::new_query(int id, query q) {
     motor_query mq;
     mq.soar_query = q;
-    //mq.start_state = get from robot_state;
+    mq.start_state = rs->get_joints();
     //mq.obstacles = get from scene;
     queries[id] = mq;
     if (!mtr->new_planner_query(id, mq)) {

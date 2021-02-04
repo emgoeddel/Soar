@@ -266,7 +266,7 @@ void svs_state::init()
     }
 
     if (!ts) {
-        ts = new trajectory_set(svsp->get_motor(), name);
+        ts = new trajectory_set(svsp->get_motor(), rs, name);
 
         if (parent) {
             ts->copy_from(parent->ts);

@@ -15,10 +15,8 @@
  * Why doesn't FCL provide this?
  */
 
-struct collision_data
-{
-    collision_data()
-    {
+struct collision_data {
+    collision_data() {
         done = false;
     }
 
@@ -30,6 +28,16 @@ struct collision_data
 // Same question as above!
 bool collision_function(fcl::CollisionObject* o1,
                         fcl::CollisionObject* o2, void* cdata);
+
+/*
+ * object_data struct
+ *
+ * To pass in as user data for each collision object
+ */
+struct object_data {
+    std::string name;
+    std::set<std::string> allowed_collisions;
+};
 
 class collision_checker : public ompl::base::StateValidityChecker {
 public:

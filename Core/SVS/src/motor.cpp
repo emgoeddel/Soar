@@ -6,7 +6,8 @@
 
 planning_problem::planning_problem(int qid, motor_query q, robot_model* m)
     : query_id(qid),
-      query(q)
+      query(q),
+      model(m)
 {
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->default_joint_group;
@@ -22,8 +23,14 @@ planning_problem::planning_problem(int qid, motor_query q, robot_model* m)
     for (; i != m->joint_groups[joint_group].end(); i++)
     {
         std::string j = *i;
-        bounds.setLow(b, m->all_joints[j].min_pos);
-        bounds.setHigh(b, m->all_joints[j].max_pos);
+        if (m->all_joints[j].type != CONTINUOUS) {
+            bounds.setLow(b, m->all_joints[j].min_pos);
+            bounds.setHigh(b, m->all_joints[j].max_pos);
+        } else {
+            // XXX Continuous joints don't actually have bounds, what to do?
+            bounds.setLow(b, -2*M_PI);
+            bounds.setHigh(b, 2*M_PI);
+        }
         b++;
     }
 
@@ -51,6 +58,17 @@ trajectory planning_problem::find_one() {
     ompl::geometric::RRTConnect* rrtc =
         new ompl::geometric::RRTConnect(ompl_ss->getSpaceInformation());
     ompl_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
+
+    std::vector<double> goal_vec = model->solve_ik(query.soar_query.target_center);
+
+    ompl::base::ScopedState<> goal(ompl_ss->getStateSpace());
+    for (int i = 0; i < goal_vec.size(); i++) {
+        goal[i] = goal_vec[i];
+    }
+    ompl_ss->setGoalState(goal);
+    ompl::base::PlannerStatus status = ompl_ss->solve(5.0);
+    std::cout << "Resulting planner status is " << status.asString() << std::endl;
+
     return trajectory();
 }
 

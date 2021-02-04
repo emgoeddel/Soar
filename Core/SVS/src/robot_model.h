@@ -8,6 +8,8 @@
 #include "mat.h"
 
 #include <fcl/BVH/BVH_model.h>
+#include <kdl/tree.hpp>
+#include <kdl/chainiksolverpos_lma.hpp>
 
 enum joint_type {
     REVOLUTE,
@@ -59,6 +61,7 @@ public:
     bool init(std::string robot_desc);
     std::string robot_info();
     std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints);
+    std::vector<double> solve_ik(vec3 ee_pt);
 
     std::string name;
     // root_link is assumed to be one of the links_of_interest
@@ -73,11 +76,19 @@ public:
     std::map<std::string, joint_info> all_joints;
     std::map<std::string, std::vector<std::string> > joint_groups;
 
+    // allowed collisions
+    std::map<std::string, std::set<std::string> > allowed;
+
 private:
     void calculate_link_xform(std::string link_name,
                               std::map<std::string, double> pose,
                               std::map<std::string, transform3>& out);
     transform3 compose_joint_xform(std::string joint_name, double pos);
+    std::vector<double> random_valid_pose(std::string group);
+
+    KDL::Tree kin_tree;
+    KDL::Chain ik_chain;
+    KDL::ChainIkSolverPos_LMA* ik_solver;
 };
 
 #endif

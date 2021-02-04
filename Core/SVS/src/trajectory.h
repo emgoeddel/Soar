@@ -7,6 +7,7 @@
 #include "moveit_msgs/RobotTrajectory.h"
 
 #include "mat.h"
+#include "robot_state.h"
 
 enum TargetType {
     POINT_TARGET,
@@ -91,7 +92,7 @@ class motor;
 
 class trajectory_set {
 public:
-    trajectory_set(motor* m, std::string n);
+    trajectory_set(motor* m, robot_state* r, std::string n);
     void copy_from(trajectory_set* other);
 
     void new_query(int id, query q);
@@ -101,6 +102,7 @@ public:
 
 private:
     motor* mtr;
+    robot_state* rs;
 
     std::string state_name;
     std::map<int, motor_query> queries;
