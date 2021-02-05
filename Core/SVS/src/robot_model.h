@@ -10,6 +10,7 @@
 #include <fcl/BVH/BVH_model.h>
 #include <kdl/tree.hpp>
 #include <kdl/chainiksolverpos_lma.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
 
 enum joint_type {
     REVOLUTE,
@@ -62,11 +63,13 @@ public:
     std::string robot_info();
     std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints);
     std::vector<double> solve_ik(vec3 ee_pt);
+    vec3 end_effector_pos(std::map<std::string, double> joints);
 
     std::string name;
     // root_link is assumed to be one of the links_of_interest
     std::string root_link;
     std::string default_joint_group;
+    std::string end_effector;
 
     // link information
     std::map<std::string, link_info> all_links;
@@ -89,6 +92,7 @@ private:
     KDL::Tree kin_tree;
     KDL::Chain ik_chain;
     KDL::ChainIkSolverPos_LMA* ik_solver;
+    KDL::ChainFkSolverPos_recursive* fk_solver;
 };
 
 #endif

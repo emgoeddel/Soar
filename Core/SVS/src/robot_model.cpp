@@ -2,7 +2,7 @@
 
 #include "robot_model.h"
 
-#include <cstdlib>
+#include <random>
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include "geometric_shapes/shapes.h"
@@ -319,12 +319,15 @@ bool robot_model::init(std::string robot_desc) {
     allowed["upperarm_roll_link"].insert("wrist_roll_link");
     allowed["wrist_flex_link"].insert("wrist_roll_link");
 
+    end_effector = "gripper_link";
+
     if (!kdl_parser::treeFromUrdfModel(urdf, kin_tree)){
         ROS_ERROR("Failed to construct KDL tree");
         return false;
     }
-    kin_tree.getChain("torso_lift_link", "gripper_link", ik_chain);
+    kin_tree.getChain("torso_lift_link", end_effector, ik_chain);
     ik_solver = new KDL::ChainIkSolverPos_LMA(ik_chain);
+    fk_solver = new KDL::ChainFkSolverPos_recursive(ik_chain);
 
     return true;
 }
@@ -402,27 +405,73 @@ robot_model::solve_ik(vec3 ee_pt) {
     KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
     KDL::Frame ee_desired(v);
 
-    for (int tries = 0; tries < 100; tries++) {
+    for (int tries = 0; tries < 20; tries++) {
         KDL::JntArray rnd_jnt(ik_chain.getNrOfJoints());
         std::vector<double> rnd = random_valid_pose("arm");
         for (int i = 0; i < rnd.size(); i++) {
             rnd_jnt.data[i] = rnd[i];
         }
 
-        KDL::JntArray ik_sol;
+        KDL::JntArray ik_sol(ik_chain.getNrOfJoints());
         int result = ik_solver->CartToJnt(rnd_jnt, ee_desired, ik_sol);
+        // std::cout << "Result on it " << tries << " was ";
+        // if (result == KDL::ChainIkSolverPos_LMA::E_NOERROR) {
+        //     std::cout << "E_NOERROR";
+        // } else if (result == KDL::ChainIkSolverPos_LMA::E_GRADIENT_JOINTS_TOO_SMALL) {
+        //     std::cout << "E_GRADIENT_JOINTS_TOO_SMALL";
+        // } else if (result == KDL::ChainIkSolverPos_LMA::E_INCREMENT_JOINTS_TOO_SMALL) {
+        //     std::cout << "E_INCREMENT_JOINTS_TOO_SMALL";
+        // } else if (result == KDL::ChainIkSolverPos_LMA::E_MAX_ITERATIONS_EXCEEDED) {
+        //     std::cout << "E_MAX_ITERATIONS_EXCEEDED";
+        // } else if (result == KDL::ChainIkSolverPos_LMA::E_SIZE_MISMATCH) {
+        //     std::cout << "E_SIZE_MISMATCH";
+        // } else {
+        //     std::cout << "something else, " << result;
+        // }
+        // std::cout << std::endl;
 
         if (result == KDL::SolverI::E_NOERROR) {
             for (int i = 0; i < ik_sol.rows(); i++) {
                 out.push_back(ik_sol(i));
-                std::cout << "IK solution found on try " << tries << std::endl;
-                break;
             }
+            std::cout << "IK solution found on try " << tries << std::endl;
+            break;
         }
     }
 
     if (out.empty()) std::cout << "Error: No IK solution found" << std::endl;
     return out;
+}
+
+vec3 robot_model::end_effector_pos(std::map<std::string, double> joints) {
+    KDL::JntArray jnt(ik_chain.getNrOfJoints());
+    std::vector<std::string>::iterator i = joint_groups["arm"].begin();
+    int ind = 0;
+    for (; i != joint_groups["arm"].end(); i++) {
+        jnt.data[ind] = joints[*i];
+    }
+
+    KDL::Frame f_out;
+    fk_solver->JntToCart(jnt, f_out);
+
+    // Just for a test...
+    KDL::Chain chn;
+    kin_tree.getChain(root_link, end_effector, chn);
+    KDL::ChainFkSolverPos_recursive base_solver(chn);
+    KDL::Frame tmp;
+    KDL::JntArray fromBase(ik_chain.getNrOfJoints()+1);
+    fromBase.data[0] = 0.2;
+    std::vector<std::string>::iterator j = joint_groups["arm"].begin();
+    ind = 1;
+    for (; j != joint_groups["arm"].end(); j++) {
+        fromBase.data[ind] = joints[*j];
+    }
+    int e = base_solver.JntToCart(fromBase, tmp);
+    std::cout << "If solved from base: " << tmp.p.x() << ", " << tmp.p.y()
+              << ", " << tmp.p.z() << " with err " << e << std::endl;
+    //
+
+    return vec3(f_out.p.x(), f_out.p.y(), f_out.p.z());
 }
 
 // Add the xform for the requested link at pose p, plus any others along its
@@ -482,12 +531,19 @@ transform3 robot_model::compose_joint_xform(std::string joint_name, double pos) 
 
 std::vector<double> robot_model::random_valid_pose(std::string group) {
     std::vector<double> out;
+    std::random_device rd;
+    std::default_random_engine dre(rd());
+    std::uniform_real_distribution<double> dist(0, 1);
 
     for (std::vector<std::string>::iterator i = joint_groups[group].begin();
          i != joint_groups[group].end(); i++) {
-        double r = std::rand()/RAND_MAX;
-        out.push_back(all_joints[*i].min_pos + r * (all_joints[*i].max_pos -
-                                                    all_joints[*i].min_pos));
+        double r = dist(dre);
+        if (all_joints[*i].type != CONTINUOUS) {
+            out.push_back(all_joints[*i].min_pos + r * (all_joints[*i].max_pos -
+                                                        all_joints[*i].min_pos));
+        } else {
+            out.push_back(-2*M_PI + r*4*M_PI);
+        }
     }
 
     return out;

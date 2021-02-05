@@ -217,7 +217,7 @@ if compiler == 'g++':
         cflags.append('-DNO_SVS')
     if GetOption('useros'):
         cflags.append('-DENABLE_ROS')
-        libs += ['roscpp', 'pcl_common', 'ompl', 'urdf', 'geometric_shapes', 'fcl']
+        libs += ['roscpp', 'pcl_common', 'ompl', 'urdf', 'geometric_shapes', 'fcl', 'orocos-kdl', 'kdl_parser']
     if GetOption('defflags'):
         cflags.append('-Wreturn-type')
         if GetOption('dbg'):
@@ -256,7 +256,7 @@ elif compiler == 'msvc':
         cflags.extend(' /D NO_SVS'.split())
     if GetOption('useros'):
         cflags.extend(' /D ENABLE_ROS'.split())
-        libs += ['roscpp', 'libpcl_common', 'ompl', 'urdf', 'geometric_shapes', 'fcl']
+        libs += ['roscpp', 'libpcl_common', 'ompl', 'urdf', 'geometric_shapes', 'fcl', 'orocos-kdl', 'kdl_parser']
     if GetOption('defflags'):
         if GetOption('dbg'):
             cflags.extend(' /MDd /Z7 /DEBUG'.split())

@@ -59,7 +59,10 @@ trajectory planning_problem::find_one() {
         new ompl::geometric::RRTConnect(ompl_ss->getSpaceInformation());
     ompl_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
 
-    std::vector<double> goal_vec = model->solve_ik(query.soar_query.target_center);
+    vec3 cur_pos = model->end_effector_pos(query.start_state);
+    std::cout << "Current ee is " << cur_pos[0] << ", " << cur_pos[1] << ", "
+              << cur_pos[2] << std::endl;
+    std::vector<double> goal_vec = model->solve_ik(cur_pos);
 
     ompl::base::ScopedState<> goal(ompl_ss->getStateSpace());
     for (int i = 0; i < goal_vec.size(); i++) {
