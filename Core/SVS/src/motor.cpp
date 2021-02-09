@@ -6,10 +6,10 @@
 
 planning_problem::planning_problem(int qid,
                                    motor_query q,
-                                   trajectory_set* tsp,
+                                   motor_state* msp,
                                    robot_model* m) : query_id(qid),
                                                      query(q),
-                                                     ts(tsp),
+                                                     ms(msp),
                                                      model(m)
 {
     joint_group = query.soar_query.joint_group;
@@ -83,7 +83,7 @@ void planning_problem::find_one() {
 
         trajectory output_traj = path_to_trajectory(pg);
 
-        ts->new_trajectory_callback(query_id, output_traj);
+        ms->new_trajectory_callback(query_id, output_traj);
     }
 }
 
@@ -137,8 +137,8 @@ std::vector<std::string> motor::get_link_names() {
     return link_names;
 }
 
-bool motor::new_planner_query(int id, motor_query q, trajectory_set* tsp) {
-    ongoing.push_back(planning_problem(id, q, tsp, &model));
+bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {
+    ongoing.push_back(planning_problem(id, q, msp, &model));
     ongoing.back().find_one();
     return true;
 }

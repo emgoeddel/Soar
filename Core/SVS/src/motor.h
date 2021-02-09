@@ -11,7 +11,7 @@
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 
 #include "mat.h"
-#include "trajectory.h"
+#include "motor_state.h"
 #include "collision.h"
 
 
@@ -25,7 +25,7 @@
 
 class planning_problem {
 public:
-    planning_problem(int qid, motor_query q, trajectory_set* tsp, robot_model* m);
+    planning_problem(int qid, motor_query q, motor_state* msp, robot_model* m);
     void find_one();
 
 private:
@@ -35,7 +35,7 @@ private:
     motor_query query;
 
     std::shared_ptr<robot_model> model;
-    std::shared_ptr<trajectory_set> ts;
+    std::shared_ptr<motor_state> ms;
     std::string joint_group;
 
     ompl::geometric::SimpleSetup* ompl_ss;
@@ -58,7 +58,7 @@ public:
 
     std::string robot_name() { return model.name; }
 
-    bool new_planner_query(int id, motor_query q, trajectory_set* tsp);
+    bool new_planner_query(int id, motor_query q, motor_state* msp);
 
 private:
     robot_model model;

@@ -22,8 +22,7 @@
 #include "symbol.h"
 
 #include "motor.h"
-#include "robot_state.h"
-#include "trajectory.h"
+#include "motor_state.h"
 
 using namespace std;
 
@@ -172,7 +171,7 @@ void sgwme::delete_tag(const string& tag_name)
 
 svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
     : svsp(svsp), parent(NULL), state(state), si(si), level(0),
-      scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL), rs(NULL), ts(NULL),
+      scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL), ms(NULL),
       scene_link(NULL)
 {
     assert(state->is_top_state());
@@ -183,7 +182,7 @@ svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
 svs_state::svs_state(Symbol* state, svs_state* parent)
     : parent(parent), state(state), svsp(parent->svsp), si(parent->si),
       level(parent->level + 1), scene_num(-1),
-      scene_num_wme(NULL), scn(NULL), img(NULL), rs(NULL), ts(NULL),
+      scene_num_wme(NULL), scn(NULL), img(NULL), ms(NULL),
       scene_link(NULL)
 {
     assert(state->get_parent_state() == parent->state);
@@ -209,12 +208,8 @@ svs_state::~svs_state()
         delete img;
     }
 
-    if (rs) {
-        delete rs;
-    }
-
-    if (ts) {
-        delete ts;
+    if (ms) {
+        delete ms;
     }
 }
 
@@ -257,19 +252,11 @@ void svs_state::init()
     }
     imwme = new image_descriptor(si, img_link, img);
 
-    if (!rs) {
-        rs = new robot_state(svsp->get_motor()->get_model_ptr());
+    if (!ms) {
+        ms = new motor_state(svsp->get_motor(), name);
 
         if (parent) {
-            rs->copy_from(parent->rs);
-        }
-    }
-
-    if (!ts) {
-        ts = new trajectory_set(svsp->get_motor(), rs, name);
-
-        if (parent) {
-            ts->copy_from(parent->ts);
+            ms->copy_from(parent->ms);
         }
     }
 }
@@ -435,7 +422,7 @@ std::string del_cmd(std::string name) {
 void svs_state::sync_scene_robot()
 {
     // Don't worry about syncing if we don't have joint input
-    if (!rs->has_joints()) return;
+    if (!ms->has_joints()) return;
     // XXX Delete the robot from scene if so ^
 
     // Build up a vector of commands
@@ -445,28 +432,28 @@ void svs_state::sync_scene_robot()
     bool robot_changed = false;
 
     // Check if Fetch is in the scene, and if not just add it
-    if (!scn->get_node(rs->name())) {
+    if (!scn->get_node(ms->robot_name())) {
         robot_changed = true;
-        cmds.push_back(add_cmd(rs->name(), "world", rs->get_base_xform()));
-        std::map<std::string, transform3> links = rs->get_link_transforms();
+        cmds.push_back(add_cmd(ms->robot_name(), "world", ms->get_base_xform()));
+        std::map<std::string, transform3> links = ms->get_link_transforms();
         for (std::map<std::string, transform3>::iterator i = links.begin();
              i != links.end(); i++) {
-            cmds.push_back(add_cmd(i->first, rs->name(), i->second));
+            cmds.push_back(add_cmd(i->first, ms->robot_name(), i->second));
         }
     } else {
         // Check if the Fetch base has moved and update if so
-        transform3 cur_xform = rs->get_base_xform();
-        transform3 last_xform = scn->get_node(rs->name())->get_world_trans();
+        transform3 cur_xform = ms->get_base_xform();
+        transform3 last_xform = scn->get_node(ms->robot_name())->get_world_trans();
         if (transform3::t_diff(cur_xform, last_xform)) {
             robot_changed = true;
             vec3 p;
             cur_xform.position(p);
-            cmds.push_back(change_cmd(rs->name(), cur_xform));
+            cmds.push_back(change_cmd(ms->robot_name(), cur_xform));
         }
 
         // Check if the links have moved and update if so
         // XXX Assumes robot's links don't change after it's first added!!
-        std::map<std::string, transform3> links = rs->get_link_transforms();
+        std::map<std::string, transform3> links = ms->get_link_transforms();
         for (std::map<std::string, transform3>::iterator i = links.begin();
              i != links.end(); i++) {
             std::string n = i->first;
@@ -580,11 +567,11 @@ void svs::proc_input(svs_state* s)
 #endif
     {
         std::lock_guard<std::mutex> guard2(loc_in_mtx);
-        s->get_robot_state()->set_base_xform(loc_input);
+        s->get_motor_state()->set_base_xform(loc_input);
     }
     {
         std::lock_guard<std::mutex> guard2(joint_in_mtx);
-        s->get_robot_state()->set_joints(joint_inputs);
+        s->get_motor_state()->set_joints(joint_inputs);
     }
     s->sync_scene_robot();
 

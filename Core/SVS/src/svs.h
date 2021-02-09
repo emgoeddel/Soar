@@ -26,8 +26,7 @@ class pcl_image;
 class basic_image;
 #endif
 class motor;
-class robot_state;
-class trajectory_set;
+class motor_state;
 
 /* working memory scene graph object - mediates between wmes and scene graph nodes */
 class sgwme : public sgnode_listener
@@ -122,13 +121,9 @@ class svs_state : public cliproxy
         {
             return scn;
         }
-        robot_state*   get_robot_state() const
+        motor_state* get_motor_state() const
         {
-            return rs;
-        }
-        trajectory_set* get_trajectory_set() const
-        {
-            return ts;
+            return ms;
         }
 #ifdef ENABLE_ROS
         pcl_image*     get_image() const
@@ -173,8 +168,7 @@ class svs_state : public cliproxy
 #else
         basic_image*    img;
 #endif
-        robot_state*    rs;
-        trajectory_set* ts;
+        motor_state*    ms;
 
         Symbol* state;
         Symbol* svs_link;

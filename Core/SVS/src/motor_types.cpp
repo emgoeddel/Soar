@@ -1,6 +1,6 @@
 #ifdef ENABLE_ROS
 
-#include "trajectory.h"
+#include "motor_types.h"
 #include "motor.h"
 
 void to_ros_msg(trajectory& from, moveit_msgs::RobotTrajectory& to) {
@@ -32,33 +32,6 @@ void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to) {
         std::cout << "Warning: Discarding MultiDOFJointTrajectory from ROS message."
                   << std::endl;
     }
-}
-
-trajectory_set::trajectory_set(motor* m, robot_state* r, std::string n) : mtr(m),
-                                                                          state_name(n),
-                                                                          rs(r) {}
-
-void trajectory_set::copy_from(trajectory_set* other) {
-    queries.clear();
-    // XXX This isn't quite right
-    // How to deal with trajectories from parent state?
-    trajectories = other->trajectories;
-}
-
-void trajectory_set::new_query(int id, query q) {
-    motor_query mq;
-    mq.soar_query = q;
-    mq.start_state = rs->get_joints();
-    //mq.obstacles = get from scene;
-    queries[id] = mq;
-    if (!mtr->new_planner_query(id, mq, this)) {
-        std::cout << "Warning: Could not start planning for query " << id << std::endl;
-    }
-}
-
-void trajectory_set::new_trajectory_callback(int id, trajectory t) {
-    trajectories[id].push_back(t);
-    std::cout << "Added a trajectory to set with id " << id << std::endl;
 }
 
 #endif

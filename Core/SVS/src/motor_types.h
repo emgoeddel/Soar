@@ -1,5 +1,5 @@
-#ifndef TRAJECTORY_H
-#define TRAJECTORY_H
+#ifndef MOTOR_TYPES_H
+#define MOTOR_TYPES_H
 
 #ifdef ENABLE_ROS
 
@@ -7,7 +7,6 @@
 #include "moveit_msgs/RobotTrajectory.h"
 
 #include "mat.h"
-#include "robot_state.h"
 
 enum TargetType {
     POINT_TARGET,
@@ -59,7 +58,7 @@ struct query {
 
 struct motor_query {
     query soar_query;
-    //std::vector<obstacle> obstacles;
+    //std::vector<obstacle> obstacles; XXX
     std::map<std::string, double> start_state;
 };
 
@@ -79,35 +78,6 @@ struct trajectory {
 
 void to_ros_msg(trajectory& from, moveit_msgs::RobotTrajectory& to);
 void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to);
-
-/*
- * trajectory_set class
- *
- * Keeps track of the ongoing motion queries made in an SVS state and the
- * current set of trajectories that have been returned for those queries
- *
- */
-
-class motor;
-
-class trajectory_set {
-public:
-    trajectory_set(motor* m, robot_state* r, std::string n);
-    void copy_from(trajectory_set* other);
-
-    void new_query(int id, query q);
-
-    void new_trajectory_callback(int id, trajectory t);
-    //void search_finished_callback(int id);
-
-private:
-    motor* mtr;
-    robot_state* rs;
-
-    std::string state_name;
-    std::map<int, motor_query> queries;
-    std::map<int, std::vector<trajectory> > trajectories;
-};
 
 #endif
 #endif
