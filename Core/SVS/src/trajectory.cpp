@@ -51,9 +51,14 @@ void trajectory_set::new_query(int id, query q) {
     mq.start_state = rs->get_joints();
     //mq.obstacles = get from scene;
     queries[id] = mq;
-    if (!mtr->new_planner_query(id, mq)) {
+    if (!mtr->new_planner_query(id, mq, this)) {
         std::cout << "Warning: Could not start planning for query " << id << std::endl;
     }
+}
+
+void trajectory_set::new_trajectory_callback(int id, trajectory t) {
+    trajectories[id].push_back(t);
+    std::cout << "Added a trajectory to set with id " << id << std::endl;
 }
 
 #endif

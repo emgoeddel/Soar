@@ -25,14 +25,17 @@
 
 class planning_problem {
 public:
-    planning_problem(int qid, motor_query q, robot_model* m);
-    trajectory find_one();
+    planning_problem(int qid, motor_query q, trajectory_set* tsp, robot_model* m);
+    void find_one();
 
 private:
+    trajectory path_to_trajectory(ompl::geometric::PathGeometric& geom);
+
     int query_id;
     motor_query query;
 
     std::shared_ptr<robot_model> model;
+    std::shared_ptr<trajectory_set> ts;
     std::string joint_group;
 
     ompl::geometric::SimpleSetup* ompl_ss;
@@ -55,7 +58,7 @@ public:
 
     std::string robot_name() { return model.name; }
 
-    bool new_planner_query(int id, motor_query q);
+    bool new_planner_query(int id, motor_query q, trajectory_set* tsp);
 
 private:
     robot_model model;

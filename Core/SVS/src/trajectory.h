@@ -98,7 +98,7 @@ public:
     void new_query(int id, query q);
 
     void new_trajectory_callback(int id, trajectory t);
-    void search_finished_callback(int id);
+    //void search_finished_callback(int id);
 
 private:
     motor* mtr;
@@ -106,7 +106,7 @@ private:
 
     std::string state_name;
     std::map<int, motor_query> queries;
-    std::map<int, std::set<trajectory> > trajectories;
+    std::map<int, std::vector<trajectory> > trajectories;
 };
 
 #endif

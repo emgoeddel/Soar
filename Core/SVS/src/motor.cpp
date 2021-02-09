@@ -4,10 +4,13 @@
 
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 
-planning_problem::planning_problem(int qid, motor_query q, robot_model* m)
-    : query_id(qid),
-      query(q),
-      model(m)
+planning_problem::planning_problem(int qid,
+                                   motor_query q,
+                                   trajectory_set* tsp,
+                                   robot_model* m) : query_id(qid),
+                                                     query(q),
+                                                     ts(tsp),
+                                                     model(m)
 {
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->default_joint_group;
@@ -53,7 +56,7 @@ planning_problem::planning_problem(int qid, motor_query q, robot_model* m)
               << ", DOF = " << dof << std::endl;
 }
 
-trajectory planning_problem::find_one() {
+void planning_problem::find_one() {
     std::cout << "Using RRT-Connect to find ONE trajectory." << std::endl;
     ompl::geometric::RRTConnect* rrtc =
         new ompl::geometric::RRTConnect(ompl_ss->getSpaceInformation());
@@ -62,7 +65,7 @@ trajectory planning_problem::find_one() {
     vec3 cur_pos = model->end_effector_pos(query.start_state);
     std::cout << "Current ee is " << cur_pos[0] << ", " << cur_pos[1] << ", "
               << cur_pos[2] << std::endl;
-    std::vector<double> goal_vec = model->solve_ik(cur_pos);
+    std::vector<double> goal_vec = model->solve_ik(query.soar_query.target_center);
 
     ompl::base::ScopedState<> goal(ompl_ss->getStateSpace());
     for (int i = 0; i < goal_vec.size(); i++) {
@@ -72,9 +75,43 @@ trajectory planning_problem::find_one() {
     ompl::base::PlannerStatus status = ompl_ss->solve(5.0);
     std::cout << "Resulting planner status is " << status.asString() << std::endl;
 
-    return trajectory();
+    if (!ompl_ss->haveExactSolutionPath()) {
+        std::cout << "No path found, no trajectory to add!" << std::endl;
+    } else {
+        ompl::geometric::PathGeometric pg = ompl_ss->getSolutionPath();
+        std::cout << "Found trajectory of length " << pg.getStateCount() << std::endl;
+
+        trajectory output_traj = path_to_trajectory(pg);
+
+        ts->new_trajectory_callback(query_id, output_traj);
+    }
 }
 
+trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& geom) {
+    std::vector<ompl::base::State*> sv = geom.getStates();
+    trajectory t;
+
+    std::vector<std::string>::iterator j = model->joint_groups[joint_group].begin();
+    for (; j != model->joint_groups[joint_group].end(); j++) {
+        t.joints.push_back(*j);
+    }
+
+    // XXX Need actual time parameterization
+    double fake_time = 0.0;
+    std::vector<ompl::base::State*>::iterator i = sv.begin();
+    for (; i != sv.end(); i++) {
+        ompl::base::ScopedState<> ss(ompl_ss->getStateSpace(), *i);
+        t.waypoints.push_back(std::vector<double>());
+        for (int i = 0; i < ompl_ss->getStateSpace()->getDimension(); i++) {
+            t.waypoints.back().push_back(ss[i]);
+        }
+        t.times.push_back(fake_time);
+        fake_time += 1.0;
+    }
+
+    t.length = sv.size();
+    return trajectory();
+}
 
 motor::motor(std::string urdf) {
     model.init(urdf);
@@ -100,10 +137,9 @@ std::vector<std::string> motor::get_link_names() {
     return link_names;
 }
 
-bool motor::new_planner_query(int id, motor_query q) {
-    ongoing.push_back(planning_problem(id, q, &model));
-    trajectory t = ongoing.back().find_one();
-    std::cout << "Found a trajectory of length " << t.length << std::endl;
+bool motor::new_planner_query(int id, motor_query q, trajectory_set* tsp) {
+    ongoing.push_back(planning_problem(id, q, tsp, &model));
+    ongoing.back().find_one();
     return true;
 }
 
