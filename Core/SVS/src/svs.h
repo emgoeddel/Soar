@@ -27,6 +27,7 @@ class basic_image;
 #endif
 class motor;
 class motor_state;
+class motor_link;
 
 /* working memory scene graph object - mediates between wmes and scene graph nodes */
 class sgwme : public sgnode_listener
@@ -162,6 +163,7 @@ class svs_state : public cliproxy
         scene*          scn;
         sgwme*          root;
         image_descriptor* imwme;
+        motor_link*     mowme;
         soar_interface* si;
 #ifdef ENABLE_ROS
         pcl_image*      img;
@@ -174,6 +176,7 @@ class svs_state : public cliproxy
         Symbol* svs_link;
         Symbol* scene_link;
         Symbol* img_link;
+        Symbol* mtr_link;
         Symbol* cmd_link;
         
         int scene_num;

@@ -22,6 +22,7 @@ common_syms::common_syms(soar_interface* si) : si(si)
     scene  = si->make_sym("spatial-scene");
     child  = si->make_sym("child");
     image  = si->make_sym("image");
+    motor  = si->make_sym("motor");
     result = si->make_sym("result");
     id     = si->make_sym("id");
     status = si->make_sym("status");
@@ -33,6 +34,7 @@ common_syms::~common_syms()
     si->del_sym(cmd);
     si->del_sym(scene);
     si->del_sym(image);
+    si->del_sym(motor);
     si->del_sym(child);
     si->del_sym(result);
     si->del_sym(id);

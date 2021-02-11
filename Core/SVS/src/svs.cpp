@@ -222,6 +222,7 @@ void svs_state::init()
     cmd_link = si->get_wme_val(si->make_id_wme(svs_link, cs.cmd));
     scene_link = si->get_wme_val(si->make_id_wme(svs_link, cs.scene));
     img_link = si->get_wme_val(si->make_id_wme(svs_link, cs.image));
+    mtr_link = si->get_wme_val(si->make_id_wme(svs_link, cs.motor));
 
     if (!scn)
     {
@@ -259,6 +260,7 @@ void svs_state::init()
             ms->copy_from(parent->ms);
         }
     }
+    mowme = new motor_link(si, mtr_link, ms);
 }
 
 void svs_state::update_scene_num()
@@ -572,6 +574,10 @@ void svs::proc_input(svs_state* s)
     {
         std::lock_guard<std::mutex> guard2(joint_in_mtx);
         s->get_motor_state()->set_joints(joint_inputs);
+        if (s->get_motor_state()->get_joints_type() != "current") {
+            std::cout << "Set joints to current!" << std::endl;
+            s->get_motor_state()->set_joints_type("current");
+        }
     }
     s->sync_scene_robot();
 
