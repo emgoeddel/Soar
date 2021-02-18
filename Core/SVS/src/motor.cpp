@@ -31,13 +31,16 @@ planning_problem::planning_problem(int qid,
             bounds.setHigh(b, m->all_joints[j].max_pos);
         } else {
             // XXX Continuous joints don't actually have bounds, what to do?
-            bounds.setLow(b, -2*M_PI);
-            bounds.setHigh(b, 2*M_PI);
+            bounds.setLow(b, -10*M_PI);
+            bounds.setHigh(b, 10*M_PI);
         }
         b++;
     }
 
+    bounds.check();
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
+    // XXX Parameter
+    space->setLongestValidSegmentFraction(0.005);
     ompl_ss = new ompl::geometric::SimpleSetup(space);
     cc = new collision_checker(ompl_ss->getSpaceInformation(), m, joint_group);
     ompl_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
@@ -79,7 +82,8 @@ void planning_problem::find_one() {
         std::cout << "No path found, no trajectory to add!" << std::endl;
     } else {
         ompl::geometric::PathGeometric pg = ompl_ss->getSolutionPath();
-        std::cout << "Found trajectory of length " << pg.getStateCount() << std::endl;
+        pg.interpolate();
+        std::cout << "Interpolated trajectory length is " << pg.getStateCount() << std::endl;
 
         trajectory output_traj = path_to_trajectory(pg);
 

@@ -7,6 +7,7 @@
 #include "src/commands/copy_transform.cpp"
 #include "src/commands/delete_node.cpp"
 #include "src/commands/find_trajectories.cpp"
+#include "src/commands/execute_trajectory.cpp"
 
 #include "src/filters/axis_distance.cpp"
 #include "src/filters/axis_relation.cpp"
