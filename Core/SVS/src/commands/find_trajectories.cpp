@@ -66,6 +66,8 @@ public:
             // If parsed successfully, set the status to "running"
             if (parse()) {
                 ms->new_query(id, search_query);
+                // XXX Does adding id to commands require instantiation?
+                si->make_wme(root, "id", si->make_sym(id));
                 set_status("running");
             } else {
                 // Error message already set in parse() method

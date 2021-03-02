@@ -78,6 +78,7 @@ command* command_table::make_command(svs_state* state, wme* w)
     }
     else
     {
+        // Note: This fails silently if a command name is mistyped
         return NULL;
     }
 }

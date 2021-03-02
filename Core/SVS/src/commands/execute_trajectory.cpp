@@ -12,6 +12,8 @@ public:
     execute_trajectory_command(svs_state* state, Symbol* root) : command(state, root),
                                                                  root(root),
                                                                  parsed(false) {
+        si = state->get_svs()->get_soar_interface();
+        ms = state->get_motor_state();
     }
 
     std::string description() { return "execute-trajectory"; }
@@ -36,6 +38,30 @@ public:
 private:
     bool parse() {
         std::cout << "Parsing an execute-trajectory command!!" << std::endl;
+
+        // Don't let the agent exec if this state's joints aren't the robot's
+        // actual current joints
+        if (ms->get_joints_type() != "current") {
+            set_status("cannot execute from hypothetical joint state");
+            return false;
+        }
+
+        wme* traj_wme;
+        if (!si->find_child_wme(root, "trajectory", traj_wme)) {
+            set_status("no trajectory selection found");
+            return false;
+        }
+        // Compare to the trajectories in the set and figure out which one this
+        // refers to
+        trajectory t;
+        if (!ms->match_trajectory(traj_wme, t)) {
+            set_status("no corresponding trajectory in set");
+            return false;
+        }
+
+        // Add check that trajectory's first state is pretty close to current
+        // joint state.
+
         return true;
     }
 

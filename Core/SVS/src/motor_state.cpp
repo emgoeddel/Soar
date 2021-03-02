@@ -47,7 +47,7 @@ std::vector<int> motor_state::get_query_ids() {
 void motor_state::new_trajectory_callback(int id, trajectory t) {
     trajectories[id].push_back(t);
     std::cout << "Added a trajectory to set with id " << id << std::endl;
-    notify_listeners();
+    notify_listener();
 }
 
 void motor_state::set_joints(std::map<std::string, double> j) {
@@ -73,7 +73,7 @@ bool motor_state::has_joints() {
 
 void motor_state::set_joints_type(std::string jt) {
     joints_type = jt;
-    notify_listeners();
+    notify_listener();
 }
 
 void motor_state::set_base_xform(transform3 t) {
@@ -95,19 +95,34 @@ std::map<std::string, transform3> motor_state::get_link_transforms() {
     return model->link_transforms(joints);
 }
 
-void motor_state::add_listener(motor_link* ml) {
-    listeners.push_back(ml);
+void motor_state::set_listener(motor_link* ml) {
+    listener = ml;
 }
 
-void motor_state::remove_listener(motor_link* ml) {
-    listeners.remove(ml);
+void motor_state::remove_listener() {
+    listener = NULL;
 }
 
-void motor_state::notify_listeners() {
-    for (std::list<motor_link*>::iterator i = listeners.begin();
-         i != listeners.end(); i++) {
-        (*i)->update_desc();
+// Needed for interpreting an execute_trajectory command because the
+// agent will provide a wme that refers to a trajectory.
+// XXX Better way to do this?
+bool motor_state::match_trajectory(wme* traj_wme, trajectory& out) {
+    if (!listener) {
+        std::cout << "Error: Motor state has no listener." << std::endl;
+        return false;
     }
+
+    if (!listener->has_matching_wme(traj_wme)) {
+        std::cout << "Error: Motor state does not have access to selected trajectory."
+                  << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+void motor_state::notify_listener() {
+    listener->update_desc();
 }
 
 const std::string motor_link::joints_tag = "joint-state";
@@ -116,11 +131,12 @@ const std::string motor_link::traj_sets_tag = "trajectories";
 const std::string motor_link::set_tag = "set";
 const std::string motor_link::target_tag = "target";
 const std::string motor_link::traj_tag = "trajectory";
+const std::string motor_link::command_id_tag = "command-id";
 
 motor_link::motor_link(soar_interface* si, Symbol* ln, motor_state* m)
     : ms(m), si(si), motor_sym(ln), joints_type("none")
 {
-    m->add_listener(this);
+    m->set_listener(this);
 
     state_sym = si->get_wme_val(si->make_id_wme(motor_sym, si->make_sym(joints_tag)));
     joints_type_wme = si->make_wme(state_sym, type_tag, joints_type);
@@ -129,7 +145,7 @@ motor_link::motor_link(soar_interface* si, Symbol* ln, motor_state* m)
     update_desc();
 }
 
-void motor_link::motor_link::update_desc() {
+void motor_link::update_desc() {
     // Update joint state information
     if (joints_type != ms->get_joints_type()) {
         joints_type = ms->get_joints_type();
@@ -145,6 +161,7 @@ void motor_link::motor_link::update_desc() {
         if (query_sym_map.count(*i) == 0) {
             query_sym_map[*i] = si->get_wme_val(si->make_id_wme(traj_sets_sym,
                                                                 si->make_sym(set_tag)));
+            si->make_wme(query_sym_map[*i], command_id_tag, si->make_sym(*i));
         }
 
         if (ms->num_trajectories(*i) > query_traj_map[*i].size()) {
@@ -152,4 +169,15 @@ void motor_link::motor_link::update_desc() {
                                                          si->make_sym(traj_tag)));
         }
     }
+}
+
+bool motor_link::has_matching_wme(wme* traj) {
+    std::map<int, std::vector<wme*> >::iterator i = query_traj_map.begin();
+    for (; i != query_traj_map.end(); i++) {
+        std::vector<wme*>::iterator j = i->second.begin();
+        for (; j != i->second.end(); j++) {
+            if (traj == *j) return true;
+        }
+    }
+    return false;
 }

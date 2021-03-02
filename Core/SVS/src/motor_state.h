@@ -55,11 +55,13 @@ public:
     std::string robot_name() { return model->name; }
 
     //// Connection to motor_link ////
-    void add_listener(motor_link* ml);
-    void remove_listener(motor_link* ml);
+    void set_listener(motor_link* ml);
+    void remove_listener();
+
+    bool match_trajectory(wme* traj_wme, trajectory& out);
 
 private:
-    void notify_listeners();
+    void notify_listener();
 
     std::shared_ptr<motor> mtr;
     std::shared_ptr<robot_model> model;
@@ -76,7 +78,7 @@ private:
     std::map<int, motor_query> queries;
     std::map<int, std::vector<trajectory> > trajectories;
 
-    std::list<motor_link*> listeners;
+    motor_link* listener;
 };
 
 /*
@@ -96,12 +98,15 @@ public:
     motor_state* get_motor_state() { return ms; }
     void update_desc();
 
+    bool has_matching_wme(wme* traj);
+
     static const std::string joints_tag;
     static const std::string type_tag;
     static const std::string traj_sets_tag;
     static const std::string set_tag;
     static const std::string target_tag;
     static const std::string traj_tag;
+    static const std::string command_id_tag;
 
 private:
     motor_state* ms;
