@@ -46,18 +46,23 @@ private:
             return false;
         }
 
-        wme* traj_wme;
-        if (!si->find_child_wme(root, "trajectory", traj_wme)) {
-            set_status("no trajectory selection found");
+        wme* set_wme;
+        if (!si->find_child_wme(root, "set-id", set_wme)) {
+            set_status("no set-id found");
+            return false;
+        }
+        wme* traj_id_wme;
+        if (!si->find_child_wme(root, "trajectory-id", traj_id_wme)) {
+            set_status("no trajectory-id found");
             return false;
         }
         // Compare to the trajectories in the set and figure out which one this
         // refers to
         trajectory t;
-        if (!ms->match_trajectory(traj_wme, t)) {
-            set_status("no corresponding trajectory in set");
-            return false;
-        }
+        // if (!ms->match_trajectory(traj_wme, t)) {
+        //     set_status("no corresponding trajectory in set");
+        //     return false;
+        // }
 
         // Add check that trajectory's first state is pretty close to current
         // joint state.
@@ -81,8 +86,9 @@ command_table_entry* execute_trajectory_command_entry()
 {
     command_table_entry* e = new command_table_entry();
     e->name = "execute-trajectory";
-    e->description = "Execute a selected trajectory";
-    e->parameters["trajectory"] = "Trajectory to execute";
+    e->description = "Executes a selected trajectory";
+    e->parameters["set-id"] = "The command-id of the set containing selected trajectory";
+    e->parameters["trajectory-id"] = "The id of the selected trajectory";
     e->create = &_make_execute_trajectory_command_;
     return e;
 }

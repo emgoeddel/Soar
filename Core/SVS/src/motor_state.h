@@ -98,8 +98,6 @@ public:
     motor_state* get_motor_state() { return ms; }
     void update_desc();
 
-    bool has_matching_wme(wme* traj);
-
     static const std::string joints_tag;
     static const std::string type_tag;
     static const std::string traj_sets_tag;
@@ -107,6 +105,7 @@ public:
     static const std::string target_tag;
     static const std::string traj_tag;
     static const std::string command_id_tag;
+    static const std::string traj_id_tag;
 
 private:
     motor_state* ms;
@@ -121,7 +120,7 @@ private:
     std::string joints_type;
 
     std::map<int, Symbol*> query_sym_map;
-    std::map<int, std::vector<wme*> > query_traj_map;
+    std::map<int, std::vector<Symbol*> > query_traj_map;
 };
 
 #endif

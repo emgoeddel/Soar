@@ -103,16 +103,13 @@ void motor_state::remove_listener() {
     listener = NULL;
 }
 
-// Needed for interpreting an execute_trajectory command because the
-// agent will provide a wme that refers to a trajectory.
-// XXX Better way to do this?
 bool motor_state::match_trajectory(wme* traj_wme, trajectory& out) {
     if (!listener) {
         std::cout << "Error: Motor state has no listener." << std::endl;
         return false;
     }
 
-    if (!listener->has_matching_wme(traj_wme)) {
+    if (true) {
         std::cout << "Error: Motor state does not have access to selected trajectory."
                   << std::endl;
         return false;
@@ -132,6 +129,7 @@ const std::string motor_link::set_tag = "set";
 const std::string motor_link::target_tag = "target";
 const std::string motor_link::traj_tag = "trajectory";
 const std::string motor_link::command_id_tag = "command-id";
+const std::string motor_link::traj_id_tag = "id";
 
 motor_link::motor_link(soar_interface* si, Symbol* ln, motor_state* m)
     : ms(m), si(si), motor_sym(ln), joints_type("none")
@@ -162,22 +160,18 @@ void motor_link::update_desc() {
             query_sym_map[*i] = si->get_wme_val(si->make_id_wme(traj_sets_sym,
                                                                 si->make_sym(set_tag)));
             si->make_wme(query_sym_map[*i], command_id_tag, si->make_sym(*i));
+            query_traj_map[*i] = std::vector<Symbol*>();
         }
 
-        if (ms->num_trajectories(*i) > query_traj_map[*i].size()) {
-            query_traj_map[*i].push_back(si->make_id_wme(query_sym_map[*i],
-                                                         si->make_sym(traj_tag)));
+        // XXX Assumes only one trajectory added per cycle, need to fix!
+        int curr_num_traj = ms->num_trajectories(*i);
+        if (curr_num_traj > query_traj_map[*i].size()) {
+            query_traj_map[*i].push_back(
+                si->get_wme_val(si->make_id_wme(query_sym_map[*i],
+                                                si->make_sym(traj_tag))));
+            si->make_wme(query_traj_map[*i].back(),
+                         traj_id_tag,
+                         si->make_sym(curr_num_traj - 1)); // Zero-indexed id
         }
     }
-}
-
-bool motor_link::has_matching_wme(wme* traj) {
-    std::map<int, std::vector<wme*> >::iterator i = query_traj_map.begin();
-    for (; i != query_traj_map.end(); i++) {
-        std::vector<wme*>::iterator j = i->second.begin();
-        for (; j != i->second.end(); j++) {
-            if (traj == *j) return true;
-        }
-    }
-    return false;
 }

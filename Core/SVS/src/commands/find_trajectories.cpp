@@ -168,7 +168,7 @@ command_table_entry* find_trajectories_command_entry()
 {
     command_table_entry* e = new command_table_entry();
     e->name = "find-trajectories";
-    e->description = "Find trajectories that match the given query";
+    e->description = "Finds trajectories that match the given query";
     e->parameters["target"] = "Spatial target of the trajectories { ^center ^size ^orientation ^orientation-flex }";
     e->parameters["min-number"] = "[Optional] Minimum number of trajectories to find";
     e->parameters["max-number"] = "[Optional] Maximum number of trajectories to find";
