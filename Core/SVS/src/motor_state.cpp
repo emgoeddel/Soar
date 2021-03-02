@@ -1,4 +1,5 @@
 #include "motor_state.h"
+#include <math.h>
 #include "motor.h"
 
 motor_state::motor_state(motor* m, std::string n) : mtr(m),
@@ -48,6 +49,24 @@ void motor_state::new_trajectory_callback(int id, trajectory t) {
     trajectories[id].push_back(t);
     std::cout << "Added a trajectory to set with id " << id << std::endl;
     notify_listener();
+}
+
+bool motor_state::is_start_state_for(trajectory& t) {
+    std::lock_guard<std::mutex> guard(joints_mtx);
+
+    std::vector<double>& wp = t.waypoints[0];
+
+    std::vector<std::string>::iterator i = t.joints.begin();
+    int j_ind = 0;
+    for (; i != t.joints.end(); i++) {
+        // XXX Fix magic number in this threshold
+        if (fabs(wp[j_ind] - joints[*i]) > 0.01) {
+            return false;
+        }
+        j_ind++;
+    }
+
+    return true;
 }
 
 void motor_state::set_joints(std::map<std::string, double> j) {
@@ -103,18 +122,20 @@ void motor_state::remove_listener() {
     listener = NULL;
 }
 
-bool motor_state::match_trajectory(wme* traj_wme, trajectory& out) {
-    if (!listener) {
-        std::cout << "Error: Motor state has no listener." << std::endl;
-        return false;
-    }
-
-    if (true) {
-        std::cout << "Error: Motor state does not have access to selected trajectory."
+bool motor_state::match_trajectory(int set_id, int traj_id, trajectory& out) {
+    if (trajectories.count(set_id) == 0) {
+        std::cout << "Error: Motor state does not have a set with id " << set_id
                   << std::endl;
         return false;
     }
 
+    if (trajectories[set_id].size() <= traj_id) {
+        std::cout << "Error: Motor state does not have a trajectory in set " << set_id
+                  << " with id " << traj_id << std::endl;
+        return false;
+    }
+
+    out = trajectories[set_id][traj_id];
     return true;
 }
 

@@ -46,26 +46,46 @@ private:
             return false;
         }
 
+        // Get the set-id from the command and error out if it's not present
         wme* set_wme;
+        int set_id;
         if (!si->find_child_wme(root, "set-id", set_wme)) {
             set_status("no set-id found");
             return false;
+        } else {
+            double tmp;
+            si->get_const_attr(root, "set-id", tmp);
+            set_id = (int) tmp;
         }
+
+        // Get the trajectory-id from the command and error out if it's not present
         wme* traj_id_wme;
+        int traj_id;
         if (!si->find_child_wme(root, "trajectory-id", traj_id_wme)) {
             set_status("no trajectory-id found");
             return false;
+        } else {
+            double tmp;
+            si->get_const_attr(root, "trajectory-id", tmp);
+            traj_id = (int) tmp;
         }
-        // Compare to the trajectories in the set and figure out which one this
-        // refers to
+
+        // Use ids to figure out which underlying trajectory this
         trajectory t;
-        // if (!ms->match_trajectory(traj_wme, t)) {
-        //     set_status("no corresponding trajectory in set");
-        //     return false;
-        // }
+        if (!ms->match_trajectory(set_id, traj_id, t)) {
+            set_status("no corresponding trajectory in set");
+            return false;
+        }
 
         // Add check that trajectory's first state is pretty close to current
         // joint state.
+        if (!ms->is_start_state_for(t)) {
+            set_status("joint state does not match trajectory start");
+            return false;
+        }
+
+        std::cout << "Executing trajectory " << traj_id << " from set " << set_id
+                  << std::endl;
 
         return true;
     }

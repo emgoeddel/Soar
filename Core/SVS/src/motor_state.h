@@ -40,6 +40,8 @@ public:
     //void search_finished_callback(int id);
     int num_trajectories(int query_id) { return trajectories[query_id].size(); }
 
+    bool is_start_state_for(trajectory& t);
+
     //// Joint state tracking ////
     void set_joints(std::map<std::string, double> j);
     std::map<std::string, double> get_joints();
@@ -58,7 +60,7 @@ public:
     void set_listener(motor_link* ml);
     void remove_listener();
 
-    bool match_trajectory(wme* traj_wme, trajectory& out);
+    bool match_trajectory(int set_id, int traj_id, trajectory& out);
 
 private:
     void notify_listener();
