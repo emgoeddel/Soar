@@ -15,7 +15,8 @@ const std::string ros_interface::IMAGE_NAME = "image";
 const std::string ros_interface::OBJECTS_NAME = "objects";
 
 ros_interface::ros_interface(svs* sp)
-    : image_source("none")
+    : image_source("none"),
+      axn_client(n, "/arm_controller/follow_joint_trajectory", true)
 {
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
@@ -48,6 +49,10 @@ ros_interface::ros_interface(svs* sp)
     models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::models_callback, this);
     // Same for the joint states
     joints_sub = n.subscribe("/joint_states", 5, &ros_interface::joints_callback, this);
+
+    // Make sure the action client can connect to the server
+    axn_client.waitForServer();
+    ROS_INFO("Joint trajectory action server started.");
 }
 
 ros_interface::~ros_interface() {

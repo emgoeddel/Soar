@@ -11,6 +11,8 @@
 #include <pcl/point_types.h>
 #include "gazebo_msgs/ModelStates.h"
 #include "sensor_msgs/JointState.h"
+#include <actionlib/client/simple_action_client.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
 
 #include "mat.h"
 #include "cliproxy.h"
@@ -80,6 +82,8 @@ private:
     ros::Subscriber pc_sub;
     std::string image_source;
     ros::AsyncSpinner* spinner;
+
+    actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> axn_client;
 
     std::string robot_desc;
     std::string robot_name;
