@@ -139,7 +139,7 @@ bool motor_state::match_trajectory(int set_id, int traj_id, trajectory& out) {
     std::cout << "Found a matching trajectory with length "
               << trajectories[set_id][traj_id].length
               << std::endl;
-    out.copy_from(trajectories[set_id][traj_id]);
+    out = trajectories[set_id][traj_id];
     return true;
 }
 

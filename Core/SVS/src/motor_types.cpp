@@ -3,14 +3,6 @@
 #include "motor_types.h"
 #include "motor.h"
 
-void trajectory::copy_from(trajectory& other) {
-    length = other.length;
-    frame = other.frame;
-    joints = other.joints;
-    waypoints = other.waypoints;
-    times = other.times;
-}
-
 void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to) {
     to.header.frame_id = from.frame;
     to.joint_names = from.joints;

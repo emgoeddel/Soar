@@ -95,7 +95,7 @@ bool ros_interface::execution_done() {
 }
 
 std::string ros_interface::execution_result() {
-    return axn_client.getState().getText();
+    return axn_client.getState().toString();
 }
 
 // SGEL helper functions
