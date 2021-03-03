@@ -52,7 +52,7 @@ ros_interface::ros_interface(svs* sp)
 
     // Make sure the action client can connect to the server
     axn_client.waitForServer();
-    ROS_INFO("Joint trajectory action server started.");
+    ROS_INFO("Connected to joint trajectory action server.");
 }
 
 ros_interface::~ros_interface() {
@@ -80,6 +80,13 @@ void ros_interface::start_ros() {
 void ros_interface::stop_ros() {
     if (spinner) spinner->stop();
     image_source = "none";
+}
+
+bool ros_interface::send_trajectory(trajectory& t) {
+    control_msgs::FollowJointTrajectoryGoal goal_msg;
+    to_ros_msg(t, goal_msg.trajectory);
+    axn_client.sendGoal(goal_msg);
+    return true;
 }
 
 // SGEL helper functions

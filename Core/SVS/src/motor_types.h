@@ -4,7 +4,7 @@
 #ifdef ENABLE_ROS
 
 #include <sstream>
-#include "moveit_msgs/RobotTrajectory.h"
+#include "trajectory_msgs/JointTrajectory.h"
 
 #include "mat.h"
 
@@ -76,8 +76,8 @@ struct trajectory {
     std::vector<double> times; // time from start of each waypoint
 };
 
-void to_ros_msg(trajectory& from, moveit_msgs::RobotTrajectory& to);
-void from_ros_msg(moveit_msgs::RobotTrajectory& from, trajectory& to);
+void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to);
+void from_ros_msg(trajectory_msgs::JointTrajectory& from, trajectory& to);
 
 #endif
 #endif

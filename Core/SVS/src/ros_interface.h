@@ -16,6 +16,7 @@
 
 #include "mat.h"
 #include "cliproxy.h"
+#include "motor_types.h"
 
 class svs;
 
@@ -45,6 +46,8 @@ public:
     static void init_ros();
     void start_ros();
     void stop_ros();
+
+    bool send_trajectory(trajectory& t);
 
     std::string get_image_source() { return image_source; }
     std::string get_robot_desc() { return robot_desc; }

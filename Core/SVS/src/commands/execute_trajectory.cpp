@@ -13,6 +13,7 @@ public:
                                                                  root(root),
                                                                  parsed(false) {
         si = state->get_svs()->get_soar_interface();
+        ri = state->get_svs()->get_ros_interface();
         ms = state->get_motor_state();
     }
 
@@ -86,11 +87,13 @@ private:
 
         std::cout << "Executing trajectory " << traj_id << " from set " << set_id
                   << std::endl;
+        ri->send_trajectory(t);
 
         return true;
     }
 
     soar_interface* si;
+    ros_interface* ri;
     motor_state* ms;
     Symbol* root;
 
