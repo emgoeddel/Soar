@@ -47,7 +47,8 @@ std::vector<int> motor_state::get_query_ids() {
 
 void motor_state::new_trajectory_callback(int id, trajectory t) {
     trajectories[id].push_back(t);
-    std::cout << "Added a trajectory to set with id " << id << std::endl;
+    std::cout << "Added a trajectory of length " << trajectories[id].back().length
+              << " to set with id " << id << std::endl;
     notify_listener();
 }
 
@@ -135,7 +136,10 @@ bool motor_state::match_trajectory(int set_id, int traj_id, trajectory& out) {
         return false;
     }
 
-    out = trajectories[set_id][traj_id];
+    std::cout << "Found a matching trajectory with length "
+              << trajectories[set_id][traj_id].length
+              << std::endl;
+    out.copy_from(trajectories[set_id][traj_id]);
     return true;
 }
 

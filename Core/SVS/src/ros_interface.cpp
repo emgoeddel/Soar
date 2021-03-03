@@ -82,11 +82,20 @@ void ros_interface::stop_ros() {
     image_source = "none";
 }
 
-bool ros_interface::send_trajectory(trajectory& t) {
+void ros_interface::send_trajectory(trajectory& t) {
     control_msgs::FollowJointTrajectoryGoal goal_msg;
     to_ros_msg(t, goal_msg.trajectory);
+    std::cout << "Message has length " << goal_msg.trajectory.points.size()
+              << std::endl;
     axn_client.sendGoal(goal_msg);
-    return true;
+}
+
+bool ros_interface::execution_done() {
+    return axn_client.getState().isDone();
+}
+
+std::string ros_interface::execution_result() {
+    return axn_client.getState().getText();
 }
 
 // SGEL helper functions

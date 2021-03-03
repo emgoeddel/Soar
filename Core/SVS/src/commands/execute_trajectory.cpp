@@ -26,13 +26,23 @@ public:
             parsed = true;
             // If parsed successfully, set the status to "running"
             if (parse()) {
-                //ms->new_query(id, search_query);
-                set_status("running");
+                last_status = "running";
+                set_status(last_status);
             } else {
                 // Error message already set in parse() method
                 return false;
             }
+            return true;
         }
+
+        bool finished = ri->execution_done();
+        if (finished && last_status == "running") {
+            std::cout << "Trajectory finished executing!" << std::endl;
+            last_status = "finished";
+            set_status(last_status);
+            si->make_wme(root, "result", ri->execution_result());
+        }
+
         return true;
     }
 
@@ -86,7 +96,7 @@ private:
         }
 
         std::cout << "Executing trajectory " << traj_id << " from set " << set_id
-                  << std::endl;
+                  << " with length " << t.length << std::endl;
         ri->send_trajectory(t);
 
         return true;
@@ -98,6 +108,7 @@ private:
     Symbol* root;
 
     bool parsed;
+    std::string last_status;
 };
 
 command* _make_execute_trajectory_command_(svs_state* state, Symbol* root)

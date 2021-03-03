@@ -47,7 +47,9 @@ public:
     void start_ros();
     void stop_ros();
 
-    bool send_trajectory(trajectory& t);
+    void send_trajectory(trajectory& t);
+    bool execution_done();
+    std::string execution_result();
 
     std::string get_image_source() { return image_source; }
     std::string get_robot_desc() { return robot_desc; }

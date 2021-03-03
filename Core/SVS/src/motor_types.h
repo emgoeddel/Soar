@@ -74,6 +74,8 @@ struct trajectory {
     std::vector<std::string> joints; // in-order names of joints
     std::vector<std::vector<double> > waypoints; // position at each waypoint
     std::vector<double> times; // time from start of each waypoint
+
+    void copy_from(trajectory& other);
 };
 
 void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to);

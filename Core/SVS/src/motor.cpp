@@ -114,7 +114,7 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
     }
 
     t.length = sv.size();
-    return trajectory();
+    return t;
 }
 
 motor::motor(std::string urdf) {
