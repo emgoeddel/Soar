@@ -168,6 +168,9 @@ motor_link::motor_link(soar_interface* si, Symbol* ln, motor_state* m)
     update_desc();
 }
 
+
+motor_link::~motor_link() {}
+
 void motor_link::update_desc() {
     // Update joint state information
     if (joints_type != ms->get_joints_type()) {

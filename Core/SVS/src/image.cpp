@@ -112,6 +112,8 @@ image_descriptor::image_descriptor(soar_interface* si, Symbol* ln, image_base* i
     update_desc();
 }
 
+image_descriptor::~image_descriptor() {}
+
 // Updates the wmes if something has changed in image that this
 // is listening to
 void image_descriptor::update_desc() {

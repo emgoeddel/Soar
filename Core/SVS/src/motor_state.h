@@ -6,7 +6,6 @@
 #include <string>
 #include <map>
 #include <list>
-#include <memory>
 #include <mutex>
 
 #include "mat.h"
@@ -65,8 +64,8 @@ public:
 private:
     void notify_listener();
 
-    std::shared_ptr<motor> mtr;
-    std::shared_ptr<robot_model> model;
+    motor* mtr;
+    robot_model* model;
 
     std::string state_name;
 

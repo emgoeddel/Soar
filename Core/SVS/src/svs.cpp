@@ -192,12 +192,12 @@ svs_state::svs_state(Symbol* state, svs_state* parent)
 svs_state::~svs_state()
 {
     command_set_it i, iend;
-    
+
     for (i = curr_cmds.begin(), iend = curr_cmds.end(); i != iend; ++i)
     {
         delete i->cmd;
     }
-    
+
     if (scn)
     {
         svsp->get_drawer()->delete_scene(scn->get_name());
@@ -205,10 +205,12 @@ svs_state::~svs_state()
     }
 
     if (img) {
+        delete imwme;
         delete img;
     }
 
     if (ms) {
+        delete mowme;
         delete ms;
     }
 }
@@ -250,8 +252,8 @@ void svs_state::init()
         if (parent) {
             img->copy_from(parent->img);
         }
+        imwme = new image_descriptor(si, img_link, img);
     }
-    imwme = new image_descriptor(si, img_link, img);
 
     if (!ms) {
         ms = new motor_state(svsp->get_motor(), name);
@@ -259,8 +261,8 @@ void svs_state::init()
         if (parent) {
             ms->copy_from(parent->ms);
         }
+        mowme = new motor_link(si, mtr_link, ms);
     }
-    mowme = new motor_link(si, mtr_link, ms);
 }
 
 void svs_state::update_scene_num()

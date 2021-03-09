@@ -58,6 +58,7 @@ ros_interface::ros_interface(svs* sp)
 
 ros_interface::~ros_interface() {
     stop_ros();
+    if(spinner) delete spinner;
 }
 
 // Static funtion to simply call ros::init, which MUST be called

@@ -57,7 +57,8 @@ struct link_info {
 
 class robot_model {
 public:
-    robot_model() : name("none") {};
+    robot_model();
+    ~robot_model();
 
     bool init(std::string robot_desc);
     std::string robot_info();

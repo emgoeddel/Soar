@@ -30,8 +30,8 @@ private:
     int query_id;
     motor_query query;
 
-    std::shared_ptr<robot_model> model;
-    std::shared_ptr<motor_state> ms;
+    robot_model* model;
+    motor_state* ms;
     std::string joint_group;
 
     ompl::geometric::SimpleSetup* ompl_ss;

@@ -8,6 +8,14 @@
 #include "geometric_shapes/shapes.h"
 #include "geometric_shapes/mesh_operations.h"
 
+robot_model::robot_model() : name("none"),
+                             ik_solver(NULL),
+                             fk_solver(NULL) {}
+
+robot_model::~robot_model() {
+    if (ik_solver) delete ik_solver;
+    if (fk_solver) delete fk_solver;
+}
 
 bool robot_model::init(std::string robot_desc) {
     urdf::Model urdf;
