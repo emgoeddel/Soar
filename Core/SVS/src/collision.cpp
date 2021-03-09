@@ -84,7 +84,7 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
         fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
         vec3 pos;
         t->second.position(pos);
-        fcl::Vec3f fcl_vec(pos[0], pos[1], pos[3]);
+        fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
         fcl::BVHModel<fcl::OBBRSS>* geom = &(model->all_links[t->first].collision_model);

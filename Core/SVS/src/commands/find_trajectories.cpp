@@ -82,7 +82,8 @@ private:
         std::cout << "Parsing a find-trajectories command!!" << std::endl;
 
         // ^min-number and ^max-number (can't read them as ints from WM)
-        double min_d, max_d;
+        double min_d = 0;
+        double max_d = 0;
         si->get_const_attr(root, "min-number", min_d);
         si->get_const_attr(root, "max-number", max_d);
         if (min_d > 0) search_query.min_num = (int) min_d;

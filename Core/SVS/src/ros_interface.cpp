@@ -16,6 +16,7 @@ const std::string ros_interface::OBJECTS_NAME = "objects";
 
 ros_interface::ros_interface(svs* sp)
     : image_source("none"),
+      spinner(NULL),
       axn_client(n, "/arm_controller/follow_joint_trajectory", true)
 {
     svs_ptr = sp;
