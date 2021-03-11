@@ -10,7 +10,7 @@ class cliproxy
     public:
         virtual ~cliproxy();
         void proxy_use(const std::string& path, const std::vector<std::string>& args, std::ostream& os);
-        bool temporary() const
+        virtual bool temporary() const
         {
             return false;
         }
