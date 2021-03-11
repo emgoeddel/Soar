@@ -22,6 +22,16 @@ ros_interface::ros_interface(svs* sp)
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");
 
+    // Pull the robot description from the params server and save
+    if (!n.getParam("/robot_description", robot_desc)) {
+        ROS_WARN("Can't find the robot_description parameter.");
+    }
+    urdf::Model urdf;
+    if (!urdf.initString(robot_desc)) {
+        ROS_WARN("Failed to parse URDF.");
+    }
+    robot_name = urdf.name_;
+
     // Set up the maps needed to track which inputs are enabled/disabled
     // and change this via command line
     update_inputs[IMAGE_NAME] = false;
@@ -35,16 +45,6 @@ ros_interface::ros_interface(svs* sp)
     disable_fxns[IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_image, this);
     disable_fxns[OBJECTS_NAME] = std::bind(&ros_interface::stop_objects, this);
     disable_fxns[robot_name] = std::bind(&ros_interface::stop_robot, this);
-
-    // Pull the robot description from the params server and save
-    if (!n.getParam("/robot_description", robot_desc)) {
-        ROS_WARN("Can't find the robot_description parameter.");
-    }
-    urdf::Model urdf;
-    if (!urdf.initString(robot_desc)) {
-        ROS_WARN("Failed to parse URDF.");
-    }
-    robot_name = urdf.name_;
 
     // Stay subscribed to the gazebo models for the entire runtime
     models_sub = n.subscribe("gazebo/model_states", 5, &ros_interface::models_callback, this);
@@ -339,7 +339,6 @@ void ros_interface::enable(const std::vector<std::string>& args, std::ostream& o
         return;
     }
 
-    // XXX "enable fetch" does not appear to be working!
     if (!update_inputs[args[0]]) enable_fxns[args[0]]();
     os << args[0] << " ROS input enabled" << std::endl;
 }
