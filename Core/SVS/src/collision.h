@@ -49,6 +49,7 @@ public:
     collision_checker(const ompl::base::SpaceInformationPtr& si,
                       robot_model* m,
                       std::string group);
+    ~collision_checker();
 
     bool isValid(const ompl::base::State* state) const override;
 

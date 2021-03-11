@@ -31,11 +31,17 @@ bool collision_function(fcl::CollisionObject* o1,
 }
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si)
-    : ompl::base::StateValidityChecker(si)
+    : ompl::base::StateValidityChecker(si),
+    model(NULL),
+    robot(NULL),
+    world(NULL)
 {}
 
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si)
-    : ompl::base::StateValidityChecker(si)
+    : ompl::base::StateValidityChecker(si),
+    model(NULL),
+    robot(NULL),
+    world(NULL)
 {}
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si,
@@ -60,6 +66,11 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
 
     robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
+}
+
+collision_checker::~collision_checker() {
+    if (robot) delete robot;
+    if (world) delete world;
 }
 
 bool collision_checker::isValid(const ompl::base::State* state) const {
