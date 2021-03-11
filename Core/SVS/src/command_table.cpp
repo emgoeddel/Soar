@@ -54,6 +54,14 @@ command_table::command_table()
     add(execute_trajectory_command_entry());
 }
 
+void command_table::del_entries() {
+    std::map<std::string, command_table_entry*>::iterator i = table.begin();
+    for (; i != table.end(); i++) {
+        delete i->second;
+    }
+    table.clear();
+}
+
 command* command_table::make_command(svs_state* state, wme* w)
 {
     string name;

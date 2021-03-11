@@ -24,7 +24,7 @@ class filter_table_entry : public cliproxy
         filter_table_entry();
         
         filter* (*create)(Symbol*, soar_interface*, scene*, filter_input*);
-        
+
         std::string name;
         std::string description;
         std::map<std::string, std::string> parameters;
@@ -36,6 +36,7 @@ class filter_table : public cliproxy
 {
     public:
         friend filter_table& get_filter_table();
+        void del_entries();
         
         filter* make_filter(const std::string& pred, Symbol* root, soar_interface* si, scene* scn, filter_input* input) const;
         

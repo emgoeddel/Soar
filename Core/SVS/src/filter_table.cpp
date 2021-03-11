@@ -13,6 +13,14 @@ filter_table& get_filter_table()
     return inst;
 }
 
+void filter_table::del_entries() {
+    std::map<std::string, filter_table_entry*>::iterator i = t.begin();
+    for (; i != t.end(); i++) {
+        delete i->second;
+    }
+    t.clear();
+}
+
 // filters/node.cpp
 filter_table_entry* node_filter_entry();
 filter_table_entry* all_nodes_filter_entry();

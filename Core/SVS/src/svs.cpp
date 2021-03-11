@@ -520,6 +520,9 @@ svs::~svs()
         delete scn_cache;
     }
 
+    get_command_table().del_entries();
+    get_filter_table().del_entries();
+
     delete si;
     delete ri;
     delete mtr;

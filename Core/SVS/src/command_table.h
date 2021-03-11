@@ -18,7 +18,7 @@ class command_table_entry : public cliproxy
     public:
         command_table_entry();
         command* (*create)(svs_state*, Symbol*);
-        
+
         std::string name;
         std::string description;
         std::map<std::string, std::string> parameters;
@@ -34,9 +34,8 @@ class command_table : public cliproxy
 {
     public:
         command_table();
-        
+        void del_entries();
         command* make_command(svs_state* state, wme* w);
-        
     private:
         void add(command_table_entry* e);
         void proxy_get_children(std::map<std::string, cliproxy*>& c);
