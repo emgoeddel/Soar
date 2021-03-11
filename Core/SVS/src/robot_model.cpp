@@ -140,9 +140,12 @@ bool robot_model::init(std::string robot_desc) {
                                          mesh_obj->triangles[3*t + 1],
                                          mesh_obj->triangles[3*t + 2]);
         }
-        all_links[n].collision_model.beginModel();
-        all_links[n].collision_model.addSubModel(points, triangles);
-        all_links[n].collision_model.endModel();
+
+        all_links[n].collision_model = std::make_shared<fcl::BVHModel<fcl::OBBRSS> >();
+        all_links[n].collision_model->beginModel();
+        all_links[n].collision_model->addSubModel(points, triangles);
+        all_links[n].collision_model->endModel();
+
         delete mesh_obj;
     }
 

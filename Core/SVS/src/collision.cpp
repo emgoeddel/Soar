@@ -98,11 +98,8 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
         fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
-        fcl::BVHModel<fcl::OBBRSS>* geom = &(model->all_links[t->first].collision_model);
-        std::shared_ptr<fcl::CollisionGeometry> cg =
-            std::shared_ptr<fcl::CollisionGeometry>(geom);
-
-        obj_ptrs.push_back(new fcl::CollisionObject(cg, fcl_xf));
+        obj_ptrs.push_back(new fcl::CollisionObject(model->all_links[t->first].collision_model,
+                                                    fcl_xf));
         obj_datas.push_back(new object_data());
         obj_datas.back()->name = t->first;
         obj_datas.back()->allowed_collisions = model->allowed[t->first];
@@ -110,13 +107,23 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
         robot->registerObject(obj_ptrs.back());
     }
 
-
     collision_data cd;
     cd.request = fcl::CollisionRequest();
     cd.request.enable_contact = false;
     cd.request.enable_cost = false;
     cd.result = fcl::CollisionResult();
     robot->collide(&cd, collision_function);
+
+    std::vector<fcl::CollisionObject*>::iterator o = obj_ptrs.begin();
+    for (; o != obj_ptrs.end(); o++) {
+        delete *o;
+    }
+    std::vector<object_data*>::iterator d = obj_datas.begin();
+    for (; d != obj_datas.end(); d++) {
+        delete *d;
+    }
+    obj_datas.clear();
+
     if (cd.result.isCollision()) {
         //std::cout << "Result: COLLISION" << std::endl;
         return false;

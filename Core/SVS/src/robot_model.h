@@ -5,6 +5,7 @@
 
 #include <map>
 #include <set>
+#include <memory>
 #include "mat.h"
 
 #include <fcl/BVH/BVH_model.h>
@@ -44,7 +45,7 @@ struct link_info {
 
     transform3 collision_origin;
     ptlist vertices;
-    fcl::BVHModel<fcl::OBBRSS> collision_model;
+    std::shared_ptr<fcl::BVHModel<fcl::OBBRSS> >collision_model;
 };
 
 /*

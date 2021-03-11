@@ -71,6 +71,9 @@ void planning_problem::find_one() {
     std::cout << "Current ee is " << cur_pos[0] << ", " << cur_pos[1] << ", "
               << cur_pos[2] << std::endl;
     std::vector<double> goal_vec = model->solve_ik(query.soar_query.target_center);
+    if (goal_vec.empty()) { // Didn't find an IK solution
+        return;
+    }
 
     ompl::base::ScopedState<> goal(ompl_ss->getStateSpace());
     for (int i = 0; i < goal_vec.size(); i++) {
