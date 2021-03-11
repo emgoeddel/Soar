@@ -8,8 +8,7 @@ planning_problem::planning_problem(int qid,
                                    motor_state* msp,
                                    robot_model* m) : query_id(qid),
                                                      query(q),
-                                                     ms(msp),
-                                                     model(m)
+                                                     model(m),                                                                                    ms(msp)
 {
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->default_joint_group;
@@ -56,6 +55,10 @@ planning_problem::planning_problem(int qid,
 
     std::cout << "Set up to plan for joint group " << joint_group.c_str()
               << ", DOF = " << dof << std::endl;
+}
+
+planning_problem::~planning_problem() {
+    if (ompl_ss) delete ompl_ss; // Deletes the collision checker?
 }
 
 void planning_problem::find_one() {

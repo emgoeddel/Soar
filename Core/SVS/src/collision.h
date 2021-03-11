@@ -54,7 +54,7 @@ public:
 
 private:
     std::vector<std::string> joint_names;
-    std::shared_ptr<robot_model> model;
+    robot_model* model;
 
     fcl::BroadPhaseCollisionManager* robot;
     fcl::BroadPhaseCollisionManager* world;

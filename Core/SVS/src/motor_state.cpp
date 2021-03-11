@@ -161,9 +161,9 @@ motor_link::motor_link(soar_interface* si, Symbol* ln, motor_state* m)
 {
     m->set_listener(this);
 
-    state_sym = si->get_wme_val(si->make_id_wme(motor_sym, si->make_sym(joints_tag)));
+    state_sym = si->get_wme_val(si->make_id_wme(motor_sym, joints_tag));
     joints_type_wme = si->make_wme(state_sym, type_tag, joints_type);
-    traj_sets_sym = si->get_wme_val(si->make_id_wme(motor_sym, si->make_sym(traj_sets_tag)));
+    traj_sets_sym = si->get_wme_val(si->make_id_wme(motor_sym, traj_sets_tag));
 
     update_desc();
 }

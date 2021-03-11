@@ -22,6 +22,8 @@
 class planning_problem {
 public:
     planning_problem(int qid, motor_query q, motor_state* msp, robot_model* m);
+    ~planning_problem();
+
     void find_one();
 
 private:

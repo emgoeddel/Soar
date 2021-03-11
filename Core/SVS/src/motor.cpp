@@ -7,6 +7,13 @@ motor::motor(std::string urdf) {
     std::cout << model.robot_info();
 }
 
+motor::~motor() {
+    for (std::vector<planning_problem*>::iterator i = ongoing.begin();
+         i != ongoing.end(); i++) {
+        delete *i;
+    }
+}
+
 robot_model* motor::get_model_ptr() {
     if (model.name == "none") {
         std::cout << "Error: Robot model not initialized" << std::endl;
@@ -27,8 +34,8 @@ std::vector<std::string> motor::get_link_names() {
 }
 
 bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {
-    ongoing.push_back(planning_problem(id, q, msp, &model));
-    ongoing.back().find_one();
+    ongoing.push_back(new planning_problem(id, q, msp, &model));
+    ongoing.back()->find_one();
     return true;
 }
 

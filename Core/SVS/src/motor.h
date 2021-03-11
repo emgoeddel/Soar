@@ -18,6 +18,7 @@
 class motor {
 public:
     motor(std::string urdf);
+    ~motor();
 
     robot_model* get_model_ptr();
     std::vector<std::string> get_link_names();
@@ -28,7 +29,7 @@ public:
 
 private:
     robot_model model;
-    std::vector<planning_problem> ongoing;
+    std::vector<planning_problem*> ongoing;
 };
 
 #endif
