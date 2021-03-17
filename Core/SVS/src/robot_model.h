@@ -45,7 +45,7 @@ struct link_info {
 
     transform3 collision_origin;
     ptlist vertices;
-    std::shared_ptr<fcl::BVHModel<fcl::OBBRSS> >collision_model;
+    std::shared_ptr<fcl::BVHModel<fcl::OBBRSS> > collision_model;
 };
 
 /*
@@ -60,29 +60,32 @@ class robot_model {
 public:
     robot_model();
     ~robot_model();
-
     bool init(std::string robot_desc);
+
+    // Data access
     std::string robot_info();
+
+    std::string get_robot_name();
+
+    std::string get_default_joint_group();
+    void set_default_joint_group(std::string jg);
+
+    std::vector<std::string> get_joint_group(std::string grp_name);
+    int get_joint_group_size(std::string grp_name);
+
+    joint_type get_joint_type(std::string joint_name);
+    double get_joint_min(std::string joint_name);
+    double get_joint_max(std::string joint_name);
+
+    std::set<std::string> get_links_of_interest();
+
+    std::shared_ptr<fcl::BVHModel<fcl::OBBRSS> > get_collision_model(std::string link_name);
+    std::set<std::string> get_allowed_collisions(std::string link_name);
+
+    // Kinematics
     std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints);
     std::vector<double> solve_ik(vec3 ee_pt);
     vec3 end_effector_pos(std::map<std::string, double> joints);
-
-    std::string name;
-    // root_link is assumed to be one of the links_of_interest
-    std::string root_link;
-    std::string default_joint_group;
-    std::string end_effector;
-
-    // link information
-    std::map<std::string, link_info> all_links;
-    std::set<std::string> links_of_interest;
-
-    // joint information
-    std::map<std::string, joint_info> all_joints;
-    std::map<std::string, std::vector<std::string> > joint_groups;
-
-    // allowed collisions
-    std::map<std::string, std::set<std::string> > allowed;
 
 private:
     void calculate_link_xform(std::string link_name,
@@ -90,6 +93,37 @@ private:
                               std::map<std::string, transform3>& out);
     transform3 compose_joint_xform(std::string joint_name, double pos);
     std::vector<double> random_valid_pose(std::string group);
+
+    std::mutex name_mtx;
+    std::string name;
+
+    // root_link is assumed to be one of the links_of_interest
+    std::mutex root_mtx;
+    std::string root_link;
+
+    std::mutex default_grp_mtx;
+    std::string default_joint_group;
+
+    // XXX mtx
+    std::string end_effector;
+
+    // link information
+    std::mutex links_mtx;
+    std::map<std::string, link_info> all_links;
+
+    std::mutex interest_mtx;
+    std::set<std::string> links_of_interest;
+
+    // joint information
+    std::mutex joints_mtx;
+    std::map<std::string, joint_info> all_joints;
+
+    std::mutex grps_mtx;
+    std::map<std::string, std::vector<std::string> > joint_groups;
+
+    // allowed collisions
+    std::mutex allowed_mtx;
+    std::map<std::string, std::set<std::string> > allowed;
 
     KDL::Tree kin_tree;
     KDL::Chain ik_chain;

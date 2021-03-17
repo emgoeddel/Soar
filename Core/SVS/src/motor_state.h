@@ -3,6 +3,7 @@
 
 #ifdef ENABLE_ROS
 
+#include <memory>
 #include <string>
 #include <map>
 #include <list>
@@ -10,7 +11,6 @@
 
 #include "mat.h"
 #include "soar_interface.h"
-#include "robot_model.h"
 #include "motor_types.h"
 
 /*
@@ -27,7 +27,7 @@ class motor_link;
 
 class motor_state {
 public:
-    motor_state(motor* m, std::string n);
+    motor_state(std::shared_ptr<motor> m, std::string n);
     void copy_from(motor_state* other);
 
     //// Trajectory planning ////
@@ -53,7 +53,7 @@ public:
 
     std::map<std::string, transform3> get_link_transforms();
 
-    std::string robot_name() { return model->name; }
+    std::string robot_name();
 
     //// Connection to motor_link ////
     void set_listener(motor_link* ml);
@@ -64,8 +64,7 @@ public:
 private:
     void notify_listener();
 
-    motor* mtr;
-    robot_model* model;
+    std::shared_ptr<motor> mtr;
 
     std::string state_name;
 

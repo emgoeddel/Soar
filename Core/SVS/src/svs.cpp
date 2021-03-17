@@ -503,8 +503,8 @@ svs::svs(agent* a)
     ros_interface::init_ros();
     ri = new ros_interface(this);
     ri->start_ros();
-    mtr = new motor(ri->get_robot_desc());
 #endif
+    mtr = std::make_shared<motor>(ri->get_robot_desc());
 }
 
 bool svs::filter_dirty_bit = true;
@@ -525,7 +525,6 @@ svs::~svs()
 
     delete si;
     delete ri;
-    delete mtr;
     delete draw;
 }
 

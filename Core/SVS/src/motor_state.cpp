@@ -2,10 +2,9 @@
 #include <math.h>
 #include "motor.h"
 
-motor_state::motor_state(motor* m, std::string n) : mtr(m),
-                                                    model(mtr->get_model_ptr()),
-                                                    state_name(n),
-                                                    joints_type("none")
+motor_state::motor_state(std::shared_ptr<motor> m, std::string n) : mtr(m),
+                                                                    state_name(n),
+                                                                    joints_type("none")
 {
     base_xform = transform3::identity();
 }
@@ -112,7 +111,11 @@ std::map<std::string, transform3> motor_state::get_link_transforms() {
     std::lock_guard<std::mutex> guard1(joints_mtx);
     std::lock_guard<std::mutex> guard2(xform_mtx);
 
-    return model->link_transforms(joints);
+    return mtr->get_link_transforms_at(joints);
+}
+
+std::string motor_state::robot_name() {
+    return mtr->get_robot_name();
 }
 
 void motor_state::set_listener(motor_link* ml) {

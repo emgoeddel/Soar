@@ -6,27 +6,27 @@
 planning_problem::planning_problem(int qid,
                                    motor_query q,
                                    motor_state* msp,
-                                   robot_model* m) : query_id(qid),
-                                                     query(q),
-                                                     model(m),                                                                                    ms(msp)
+                                   std::shared_ptr<robot_model> m) : query_id(qid),
+                                                                     query(q),
+                                                                     model(m),                                                                                    ms(msp)
 {
     joint_group = query.soar_query.joint_group;
-    if (joint_group == "") joint_group = m->default_joint_group;
+    if (joint_group == "") joint_group = m->get_default_joint_group();
+    joints = m->get_joint_group(joint_group);
 
     // construct vector state space based on default joint group
-    int dof = m->joint_groups[joint_group].size();
+    int dof = joints.size();
     ompl::base::StateSpacePtr space(new ompl::base::RealVectorStateSpace(dof));
 
     // set the bounds for state space based on joint limits
     ompl::base::RealVectorBounds bounds(dof);
-    std::vector<std::string>::iterator i = m->joint_groups[joint_group].begin();
     int b = 0;
-    for (; i != m->joint_groups[joint_group].end(); i++)
+    for (std::vector<std::string>::iterator i = joints.begin(); i != joints.end(); i++)
     {
         std::string j = *i;
-        if (m->all_joints[j].type != CONTINUOUS) {
-            bounds.setLow(b, m->all_joints[j].min_pos);
-            bounds.setHigh(b, m->all_joints[j].max_pos);
+        if (m->get_joint_type(j) != CONTINUOUS) {
+            bounds.setLow(b, m->get_joint_min(j));
+            bounds.setHigh(b, m->get_joint_max(j));
         } else {
             // XXX Continuous joints don't actually have bounds, what to do?
             bounds.setLow(b, -10*M_PI);
@@ -44,9 +44,8 @@ planning_problem::planning_problem(int qid,
     ompl_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
 
     ompl::base::ScopedState<> start(space);
-    std::vector<std::string>::iterator j = m->joint_groups[joint_group].begin();
     int c = 0;
-    for (; j != m->joint_groups[joint_group].end(); j++)
+    for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++)
     {
         start[c] = q.start_state[*j];
         c++;
@@ -100,8 +99,7 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
     std::vector<ompl::base::State*> sv = geom.getStates();
     trajectory t;
 
-    std::vector<std::string>::iterator j = model->joint_groups[joint_group].begin();
-    for (; j != model->joint_groups[joint_group].end(); j++) {
+    for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++) {
         t.joints.push_back(*j);
     }
 

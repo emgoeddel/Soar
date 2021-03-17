@@ -4,6 +4,7 @@
 #ifdef ENABLE_ROS
 
 #include <vector>
+#include <mutex>
 
 #include "robot_model.h"
 #include "planning_problem.h"
@@ -20,15 +21,17 @@ public:
     motor(std::string urdf);
     ~motor();
 
-    robot_model* get_model_ptr();
+    // Robot model and state queries
+    std::string get_robot_name() { return model->get_robot_name(); }
     std::vector<std::string> get_link_names();
+    std::map<std::string, transform3>
+    get_link_transforms_at(std::map<std::string, double> j);
 
-    std::string robot_name() { return model.name; }
-
+    // Motion planning
     bool new_planner_query(int id, motor_query q, motor_state* msp);
 
 private:
-    robot_model model;
+    std::shared_ptr<robot_model> model;
     std::vector<planning_problem*> ongoing;
 };
 

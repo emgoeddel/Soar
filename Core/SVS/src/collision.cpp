@@ -32,37 +32,35 @@ bool collision_function(fcl::CollisionObject* o1,
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si)
     : ompl::base::StateValidityChecker(si),
-    model(NULL),
     robot(NULL),
     world(NULL)
 {}
 
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si)
     : ompl::base::StateValidityChecker(si),
-    model(NULL),
     robot(NULL),
     world(NULL)
 {}
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si,
-                                     robot_model* m,
+                                     std::shared_ptr<robot_model> m,
                                      std::string group)
     : ompl::base::StateValidityChecker(si),
     model(m)
 {
-    joint_names = model->joint_groups[group];
+    joint_names = model->get_joint_group(group);
 
     robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
 }
 
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
-                                     robot_model* m,
+                                     std::shared_ptr<robot_model> m,
                                      std::string group)
     : ompl::base::StateValidityChecker(si),
     model(m)
 {
-    joint_names = model->joint_groups[group];
+    joint_names = model->get_joint_group(group);
 
     robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
@@ -98,11 +96,11 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
         fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
-        obj_ptrs.push_back(new fcl::CollisionObject(model->all_links[t->first].collision_model,
+        obj_ptrs.push_back(new fcl::CollisionObject(model->get_collision_model(t->first),
                                                     fcl_xf));
         obj_datas.push_back(new object_data());
         obj_datas.back()->name = t->first;
-        obj_datas.back()->allowed_collisions = model->allowed[t->first];
+        obj_datas.back()->allowed_collisions = model->get_allowed_collisions(t->first);
         obj_ptrs.back()->setUserData(obj_datas.back());
         robot->registerObject(obj_ptrs.back());
     }

@@ -6,7 +6,6 @@
 #include <ompl/base/StateValidityChecker.h>
 #include <fcl/broadphase/broadphase_dynamic_AABB_tree.h>
 #include <fcl/collision.h>
-
 #include "robot_model.h"
 
 /*
@@ -44,10 +43,10 @@ public:
     collision_checker(ompl::base::SpaceInformation* si);
     collision_checker(const ompl::base::SpaceInformationPtr& si);
     collision_checker(ompl::base::SpaceInformation* si,
-                      robot_model* m,
+                      std::shared_ptr<robot_model> m,
                       std::string group);
     collision_checker(const ompl::base::SpaceInformationPtr& si,
-                      robot_model* m,
+                      std::shared_ptr<robot_model> m,
                       std::string group);
     ~collision_checker();
 
@@ -55,7 +54,7 @@ public:
 
 private:
     std::vector<std::string> joint_names;
-    robot_model* model;
+    std::shared_ptr<robot_model> model;
 
     fcl::BroadPhaseCollisionManager* robot;
     fcl::BroadPhaseCollisionManager* world;

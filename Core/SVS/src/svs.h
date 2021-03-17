@@ -1,6 +1,7 @@
 #ifndef SVS_H
 #define SVS_H
 
+#include <memory>
 #include <vector>
 #include <map>
 #include <set>
@@ -215,7 +216,7 @@ class svs : public svs_interface, public cliproxy
        ros_interface* get_ros_interface() { return ri; }
 #endif
 
-        motor* get_motor()
+        std::shared_ptr<motor> get_motor()
         {
             return mtr;
         }
@@ -267,7 +268,7 @@ class svs : public svs_interface, public cliproxy
         std::mutex                joint_in_mtx;
         std::mutex                loc_in_mtx;
 #endif
-        motor*                    mtr;
+        std::shared_ptr<motor>    mtr;
 
         soar_interface*           si;
         std::vector<svs_state*>   state_stack;
