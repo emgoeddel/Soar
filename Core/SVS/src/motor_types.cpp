@@ -1,7 +1,6 @@
 #ifdef ENABLE_ROS
 
 #include "motor_types.h"
-#include "motor.h"
 
 void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to) {
     to.header.frame_id = from.frame;

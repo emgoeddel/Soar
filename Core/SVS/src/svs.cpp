@@ -21,7 +21,7 @@
 
 #include "symbol.h"
 
-#include "motor.h"
+#include "motor/motor.h"
 #include "motor_state.h"
 
 using namespace std;

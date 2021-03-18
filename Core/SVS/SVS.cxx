@@ -35,9 +35,6 @@
 #include "src/scene.cpp"
 #include "src/motor_types.cpp"
 #include "src/motor_state.cpp"
-#include "src/robot_model.cpp"
-#include "src/collision.cpp"
-#include "src/motor.cpp"
 #include "src/image.cpp"
 #include "src/serialize.cpp"
 #include "src/sgnode.cpp"
@@ -46,3 +43,6 @@
 #include "src/ros_interface.cpp"
 #include "src/svs.cpp"
 
+#include "src/motor/motor.cpp"
+#include "src/motor/robot_model.cpp"
+#include "src/motor/collision.cpp"

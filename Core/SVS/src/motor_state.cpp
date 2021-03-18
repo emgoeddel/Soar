@@ -1,6 +1,6 @@
 #include "motor_state.h"
 #include <math.h>
-#include "motor.h"
+#include "motor/motor.h"
 
 motor_state::motor_state(std::shared_ptr<motor> m, std::string n) : mtr(m),
                                                                     state_name(n),
