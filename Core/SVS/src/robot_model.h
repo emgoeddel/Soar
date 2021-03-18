@@ -68,7 +68,6 @@ public:
     std::string get_robot_name();
 
     std::string get_default_joint_group();
-    void set_default_joint_group(std::string jg);
 
     std::vector<std::string> get_joint_group(std::string grp_name);
     int get_joint_group_size(std::string grp_name);
@@ -94,35 +93,24 @@ private:
     transform3 compose_joint_xform(std::string joint_name, double pos);
     std::vector<double> random_valid_pose(std::string group);
 
-    std::mutex name_mtx;
+    bool initialized;
+
     std::string name;
 
     // root_link is assumed to be one of the links_of_interest
-    std::mutex root_mtx;
     std::string root_link;
-
-    std::mutex default_grp_mtx;
     std::string default_joint_group;
-
-    // XXX mtx
     std::string end_effector;
 
     // link information
-    std::mutex links_mtx;
     std::map<std::string, link_info> all_links;
-
-    std::mutex interest_mtx;
     std::set<std::string> links_of_interest;
 
     // joint information
-    std::mutex joints_mtx;
     std::map<std::string, joint_info> all_joints;
-
-    std::mutex grps_mtx;
     std::map<std::string, std::vector<std::string> > joint_groups;
 
     // allowed collisions
-    std::mutex allowed_mtx;
     std::map<std::string, std::set<std::string> > allowed;
 
     KDL::Tree kin_tree;
