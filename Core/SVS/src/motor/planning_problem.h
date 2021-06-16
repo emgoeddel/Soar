@@ -3,6 +3,8 @@
 
 #ifdef ENABLE_ROS
 
+#include <thread>
+
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 
@@ -29,6 +31,7 @@ public:
     void find_one();
 
 private:
+    void run_planner();
     trajectory path_to_trajectory(ompl::geometric::PathGeometric& geom);
 
     int query_id;
@@ -39,6 +42,7 @@ private:
     std::string joint_group;
     std::vector<std::string> joints;
 
+    std::thread planner_thread;
     ompl::geometric::SimpleSetup* ompl_ss;
     collision_checker* cc;
 };

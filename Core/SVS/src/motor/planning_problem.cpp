@@ -57,11 +57,16 @@ planning_problem::planning_problem(int qid,
 }
 
 planning_problem::~planning_problem() {
+    planner_thread.join();
     if (ompl_ss) delete ompl_ss; // Deletes the collision checker?
 }
 
 void planning_problem::find_one() {
     std::cout << "Using RRT-Connect to find ONE trajectory." << std::endl;
+    planner_thread = std::thread(&planning_problem::run_planner, this);
+}
+
+void planning_problem::run_planner() {
     ompl::geometric::RRTConnect* rrtc =
         new ompl::geometric::RRTConnect(ompl_ss->getSpaceInformation());
     ompl_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
