@@ -3,6 +3,7 @@
 
 #ifdef ENABLE_ROS
 
+#include <vector>
 #include <thread>
 
 #include <ompl/geometric/SimpleSetup.h>
@@ -28,11 +29,12 @@ public:
                      std::shared_ptr<robot_model> m);
     ~planning_problem();
 
-    void find_one();
+    void start_solve(int num_solutions = 1);
 
 private:
     void run_planner();
-    trajectory path_to_trajectory(ompl::geometric::PathGeometric& geom);
+    trajectory path_to_trajectory(ompl::geometric::PathGeometric& geom,
+                                  ompl::geometric::SimpleSetup* ompl_ss);
 
     int query_id;
     motor_query query;
@@ -42,9 +44,8 @@ private:
     std::string joint_group;
     std::vector<std::string> joints;
 
-    std::thread planner_thread;
-    ompl::geometric::SimpleSetup* ompl_ss;
-    collision_checker* cc;
+    std::vector<std::thread> thread_vec;
+    std::vector<ompl::geometric::SimpleSetup*> ss_vec;
 };
 
 #endif

@@ -13,7 +13,27 @@ planning_problem::planning_problem(int qid,
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->get_default_joint_group();
     joints = m->get_joint_group(joint_group);
+}
 
+planning_problem::~planning_problem() {
+    for (std::vector<std::thread>::iterator i = thread_vec.begin();
+         i != thread_vec.end(); i++) {
+        i->join();
+    }
+
+    for (std::vector<ompl::geometric::SimpleSetup*>::iterator j = ss_vec.begin();
+         j != ss_vec.end(); j++) {
+        delete *j; // deletes collision checkers along with
+    }
+}
+
+void planning_problem::start_solve(int num_solutions) {
+    std::cout << "Using RRT-Connect to find " << num_solutions
+              << " trajectories." << std::endl;
+    thread_vec.push_back(std::thread(&planning_problem::run_planner, this));
+}
+
+void planning_problem::run_planner() {
     // construct vector state space based on default joint group
     int dof = joints.size();
     ompl::base::StateSpacePtr space(new ompl::base::RealVectorStateSpace(dof));
@@ -24,9 +44,9 @@ planning_problem::planning_problem(int qid,
     for (std::vector<std::string>::iterator i = joints.begin(); i != joints.end(); i++)
     {
         std::string j = *i;
-        if (m->get_joint_type(j) != CONTINUOUS) {
-            bounds.setLow(b, m->get_joint_min(j));
-            bounds.setHigh(b, m->get_joint_max(j));
+        if (model->get_joint_type(j) != CONTINUOUS) {
+            bounds.setLow(b, model->get_joint_min(j));
+            bounds.setHigh(b, model->get_joint_max(j));
         } else {
             // XXX Continuous joints don't actually have bounds, what to do?
             bounds.setLow(b, -10*M_PI);
@@ -39,38 +59,32 @@ planning_problem::planning_problem(int qid,
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
     // XXX Parameter
     space->setLongestValidSegmentFraction(0.005);
-    ompl_ss = new ompl::geometric::SimpleSetup(space);
-    cc = new collision_checker(ompl_ss->getSpaceInformation(), m, joint_group);
-    ompl_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
 
+    // add a SimpleSetup object for this planning thread
+    ss_vec.push_back(new ompl::geometric::SimpleSetup(space));
+    ompl::geometric::SimpleSetup* cur_ss = ss_vec.back();
+
+    // create a collision checker for this thread
+    cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(
+                                        new collision_checker(cur_ss->getSpaceInformation(),
+                                                              model, joint_group)));
+
+    // copy the start state into SimpleSetup
     ompl::base::ScopedState<> start(space);
     int c = 0;
     for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++)
     {
-        start[c] = q.start_state[*j];
+        start[c] = query.start_state[*j];
         c++;
     }
-    ompl_ss->setStartState(start);
+    cur_ss->setStartState(start);
 
-    std::cout << "Set up to plan for joint group " << joint_group.c_str()
-              << ", DOF = " << dof << std::endl;
-}
-
-planning_problem::~planning_problem() {
-    planner_thread.join();
-    if (ompl_ss) delete ompl_ss; // Deletes the collision checker?
-}
-
-void planning_problem::find_one() {
-    std::cout << "Using RRT-Connect to find ONE trajectory." << std::endl;
-    planner_thread = std::thread(&planning_problem::run_planner, this);
-}
-
-void planning_problem::run_planner() {
+    // set up the planner
     ompl::geometric::RRTConnect* rrtc =
-        new ompl::geometric::RRTConnect(ompl_ss->getSpaceInformation());
-    ompl_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
+        new ompl::geometric::RRTConnect(cur_ss->getSpaceInformation());
+    cur_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
 
+    // use IK to find a goal state
     vec3 cur_pos = model->end_effector_pos(query.start_state);
     std::cout << "Current ee is " << cur_pos[0] << ", " << cur_pos[1] << ", "
               << cur_pos[2] << std::endl;
@@ -79,28 +93,33 @@ void planning_problem::run_planner() {
         return;
     }
 
-    ompl::base::ScopedState<> goal(ompl_ss->getStateSpace());
+    // copy the goal state into SimpleSetup
+    ompl::base::ScopedState<> goal(cur_ss->getStateSpace());
     for (int i = 0; i < goal_vec.size(); i++) {
         goal[i] = goal_vec[i];
     }
-    ompl_ss->setGoalState(goal);
-    ompl::base::PlannerStatus status = ompl_ss->solve(5.0);
+    cur_ss->setGoalState(goal);
+
+    // run the planner
+    ompl::base::PlannerStatus status = cur_ss->solve(5.0);
     std::cout << "Resulting planner status is " << status.asString() << std::endl;
 
-    if (!ompl_ss->haveExactSolutionPath()) {
+    if (!cur_ss->haveExactSolutionPath()) {
         std::cout << "No path found, no trajectory to add!" << std::endl;
     } else {
-        ompl::geometric::PathGeometric pg = ompl_ss->getSolutionPath();
+        ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
         pg.interpolate();
         std::cout << "Interpolated trajectory length is " << pg.getStateCount() << std::endl;
 
-        trajectory output_traj = path_to_trajectory(pg);
+        trajectory output_traj = path_to_trajectory(pg, cur_ss);
 
+        // notify SVS of new trajectory
         ms->new_trajectory_callback(query_id, output_traj);
     }
 }
 
-trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& geom) {
+trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& geom,
+                                                ompl::geometric::SimpleSetup* ompl_ss) {
     std::vector<ompl::base::State*> sv = geom.getStates();
     trajectory t;
 
