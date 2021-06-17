@@ -30,7 +30,9 @@ planning_problem::~planning_problem() {
 void planning_problem::start_solve(int num_solutions) {
     std::cout << "Using RRT-Connect to find " << num_solutions
               << " trajectories." << std::endl;
-    thread_vec.push_back(std::thread(&planning_problem::run_planner, this));
+    for (int i = 0; i < num_solutions; i++) {
+        thread_vec.push_back(std::thread(&planning_problem::run_planner, this));
+    }
 }
 
 void planning_problem::run_planner() {
