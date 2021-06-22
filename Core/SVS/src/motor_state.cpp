@@ -14,7 +14,10 @@ void motor_state::copy_from(motor_state* other) {
 
     // XXX This isn't quite right
     // How to deal with trajectories from parent state?
-    trajectories = other->trajectories;
+    {
+        std::lock_guard<std::mutex> guard(traj_mtx);
+        trajectories = other->trajectories;
+    }
 
     std::lock_guard<std::mutex> guard1(joints_mtx);
     std::lock_guard<std::mutex> guard2(xform_mtx);
@@ -45,10 +48,17 @@ std::vector<int> motor_state::get_query_ids() {
 }
 
 void motor_state::new_trajectory_callback(int id, trajectory t) {
-    trajectories[id].push_back(t);
-    std::cout << "Added a trajectory of length " << trajectories[id].back().length
-              << " to set with id " << id << std::endl;
+    {
+        std::lock_guard<std::mutex> guard(traj_mtx);
+        trajectories[id].push_back(t);
+    }
+
     notify_listener();
+}
+
+int motor_state::num_trajectories(int query_id) {
+    std::lock_guard<std::mutex> guard(traj_mtx);
+    return trajectories[query_id].size();
 }
 
 bool motor_state::is_start_state_for(trajectory& t) {
@@ -194,15 +204,17 @@ void motor_link::update_desc() {
             query_traj_map[*i] = std::vector<Symbol*>();
         }
 
-        // XXX Assumes only one trajectory added per cycle, need to fix!
         int curr_num_traj = ms->num_trajectories(*i);
         if (curr_num_traj > query_traj_map[*i].size()) {
-            query_traj_map[*i].push_back(
-                si->get_wme_val(si->make_id_wme(query_sym_map[*i],
-                                                si->make_sym(traj_tag))));
-            si->make_wme(query_traj_map[*i].back(),
-                         traj_id_tag,
-                         si->make_sym(curr_num_traj - 1)); // Zero-indexed id
+            int num_new_traj = curr_num_traj - query_traj_map[*i].size();
+            for (int n = num_new_traj; n > 0; n--) {
+                query_traj_map[*i].push_back(
+                    si->get_wme_val(si->make_id_wme(query_sym_map[*i],
+                                                    si->make_sym(traj_tag))));
+                si->make_wme(query_traj_map[*i].back(),
+                             traj_id_tag,
+                             si->make_sym(curr_num_traj - n)); // Zero-indexed id
+            }
         }
     }
 }

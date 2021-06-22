@@ -33,7 +33,7 @@ motor::get_link_transforms_at(std::map<std::string, double> j) {
 
 bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {
     ongoing.push_back(new planning_problem(id, q, msp, model));
-    ongoing.back()->start_solve(4);
+    ongoing.back()->start_solve(6);
     return true;
 }
 

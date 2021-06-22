@@ -37,7 +37,7 @@ public:
 
     void new_trajectory_callback(int id, trajectory t);
     //void search_finished_callback(int id);
-    int num_trajectories(int query_id) { return trajectories[query_id].size(); }
+    int num_trajectories(int query_id);
 
     bool is_start_state_for(trajectory& t);
 
@@ -77,6 +77,7 @@ private:
 
     std::map<int, motor_query> queries;
     std::map<int, std::vector<trajectory> > trajectories;
+    std::mutex traj_mtx;
 
     motor_link* listener;
 };

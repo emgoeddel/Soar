@@ -63,8 +63,12 @@ void planning_problem::run_planner() {
     space->setLongestValidSegmentFraction(0.005);
 
     // add a SimpleSetup object for this planning thread
-    ss_vec.push_back(new ompl::geometric::SimpleSetup(space));
-    ompl::geometric::SimpleSetup* cur_ss = ss_vec.back();
+    ompl::geometric::SimpleSetup* cur_ss;
+    {
+        std::lock_guard<std::mutex> guard(ss_vec_mtx);
+        ss_vec.push_back(new ompl::geometric::SimpleSetup(space));
+        cur_ss = ss_vec.back();
+    }
 
     // create a collision checker for this thread
     cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(

@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <thread>
+#include <mutex>
 
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
@@ -46,6 +47,7 @@ private:
 
     std::vector<std::thread> thread_vec;
     std::vector<ompl::geometric::SimpleSetup*> ss_vec;
+    std::mutex ss_vec_mtx;
 };
 
 #endif
