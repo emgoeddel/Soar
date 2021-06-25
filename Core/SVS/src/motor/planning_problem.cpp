@@ -90,48 +90,56 @@ void planning_problem::run_planner() {
         new ompl::geometric::RRTConnect(cur_ss->getSpaceInformation());
     cur_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
 
-    // use IK to find a goal state
-    vec3 cur_pos = model->end_effector_pos(query.start_state);
-    std::cout << "Current ee is " << cur_pos[0] << ", " << cur_pos[1] << ", "
-              << cur_pos[2] << std::endl;
-    std::vector<double> goal_vec = model->solve_ik(query.soar_query.target_center);
-    if (goal_vec.empty()) { // Didn't find an IK solution
-        return;
-    }
+    // check for whether to continue searching after first search finishes
+    bool restart_search = false;
 
-    // copy the goal state into SimpleSetup
-    ompl::base::ScopedState<> goal(cur_ss->getStateSpace());
-    for (int i = 0; i < goal_vec.size(); i++) {
-        goal[i] = goal_vec[i];
-    }
-    cur_ss->setGoalState(goal);
-
-    // run the planner
-    ompl::base::PlannerStatus status = cur_ss->solve(5.0);
-    std::cout << "Resulting planner status is " << status.asString() << std::endl;
-
-    if (!cur_ss->haveExactSolutionPath()) {
-        std::cout << "No path found, no trajectory to add!" << std::endl;
-    } else {
-        ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
-        pg.interpolate();
-        std::cout << "Interpolated trajectory length is " << pg.getStateCount() << std::endl;
-
-        trajectory output_traj = path_to_trajectory(pg, cur_ss);
-
-        {
-            std::lock_guard<std::mutex> guard(soln_mtx);
-            solutions.push_back(output_traj);
-            std::cout << "Now have " << solutions.size() << " solutions" << std::endl;
-            if (solutions.size() < query.soar_query.min_num) {
-                std::cout << "Should restart search..." << std::endl;
-            }
-
+    do {
+        // use IK to find a goal state
+        //vec3 cur_pos = model->end_effector_pos(query.start_state);
+        //std::cout << "Current ee is " << cur_pos[0] << ", " << cur_pos[1] << ", "
+        //<< cur_pos[2] << std::endl;
+        std::vector<double> goal_vec = model->solve_ik(query.soar_query.target_center);
+        if (goal_vec.empty()) { // Didn't find an IK solution
+            restart_search = true;
+            continue;
         }
 
-        // notify SVS of new trajectory
-        ms->new_trajectory_callback(query_id, output_traj);
-    }
+        // copy the goal state into SimpleSetup
+        ompl::base::ScopedState<> goal(cur_ss->getStateSpace());
+        for (int i = 0; i < goal_vec.size(); i++) {
+            goal[i] = goal_vec[i];
+        }
+        cur_ss->setGoalState(goal);
+
+        // run the planner
+        ompl::base::PlannerStatus status = cur_ss->solve(2.0);
+        std::cout << "Resulting planner status is " << status.asString() << std::endl;
+
+        if (!cur_ss->haveExactSolutionPath()) {
+            std::cout << "No path found, no trajectory to add!" << std::endl;
+        } else {
+            ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
+            pg.interpolate();
+            std::cout << "Interpolated trajectory length is " << pg.getStateCount()
+                      << std::endl;
+
+            trajectory output_traj = path_to_trajectory(pg, cur_ss);
+
+            {
+                std::lock_guard<std::mutex> guard(soln_mtx);
+                solutions.push_back(output_traj);
+                std::cout << "Now have " << solutions.size() << " solutions" << std::endl;
+                if (solutions.size() < query.soar_query.min_num) {
+                    restart_search = true;
+                    cur_ss->clear();
+                }
+
+            }
+
+            // notify SVS of new trajectory
+            ms->new_trajectory_callback(query_id, output_traj);
+        }
+    } while (restart_search);
 }
 
 trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& geom,
