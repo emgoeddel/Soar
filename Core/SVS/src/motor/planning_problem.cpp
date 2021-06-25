@@ -119,6 +119,16 @@ void planning_problem::run_planner() {
 
         trajectory output_traj = path_to_trajectory(pg, cur_ss);
 
+        {
+            std::lock_guard<std::mutex> guard(soln_mtx);
+            solutions.push_back(output_traj);
+            std::cout << "Now have " << solutions.size() << " solutions" << std::endl;
+            if (solutions.size() < query.soar_query.min_num) {
+                std::cout << "Should restart search..." << std::endl;
+            }
+
+        }
+
         // notify SVS of new trajectory
         ms->new_trajectory_callback(query_id, output_traj);
     }

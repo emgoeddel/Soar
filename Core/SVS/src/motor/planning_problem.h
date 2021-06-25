@@ -45,6 +45,9 @@ private:
     std::string joint_group;
     std::vector<std::string> joints;
 
+    std::vector<trajectory> solutions;
+    std::mutex soln_mtx;
+
     std::vector<std::thread> thread_vec;
     std::vector<ompl::geometric::SimpleSetup*> ss_vec;
     std::mutex ss_vec_mtx;
