@@ -462,8 +462,8 @@ robot_model::solve_ik(vec3 ee_pt) {
     std::vector<double> out;
     if (!initialized) return out;
 
-    //std::cout << "Trying to reach " << ee_pt[0] << ", " << ee_pt[1] << ", "
-    //          << ee_pt[2] << std::endl;
+    // Prevent multiple threads from querying the IK solver at once
+    std::lock_guard<std::mutex> guard(ik_mtx);
 
     // XXX Baking in the assumption we are planning for the arm here, bad!
     if (ik_chain.getNrOfJoints() != joint_groups["arm"].size()) {
@@ -477,12 +477,9 @@ robot_model::solve_ik(vec3 ee_pt) {
     for (int tries = 0; tries < 20; tries++) {
         KDL::JntArray rnd_jnt(ik_chain.getNrOfJoints());
         std::vector<double> rnd = random_valid_pose("arm");
-        //std::cout << "Starting IK from random pose ";
         for (int i = 0; i < rnd.size(); i++) {
             rnd_jnt.data[i] = rnd[i];
-        //std::cout << rnd[i] << " ";
         }
-        //std::cout << std::endl;
 
         KDL::JntArray ik_sol(ik_chain.getNrOfJoints());
         int result = ik_solver->CartToJnt(rnd_jnt, ee_desired, ik_sol);

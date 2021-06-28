@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <mutex>
 #include "mat.h"
 
 #include <fcl/BVH/BVH_model.h>
@@ -117,6 +118,7 @@ private:
     KDL::Chain ik_chain;
     KDL::ChainIkSolverPos_LMA* ik_solver;
     KDL::ChainFkSolverPos_recursive* fk_solver;
+    std::mutex ik_mtx;
 };
 
 #endif
