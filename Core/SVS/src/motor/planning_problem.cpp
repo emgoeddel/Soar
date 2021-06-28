@@ -115,6 +115,10 @@ void planning_problem::run_planner() {
         ompl::base::PlannerStatus status = cur_ss->solve(2.0);
         std::cout << "Resulting planner status is " << status.asString() << std::endl;
 
+        bool has_trajectory = false;
+        trajectory output_traj;
+        int num_solns = 0;
+
         if (!cur_ss->haveExactSolutionPath()) {
             std::cout << "No path found, no trajectory to add!" << std::endl;
         } else {
@@ -123,22 +127,23 @@ void planning_problem::run_planner() {
             std::cout << "Interpolated trajectory length is " << pg.getStateCount()
                       << std::endl;
 
-            trajectory output_traj = path_to_trajectory(pg, cur_ss);
-
-            {
-                std::lock_guard<std::mutex> guard(soln_mtx);
-                solutions.push_back(output_traj);
-                std::cout << "Now have " << solutions.size() << " solutions" << std::endl;
-                if (solutions.size() < query.soar_query.min_num) {
-                    restart_search = true;
-                    cur_ss->clear();
-                }
-
-            }
+            output_traj = path_to_trajectory(pg, cur_ss);
+            has_trajectory = true;
 
             // notify SVS of new trajectory
             ms->new_trajectory_callback(query_id, output_traj);
         }
+
+        {
+            std::lock_guard<std::mutex> guard(soln_mtx);
+            if (has_trajectory) solutions.push_back(output_traj);
+            num_solns = solutions.size();
+        }
+
+        if (num_solns < query.soar_query.min_num) {
+            restart_search = true;
+            cur_ss->clear();
+        } else restart_search = false;
     } while (restart_search);
 }
 

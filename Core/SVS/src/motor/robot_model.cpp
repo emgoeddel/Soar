@@ -462,8 +462,8 @@ robot_model::solve_ik(vec3 ee_pt) {
     std::vector<double> out;
     if (!initialized) return out;
 
-    std::cout << "Trying to reach " << ee_pt[0] << ", " << ee_pt[1] << ", "
-              << ee_pt[2] << std::endl;
+    //std::cout << "Trying to reach " << ee_pt[0] << ", " << ee_pt[1] << ", "
+    //          << ee_pt[2] << std::endl;
 
     // XXX Baking in the assumption we are planning for the arm here, bad!
     if (ik_chain.getNrOfJoints() != joint_groups["arm"].size()) {
@@ -477,9 +477,12 @@ robot_model::solve_ik(vec3 ee_pt) {
     for (int tries = 0; tries < 20; tries++) {
         KDL::JntArray rnd_jnt(ik_chain.getNrOfJoints());
         std::vector<double> rnd = random_valid_pose("arm");
+        //std::cout << "Starting IK from random pose ";
         for (int i = 0; i < rnd.size(); i++) {
             rnd_jnt.data[i] = rnd[i];
+        //std::cout << rnd[i] << " ";
         }
+        //std::cout << std::endl;
 
         KDL::JntArray ik_sol(ik_chain.getNrOfJoints());
         int result = ik_solver->CartToJnt(rnd_jnt, ee_desired, ik_sol);
@@ -500,10 +503,27 @@ robot_model::solve_ik(vec3 ee_pt) {
         // std::cout << std::endl;
 
         if (result == KDL::SolverI::E_NOERROR) {
+            // Before considering this iteration a success, check bounds
+            bool in_bounds = true;
+            for (int i = 0; i < ik_sol.rows(); i++) {
+                std::string j_name = joint_groups["arm"][i];
+                if (all_joints[j_name].type == CONTINUOUS) continue;
+                double j_min = all_joints[j_name].min_pos;
+                double j_max = all_joints[j_name].max_pos;
+
+                if (ik_sol(i) < j_min || ik_sol(i) > j_max) {
+                    in_bounds = false;
+                    break;
+                }
+            }
+
+            if (!in_bounds) continue;
+
             for (int i = 0; i < ik_sol.rows(); i++) {
                 out.push_back(ik_sol(i));
             }
-            std::cout << "IK solution found on try " << tries << std::endl;
+
+            //std::cout << "Valid IK solution found on try " << tries << std::endl;
             break;
         }
     }
