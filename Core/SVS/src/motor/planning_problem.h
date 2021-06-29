@@ -48,6 +48,7 @@ private:
     std::vector<trajectory> solutions;
     std::mutex soln_mtx;
 
+    unsigned int MAX_THREADS;
     std::vector<std::thread> thread_vec;
     std::vector<ompl::geometric::SimpleSetup*> ss_vec;
     std::mutex ss_vec_mtx;

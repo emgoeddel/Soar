@@ -13,6 +13,12 @@ planning_problem::planning_problem(int qid,
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->get_default_joint_group();
     joints = m->get_joint_group(joint_group);
+    MAX_THREADS = std::thread::hardware_concurrency();
+    if (MAX_THREADS == 0) {
+        std::cout << "Hardware concurrency not computable, defaulting to 4 threads."
+                  << std::endl;
+        MAX_THREADS = 4;
+    }
 }
 
 planning_problem::~planning_problem() {
@@ -29,8 +35,8 @@ planning_problem::~planning_problem() {
 
 void planning_problem::start_solve(int num_solutions) {
     std::cout << "Using RRT-Connect to find " << num_solutions
-              << " trajectories." << std::endl;
-    for (int i = 0; i < num_solutions; i++) {
+              << " trajectories with " << MAX_THREADS << " threads." << std::endl;
+    for (int i = 0; i < MAX_THREADS; i++) {
         thread_vec.push_back(std::thread(&planning_problem::run_planner, this));
     }
 }
