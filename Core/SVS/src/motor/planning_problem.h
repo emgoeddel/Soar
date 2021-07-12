@@ -4,6 +4,7 @@
 #ifdef ENABLE_ROS
 
 #include <vector>
+#include <list>
 #include <thread>
 #include <mutex>
 
@@ -52,7 +53,7 @@ private:
     std::vector<std::thread> thread_vec;
     std::mutex ss_vec_mtx;
     std::vector<ompl::geometric::SimpleSetup*> ss_vec;
-    std::vector<ompl::base::PlannerTerminationCondition> ptc_vec;
+    std::list<ompl::base::PlannerTerminationCondition> ptc_list;
 };
 
 #endif

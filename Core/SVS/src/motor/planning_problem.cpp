@@ -75,8 +75,8 @@ void planning_problem::run_planner() {
         std::lock_guard<std::mutex> guard(ss_vec_mtx);
         ss_vec.push_back(new ompl::geometric::SimpleSetup(space));
         cur_ss = ss_vec.back();
-        ptc_vec.push_back(ompl::base::timedPlannerTerminationCondition(2.0));
-        cur_ptc = &(ptc_vec.back());
+        ptc_list.push_back(ompl::base::timedPlannerTerminationCondition(2.0));
+        cur_ptc = &(ptc_list.back());
     }
 
     // create a collision checker for this thread
@@ -120,10 +120,6 @@ void planning_problem::run_planner() {
         }
         cur_ss->setGoalState(goal);
 
-        std::thread::id this_id = std::this_thread::get_id();
-        std::cout << "What is pre-solve cur_ptc for thread " << this_id << "? "
-                  << cur_ptc->eval() << std::endl;
-
         // run the planner
         ompl::base::PlannerStatus status = cur_ss->solve(*cur_ptc);
         std::cout << "Resulting planner status is " << status.asString() << std::endl;
@@ -153,23 +149,16 @@ void planning_problem::run_planner() {
             num_solns = solutions.size();
         }
 
-        std::cout << "What is post-solve cur_ptc for thread " << this_id << "? "
-                  << cur_ptc->eval() << std::endl;
-
         if (num_solns < query.soar_query.min_num) {
             restart_search = true;
             cur_ss->clear();
         } else {
             restart_search = false;
-            if (has_trajectory) {
-                std::vector<ompl::base::PlannerTerminationCondition>::iterator p = ptc_vec.begin();
-                for (; p != ptc_vec.end(); p++) {
-                    if (*p == *cur_ptc) {
-                        std::cout << "PTC skipping itself" << std::endl;
-                        continue;
-                    }
-                    if (bool(*p)) {
-                        std::cout << "PTC skipping terminated PTC" << std::endl;
+            if (has_trajectory) { // If this is the thread that found the last trajectory,
+                                  // it should kill all the other threads
+                std::list<ompl::base::PlannerTerminationCondition>::iterator p = ptc_list.begin();
+                for (; p != ptc_list.end(); p++) {
+                    if (p->eval()) { // Already terminated this thread
                         continue;
                     }
                     p->terminate();
