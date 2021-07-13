@@ -32,7 +32,6 @@ motor::get_link_transforms_at(std::map<std::string, double> j) {
 }
 
 bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {
-    q.soar_query.min_num = 6; // XXX FOR DEBUGGING ONLY
     ongoing.push_back(new planning_problem(id, q, msp, model));
     ongoing.back()->start_solve(q.soar_query.min_num);
     return true;
