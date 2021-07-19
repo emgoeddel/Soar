@@ -31,7 +31,7 @@ public:
                      std::shared_ptr<robot_model> m);
     ~planning_problem();
 
-    void start_solve(int num_solutions = 1);
+    void start_solve();
 
 private:
     void run_planner();
@@ -48,6 +48,7 @@ private:
 
     std::vector<trajectory> solutions;
     std::mutex soln_mtx;
+    bool notified_min_traj;
 
     unsigned int MAX_THREADS;
     std::vector<std::thread> thread_vec;

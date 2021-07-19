@@ -32,11 +32,14 @@ public:
 
     //// Trajectory planning ////
     void new_query(int id, query q);
+    std::string get_query_status(int id);
     int num_queries() { return queries.size(); }
     std::vector<int> get_query_ids();
 
+    void search_started_callback(int id);
     void new_trajectory_callback(int id, trajectory t);
-    //void search_finished_callback(int id);
+    void min_traj_callback(int id);
+    void max_traj_callback(int id);
     int num_trajectories(int query_id);
 
     bool is_start_state_for(trajectory& t);
@@ -78,6 +81,8 @@ private:
     std::map<int, motor_query> queries;
     std::map<int, std::vector<trajectory> > trajectories;
     std::mutex traj_mtx;
+    std::map<int, std::string> statuses;
+    std::mutex stat_mtx;
 
     motor_link* listener;
 };

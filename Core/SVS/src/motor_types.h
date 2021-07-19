@@ -60,6 +60,12 @@ struct motor_query {
     query soar_query;
     //std::vector<obstacle> obstacles; XXX
     std::map<std::string, double> start_state;
+
+    // Utility functions
+    bool has_min_num() { return soar_query.min_num >= 0; }
+    bool has_max_num() { return soar_query.max_num > 1; }
+    bool has_min_time() { return soar_query.min_time >= 0; }
+    bool has_max_time() { return soar_query.max_time > 0; }
 };
 
 /*

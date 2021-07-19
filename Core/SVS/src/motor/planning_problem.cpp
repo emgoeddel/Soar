@@ -8,7 +8,8 @@ planning_problem::planning_problem(int qid,
                                    motor_state* msp,
                                    std::shared_ptr<robot_model> m) : query_id(qid),
                                                                      query(q),
-                                                                     model(m),                                                                                    ms(msp)
+                                                                     model(m),                                                                                    ms(msp),
+                                                                     notified_min_traj(false)
 {
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->get_default_joint_group();
@@ -33,9 +34,9 @@ planning_problem::~planning_problem() {
     }
 }
 
-void planning_problem::start_solve(int num_solutions) {
-    std::cout << "Using RRT-Connect to find " << num_solutions
-              << " trajectories with " << MAX_THREADS << " threads." << std::endl;
+void planning_problem::start_solve() {
+    std::cout << "Starting RRT-Connect with " << MAX_THREADS << " threads." << std::endl;
+    ms->search_started_callback(query_id);
     for (int i = 0; i < MAX_THREADS; i++) {
         thread_vec.push_back(std::thread(&planning_problem::run_planner, this));
     }
@@ -75,7 +76,7 @@ void planning_problem::run_planner() {
         std::lock_guard<std::mutex> guard(ss_vec_mtx);
         ss_vec.push_back(new ompl::geometric::SimpleSetup(space));
         cur_ss = ss_vec.back();
-        ptc_list.push_back(ompl::base::timedPlannerTerminationCondition(2.0));
+        ptc_list.push_back(ompl::base::timedPlannerTerminationCondition(60.0));
         cur_ptc = &(ptc_list.back());
     }
 
@@ -149,10 +150,19 @@ void planning_problem::run_planner() {
             num_solns = solutions.size();
         }
 
-        if (num_solns < query.soar_query.min_num) {
+        // Once the min_number is reached, change the status but don't stop the search
+        if (query.has_min_num() &&
+            num_solns >= query.soar_query.min_num &&
+            !notified_min_traj) {
+            ms->min_traj_callback(query_id);
+            notified_min_traj = true;
+        }
+
+        if (!query.has_max_num() || num_solns < query.soar_query.max_num) {
             restart_search = true;
             cur_ss->clear();
-        } else {
+        } else { // Once the max_number is reached, kill the search
+            ms->max_traj_callback(query_id);
             restart_search = false;
             if (has_trajectory) { // If this is the thread that found the last trajectory,
                                   // it should kill all the other threads

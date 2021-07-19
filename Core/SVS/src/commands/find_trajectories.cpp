@@ -69,9 +69,15 @@ public:
                 // XXX Does adding id to commands require instantiation?
                 si->make_wme(root, "id", si->make_sym(id));
                 set_status("running");
+                prev_status = "running";
             } else {
                 // Error message already set in parse() method
                 return false;
+            }
+        } else {
+            std::string stat = ms->get_query_status(id);
+            if (stat != prev_status) {
+                set_status(stat);
             }
         }
         return true;
@@ -87,7 +93,15 @@ private:
         si->get_const_attr(root, "min-number", min_d);
         si->get_const_attr(root, "max-number", max_d);
         if (min_d > 0) search_query.min_num = (int) min_d;
+        else search_query.min_num = -1;
         if (max_d > 0) search_query.max_num = (int) max_d;
+        else search_query.max_num = -1;
+
+        // sanity check
+        if (search_query.max_num != -1 && search_query.max_num < search_query.min_num) {
+            set_status("max-number incorrect");
+            return false;
+        }
 
         // ^min-time and ^max-time
         si->get_const_attr(root, "min-time", search_query.min_time);
@@ -152,6 +166,7 @@ private:
 
     bool parsed;
     query search_query;
+    std::string prev_status;
 
     int id;
 

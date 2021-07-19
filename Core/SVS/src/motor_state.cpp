@@ -36,6 +36,11 @@ void motor_state::new_query(int id, query q) {
     }
 }
 
+std::string motor_state::get_query_status(int id) {
+    std::lock_guard<std::mutex> guard(stat_mtx);
+    return statuses[id];
+}
+
 std::vector<int> motor_state::get_query_ids() {
     std::vector<int> out;
 
@@ -47,6 +52,11 @@ std::vector<int> motor_state::get_query_ids() {
     return out;
 }
 
+void motor_state::search_started_callback(int id) {
+    std::lock_guard<std::mutex> guard(stat_mtx);
+    statuses[id] = "running";
+}
+
 void motor_state::new_trajectory_callback(int id, trajectory t) {
     {
         std::lock_guard<std::mutex> guard(traj_mtx);
@@ -54,6 +64,16 @@ void motor_state::new_trajectory_callback(int id, trajectory t) {
     }
 
     notify_listener();
+}
+
+void motor_state::min_traj_callback(int id) {
+    std::lock_guard<std::mutex> guard(stat_mtx);
+    statuses[id] = "running_complete";
+}
+
+void motor_state::max_traj_callback(int id) {
+    std::lock_guard<std::mutex> guard(stat_mtx);
+    statuses[id] = "complete";
 }
 
 int motor_state::num_trajectories(int query_id) {
