@@ -36,12 +36,15 @@ planning_problem::~planning_problem() {
 
 void planning_problem::start_solve() {
     std::cout << "Starting RRT-Connect with " << MAX_THREADS << " threads." << std::endl;
-    ms->search_started_callback(query_id);
+    ms->query_status_callback(query_id, "running");
     for (int i = 0; i < MAX_THREADS; i++) {
         thread_vec.push_back(std::thread(&planning_problem::run_planner, this));
     }
 }
 
+// Note that this implements, via callbacks, the status updates defined in
+// find_trajectories.cpp--it notifies the motor_state when a query should be
+// considered "running" "continuing" or "complete"
 void planning_problem::run_planner() {
     // construct vector state space based on default joint group
     int dof = joints.size();
@@ -154,7 +157,7 @@ void planning_problem::run_planner() {
         if (query.has_min_num() &&
             num_solns >= query.soar_query.min_num &&
             !notified_min_traj) {
-            ms->min_traj_callback(query_id);
+            ms->query_status_callback(query_id, "continuing");
             notified_min_traj = true;
         }
 
@@ -162,7 +165,7 @@ void planning_problem::run_planner() {
             restart_search = true;
             cur_ss->clear();
         } else { // Once the max_number is reached, kill the search
-            ms->max_traj_callback(query_id);
+            ms->query_status_callback(query_id, "complete");
             restart_search = false;
             if (has_trajectory) { // If this is the thread that found the last trajectory,
                                   // it should kill all the other threads
@@ -175,6 +178,7 @@ void planning_problem::run_planner() {
                 }
             }
         }
+        // std::this_thread::sleep_for(std::chrono::seconds(5)); // dbg status updates
     } while (restart_search);
 }
 

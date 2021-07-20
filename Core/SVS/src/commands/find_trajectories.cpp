@@ -25,11 +25,11 @@
  *    ^max-time - [Optional] maximum seconds to spend planning**
  *
  * * After finding the min number of trajectories, the search will continue and
- *   wait to be cut off, although its status will switch to running_complete. After
- *   finding the max number of trajectories, the search will stop and be marked complete.
+ *   wait to be cut off, although its status will switch to "continuing". After
+ *   finding the max number of trajectories, the search will stop and be marked "complete".
  * ** After the min number of seconds, the search will continue and wait to be cut
- *    off with its status set to running_complete. After the max number of seconds, the
- *    search will stop and be marked complete.
+ *    off with its status set to "continuing". After the max number of seconds, the
+ *    search will stop and be marked "complete".
  */
 
 class find_trajectories_command : public command
@@ -68,8 +68,8 @@ public:
                 ms->new_query(id, search_query);
                 // XXX Does adding id to commands require instantiation?
                 si->make_wme(root, "id", si->make_sym(id));
-                set_status("running");
-                prev_status = "running";
+                set_status("parsed");
+                prev_status = "parsed";
             } else {
                 // Error message already set in parse() method
                 return false;

@@ -36,10 +36,8 @@ public:
     int num_queries() { return queries.size(); }
     std::vector<int> get_query_ids();
 
-    void search_started_callback(int id);
+    void query_status_callback(int id, std::string stat);
     void new_trajectory_callback(int id, trajectory t);
-    void min_traj_callback(int id);
-    void max_traj_callback(int id);
     int num_trajectories(int query_id);
 
     bool is_start_state_for(trajectory& t);
