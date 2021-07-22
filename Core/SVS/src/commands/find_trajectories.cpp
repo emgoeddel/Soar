@@ -11,7 +11,7 @@
  * find_trajectories_command class
  *
  * Defines the Soar interface for requesting and controlling the
- * creation of a MAST trajectory set through a ^find-trajectoreis command.
+ * creation of a MAST trajectory set through a ^find-trajectories command.
  *
  * Usage:
  *    ^target <t> - gripper target area for the motion
