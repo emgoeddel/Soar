@@ -11,7 +11,7 @@
  * select_trajectory_command class
  *
  * Defines the Soar interface for selecting <n> trajectories from a trajectory
- * set through a ^select command.
+ * set through a ^select-trajectory command.
  *
  * Usage:
  *    ^number <n> - [Optional] number of trajectories to select *
@@ -26,13 +26,34 @@ public:
     select_trajectory_command(svs_state* state, Symbol* root) : command(state, root),
                                                                 root(root),
                                                                 parsed(false) {
+        si = state->get_svs()->get_soar_interface();
+        ms = state->get_motor_state();
     }
 
     std::string description() { return "select-trajectory"; }
     int command_type() { return SVS_READ_COMMAND; }
 
     bool update_sub() {
-        return false;
+        // When command is first put on the link, parse it
+        if (!parsed) {
+            parsed = true;
+            if (parse()) {}
+            else return false;
+        }
+        return true;
+    }
+
+private:
+    bool parse() {
+        std::cout << "Parsing a select-trajectory command!!" << std::endl;
+
+        std::string obj_name;
+        si->get_const_attr(root, "objective", obj_name);
+
+        double num_traj = 0;
+        si->get_const_attr(root, "number", num_traj);
+
+        return true;
     }
 
     soar_interface* si;

@@ -63,7 +63,7 @@ public:
         // When command is first put on the link, parse it
         if (!parsed) {
             parsed = true;
-            // If parsed successfully, set the status to "running"
+            // If parsed successfully, set the status to "parsed"
             if (parse()) {
                 ms->new_query(id, search_query);
                 // XXX Does adding id to commands require instantiation?
