@@ -37,7 +37,9 @@ public:
         // When command is first put on the link, parse it
         if (!parsed) {
             parsed = true;
-            if (parse()) {}
+            if (parse()) {
+                set_status("parsed");
+            }
             else return false;
         }
         return true;
@@ -48,11 +50,24 @@ private:
         std::cout << "Parsing a select-trajectory command!!" << std::endl;
 
         std::string obj_name;
-        si->get_const_attr(root, "objective", obj_name);
+        if (!si->get_const_attr(root, "objective", obj_name)) {
+            set_status("no objective found");
+            return false;
+        }
 
-        double num_traj = 0;
+        double set = -1;
+        if (!si->get_const_attr(root, "set-id", set)) {
+            set_status("no set-id found");
+            return false;
+        }
+        int set_id = (int)set;
+
+        double num_traj = 1;
         si->get_const_attr(root, "number", num_traj);
 
+        std::cout << "Selecting " << num_traj << " trajectories from set "
+                  << set_id << " based on the " << obj_name << " objective"
+                  << std::endl;
         return true;
     }
 
