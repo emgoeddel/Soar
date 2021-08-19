@@ -17,6 +17,7 @@
 #include "common.h"
 #include "filter_table.h"
 #include "command_table.h"
+#include "objective_table.h"
 #include "drawer.h"
 
 #include "symbol.h"
@@ -522,6 +523,7 @@ svs::~svs()
 
     get_command_table().del_entries();
     get_filter_table().del_entries();
+    get_objective_table().del_entries();
 
     delete si;
     delete ri;
@@ -709,6 +711,7 @@ void svs::proxy_get_children(map<string, cliproxy*>& c)
     c["commands"]          = &get_command_table();
 
 #ifdef ENABLE_ROS
+    c["objectives"] = &get_objective_table();
     c["ros"] = ri;
 #endif
 
