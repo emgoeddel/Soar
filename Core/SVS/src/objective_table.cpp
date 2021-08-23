@@ -28,9 +28,16 @@ void objective_table::del_entries() {
     table.clear();
 }
 
-//objective* objective_table::make_objective()
+objective* objective_table::make_objective(const std::string& name,
+                                           Symbol* cmd_rt,
+                                           soar_interface* si,
+                                           motor_state* ms,
+                                           objective_input* oi) const {
+    return new objective(cmd_rt, si, ms, oi);
+}
 
 objective_table::objective_table() {
+    // XXX Implement
 }
 
 void objective_table::add(objective_table_entry* e) {

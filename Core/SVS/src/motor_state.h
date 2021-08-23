@@ -51,7 +51,6 @@ public:
 
     void set_base_xform(transform3 t);
     transform3 get_base_xform();
-
     std::map<std::string, transform3> get_link_transforms();
 
     std::string robot_name();

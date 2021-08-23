@@ -43,6 +43,7 @@
 #include "src/soar_interface.cpp"
 #include "src/ros_interface.cpp"
 #include "src/objective_table.cpp"
+#include "src/objective.cpp"
 #include "src/svs.cpp"
 
 #include "src/motor/motor.cpp"

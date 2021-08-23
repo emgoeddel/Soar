@@ -5,14 +5,13 @@
 
 #include "cliproxy.h"
 #include "soar_interface.h"
-
-//class objective;
+#include "objective.h"
 
 class objective_table_entry : public cliproxy {
 public:
     objective_table_entry();
 
-    // objective* (*create)(...)
+    objective* (*create)(Symbol*, soar_interface*, motor_state*, objective_input*);
 
     std::string name;
     std::string description;
@@ -34,7 +33,11 @@ class objective_table : public cliproxy {
 public:
     friend objective_table& get_objective_table();
     void del_entries();
-    //objective* make_objective() const;
+    objective* make_objective(const std::string& name,
+                              Symbol* cmd_rt,
+                              soar_interface* si,
+                              motor_state* ms,
+                              objective_input* oi) const;
 
 private:
     objective_table();
