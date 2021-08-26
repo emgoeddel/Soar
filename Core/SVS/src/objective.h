@@ -19,16 +19,21 @@ enum OutputType {
 
 class objective {
 public:
-    objective(Symbol* cmd_rt, soar_interface* si, motor_state* ms, objective_input* oi);
+    objective(Symbol* cmd_rt,
+              soar_interface* si,
+              motor_state* ms,
+              objective_input* oi);
     virtual ~objective();
 
-    // Evaluate the objective and update the motor state
-    void evaluate();
+    // Evaluate the objective with results -> values
+    virtual void evaluate() = 0;
+    // Turn the values -> outputs based on the OutputType
+    void update_outputs();
 
     // Put a status on the command object
     void set_status(const std::string& msg);
 
-private:
+protected:
     Symbol* cmd_rt;
     soar_interface* si;
     std::string status;

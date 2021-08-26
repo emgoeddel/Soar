@@ -76,7 +76,7 @@ else:
 svs_env = env.Clone()
 svs_env['LIBS'] = []
 
-srcdirs = ['src', 'src/filters', 'src/commands', 'src/models', 'src/motor']
+srcdirs = ['src', 'src/filters', 'src/commands', 'src/objectives', 'src/models', 'src/motor']
 incdirs = [env.Dir(d).srcnode() for d in 'src src/models eigen ccd'.split()]
 scu_src = ['SVS.cxx']
 

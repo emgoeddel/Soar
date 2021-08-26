@@ -24,6 +24,8 @@
 #include "src/filters/tag_select.cpp"
 #include "src/filters/volume.cpp"
 
+#include "src/objectives/length.cpp"
+
 #include "src/cliproxy.cpp"
 #include "src/command.cpp"
 #include "src/command_table.cpp"

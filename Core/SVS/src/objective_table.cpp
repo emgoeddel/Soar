@@ -1,5 +1,7 @@
 #include "objective_table.h"
 
+#include "objectives/length.h"
+
 objective_table_entry::objective_table_entry() : //create(NULL),
                                                  description("") {
     set_help("Reports information about this objective");
@@ -20,6 +22,11 @@ void objective_table_entry::proxy_use_sub(const std::vector<std::string>& args,
 
 //////////////////////////////////////////////
 
+// LENGTH
+objective_table_entry* state_count_objective_entry();
+
+//////////////////////////////////////////////
+
 void objective_table::del_entries() {
     std::map<std::string, objective_table_entry*>::iterator i = table.begin();
     for (; i != table.end(); i++) {
@@ -33,11 +40,13 @@ objective* objective_table::make_objective(const std::string& name,
                                            soar_interface* si,
                                            motor_state* ms,
                                            objective_input* oi) const {
-    return new objective(cmd_rt, si, ms, oi);
+    return new state_count_objective(cmd_rt, si, ms, oi);
 }
 
 objective_table::objective_table() {
-    // XXX Implement
+    set_help("Prints out a list of all objectives.");
+
+    add(state_count_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {

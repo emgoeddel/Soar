@@ -14,7 +14,17 @@ objective::~objective() {
     delete input;
 }
 
-void objective::evaluate() {
+// Assumes values have already been computed
+void objective::update_outputs() {
+    switch (ot) {
+    case RANK:
+        break;
+    case SELECT:
+        break;
+    case VALUE:
+    default:
+        break;
+    }
 }
 
 void objective::set_status(const std::string& msg) {
