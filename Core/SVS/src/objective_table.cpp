@@ -23,7 +23,7 @@ void objective_table_entry::proxy_use_sub(const std::vector<std::string>& args,
 //////////////////////////////////////////////
 
 // LENGTH
-objective_table_entry* state_count_objective_entry();
+objective_table_entry* waypoints_objective_entry();
 
 //////////////////////////////////////////////
 
@@ -40,13 +40,15 @@ objective* objective_table::make_objective(const std::string& name,
                                            soar_interface* si,
                                            motor_state* ms,
                                            objective_input* oi) const {
-    return new state_count_objective(cmd_rt, si, ms, oi);
+    std::map<std::string, objective_table_entry*>::const_iterator i = table.find(name);
+    if (i == table.end() || i->second->create == NULL) return NULL;
+    return (*(i->second->create))(cmd_rt, si, ms, oi);
 }
 
 objective_table::objective_table() {
     set_help("Prints out a list of all objectives.");
 
-    add(state_count_objective_entry());
+    add(waypoints_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {

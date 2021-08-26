@@ -3,30 +3,32 @@
 #include "length.h"
 #include "objective_table.h"
 
-state_count_objective::state_count_objective(Symbol* cmd_rt,
-                                             soar_interface* si,
-                                             motor_state* ms,
-                                             objective_input* oi) : objective(cmd_rt,
-                                                                              si,
-                                                                              ms,
-                                                                              oi) {}
-
-void state_count_objective::evaluate() {
+waypoints_objective::waypoints_objective(Symbol* cmd_rt,
+                                         soar_interface* si,
+                                         motor_state* ms,
+                                         objective_input* oi) : objective(cmd_rt,
+                                                                          si,
+                                                                          ms,
+                                                                          oi) {
+    std::cout << "Instantiating the waypoints objective!" << std::endl;
 }
 
-objective* make_state_count_objective(Symbol* cmd_rt,
-                                      soar_interface* si,
-                                      motor_state* ms,
-                                      objective_input* oi) {
-    return new state_count_objective(cmd_rt, si, ms, oi);
+void waypoints_objective::evaluate() {
 }
 
-objective_table_entry* state_count_objective_entry() {
+objective* make_waypoints_objective(Symbol* cmd_rt,
+                                    soar_interface* si,
+                                    motor_state* ms,
+                                    objective_input* oi) {
+    return new waypoints_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* waypoints_objective_entry() {
     objective_table_entry* e = new objective_table_entry();
-    e->name = "state-count";
+    e->name = "waypoints";
     e->description = "Number of waypoints in the trajectory";
     e->parameters["set-id"] = "Trajectory set";
-    e->create = &make_state_count_objective;
+    e->create = &make_waypoints_objective;
     return e;
 }
 

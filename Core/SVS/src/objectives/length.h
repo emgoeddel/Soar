@@ -14,14 +14,14 @@
  *
  */
 
-// Provides the number of states in a fully-interpolated trajectory, which is a
+// Provides the number of waypoints in a fully-interpolated trajectory, which is a
 // rough comparison of trajectory length.
-class state_count_objective : public objective {
+class waypoints_objective : public objective {
 public:
-    state_count_objective(Symbol* cmd_rt,
-                          soar_interface* si,
-                          motor_state* ms,
-                          objective_input* oi);
+    waypoints_objective(Symbol* cmd_rt,
+                        soar_interface* si,
+                        motor_state* ms,
+                        objective_input* oi);
     void evaluate();
 };
 

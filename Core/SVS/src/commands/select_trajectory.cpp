@@ -4,6 +4,7 @@
 #include "symbol.h"
 #include "command.h"
 #include "command_table.h"
+#include "objective_table.h"
 #include "scene.h"
 #include "motor_state.h"
 
@@ -68,12 +69,22 @@ private:
         std::cout << "Selecting " << num_traj << " trajectories from set "
                   << set_id << " based on the " << obj_name << " objective"
                   << std::endl;
+
+        objective_input* input = new objective_input();
+        obj = get_objective_table().make_objective(obj_name,
+                                                   root,
+                                                   si,
+                                                   ms,
+                                                   input);
+
         return true;
     }
 
     soar_interface* si;
     motor_state* ms;
     Symbol* root;
+
+    objective* obj;
 
     bool parsed;
 };
