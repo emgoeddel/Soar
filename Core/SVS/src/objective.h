@@ -6,10 +6,11 @@
 #include <string>
 #include <map>
 
-#include "motor_state.h"
+#include "soar_interface.h"
 #include "filter_val.h"
 
 typedef std::map<std::string, filter_val*> objective_input;
+class motor_state;
 
 enum OutputType {
     VALUE, // ^objective_name <value>
@@ -26,9 +27,10 @@ public:
     virtual ~objective();
 
     // Evaluate the objective with results -> values
-    virtual void evaluate() = 0;
+    virtual bool evaluate() = 0;
     // Turn the values -> outputs based on the OutputType
     void update_outputs();
+    OutputType output_type() { return ot; }
 
     // Put a status on the command object
     void set_status(const std::string& msg);

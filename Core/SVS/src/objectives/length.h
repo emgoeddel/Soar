@@ -22,7 +22,7 @@ public:
                         soar_interface* si,
                         motor_state* ms,
                         objective_input* oi);
-    void evaluate();
+    bool evaluate();
 };
 
 #endif

@@ -24,6 +24,7 @@
 
 class motor;
 class motor_link;
+class objective;
 
 class motor_state {
 public:
@@ -35,12 +36,18 @@ public:
     std::string get_query_status(int id);
     int num_queries() { return queries.size(); }
     std::vector<int> get_query_ids();
+    bool has_query_id(int id); // refers to started queries
+    bool has_set_id(int id); // refers to queries with actual trajectories
 
     void query_status_callback(int id, std::string stat);
     void new_trajectory_callback(int id, trajectory t);
     int num_trajectories(int query_id);
 
     bool is_start_state_for(trajectory& t);
+    std::map<int, double> trajectory_lengths(int id);
+
+    //// Objective reporting ////
+    void new_objective_callback(int id, objective* obj);
 
     //// Joint state tracking ////
     void set_joints(std::map<std::string, double> j);

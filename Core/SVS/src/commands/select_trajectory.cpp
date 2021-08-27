@@ -62,6 +62,10 @@ private:
             return false;
         }
         int set_id = (int)set;
+        if (!ms->has_set_id(set_id)) {
+            set_status("set-id not found in motor state");
+            return false;
+        }
 
         double num_traj = 1;
         si->get_const_attr(root, "number", num_traj);
@@ -70,12 +74,21 @@ private:
                   << set_id << " based on the " << obj_name << " objective"
                   << std::endl;
 
-        objective_input* input = new objective_input();
+        input = new objective_input();
+        (*input)["output-type"] = new filter_val_c<std::string>("select"); // XXX
+        (*input)["number"] = new filter_val_c<int>(num_traj);
+        (*input)["set-id"] = new filter_val_c<int>(set_id);
         obj = get_objective_table().make_objective(obj_name,
                                                    root,
                                                    si,
                                                    ms,
                                                    input);
+
+        if (!obj->evaluate()) {
+            set_status("could not evaluate");
+            return false;
+        }
+        obj->update_outputs(); // XXX Better way to do this?
 
         return true;
     }
@@ -85,6 +98,7 @@ private:
     Symbol* root;
 
     objective* obj;
+    objective_input* input; // owned by the objective though
 
     bool parsed;
 };

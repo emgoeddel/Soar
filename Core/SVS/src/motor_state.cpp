@@ -52,6 +52,17 @@ std::vector<int> motor_state::get_query_ids() {
     return out;
 }
 
+bool motor_state::has_query_id(int id) {
+    if (queries.count(id) != 0) return true;
+    return false;
+}
+
+bool motor_state::has_set_id(int id) {
+    std::lock_guard<std::mutex> guard(traj_mtx);
+    if (trajectories.count(id) != 0) return true;
+    return false;
+}
+
 void motor_state::query_status_callback(int id, std::string stat) {
     std::lock_guard<std::mutex> guard(stat_mtx);
     statuses[id] = stat;
@@ -87,6 +98,23 @@ bool motor_state::is_start_state_for(trajectory& t) {
     }
 
     return true;
+}
+
+std::map<int, double> motor_state::trajectory_lengths(int id) {
+    std::lock_guard<std::mutex> guard(traj_mtx);
+
+    std::map<int, double> lens;
+    std::vector<trajectory>::iterator i = trajectories[id].begin();
+    int traj_id = 0;
+    for(; i != trajectories[id].end(); i++) {
+        lens[traj_id] = i->length;
+        traj_id++;
+    }
+
+    return lens;
+}
+
+void motor_state::new_objective_callback(int id, objective* obj) {
 }
 
 void motor_state::set_joints(std::map<std::string, double> j) {

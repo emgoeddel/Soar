@@ -2,6 +2,7 @@
 
 #include "length.h"
 #include "objective_table.h"
+#include "motor_state.h"
 
 waypoints_objective::waypoints_objective(Symbol* cmd_rt,
                                          soar_interface* si,
@@ -13,7 +14,10 @@ waypoints_objective::waypoints_objective(Symbol* cmd_rt,
     std::cout << "Instantiating the waypoints objective!" << std::endl;
 }
 
-void waypoints_objective::evaluate() {
+bool waypoints_objective::evaluate() {
+    values = ms->trajectory_lengths(set_id);
+    std::cout << "Computed the length values" << std::endl;
+    return true;
 }
 
 objective* make_waypoints_objective(Symbol* cmd_rt,
