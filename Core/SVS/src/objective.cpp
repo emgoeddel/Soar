@@ -13,7 +13,9 @@ objective::objective(Symbol* cmd_rt,
     filter_val_c<int>* sid_fv = dynamic_cast<filter_val_c<int>*>((*input)["set-id"]);
     set_id = sid_fv->get_value();
     filter_val_c<int>* n_fv = dynamic_cast<filter_val_c<int>*>((*input)["number"]);
-    subset_size = sid_fv->get_value();
+    subset_size = n_fv->get_value();
+    filter_val_c<std::string>* nm_fv = dynamic_cast<filter_val_c<std::string>*>((*input)["name"]);
+    name = nm_fv->get_value();
 }
 
 objective::~objective() {

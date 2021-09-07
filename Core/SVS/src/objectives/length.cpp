@@ -16,7 +16,8 @@ waypoints_objective::waypoints_objective(Symbol* cmd_rt,
 
 bool waypoints_objective::evaluate() {
     values = ms->trajectory_lengths(set_id);
-    std::cout << "Computed the length values" << std::endl;
+    std::cout << "Computed the length values for " << values.size()
+              << " trajectories" << std::endl;
     return true;
 }
 

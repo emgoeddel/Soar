@@ -49,6 +49,10 @@ public:
     //// Objective reporting ////
     void new_objective_callback(int id, objective* obj);
 
+    int num_objectives(int set_id);
+    std::vector<std::string> objective_names(int set_id);
+    objective* get_objective(int set_id, std::string name);
+
     //// Joint state tracking ////
     void set_joints(std::map<std::string, double> j);
     std::map<std::string, double> get_joints();
@@ -85,6 +89,7 @@ private:
     std::map<int, motor_query> queries;
     std::map<int, std::vector<trajectory> > trajectories;
     std::mutex traj_mtx;
+    std::map<int, std::map<std::string, objective*> > objectives;
     std::map<int, std::string> statuses;
     std::mutex stat_mtx;
 
@@ -130,7 +135,8 @@ private:
     std::string joints_type;
 
     std::map<int, Symbol*> query_sym_map;
-    std::map<int, std::vector<Symbol*> > query_traj_map;
+    std::map<int, std::map<int, Symbol*> > query_traj_map;
+    std::map<int, std::map<std::string, std::map<int, Symbol*> > > query_obj_map;
 };
 
 #endif

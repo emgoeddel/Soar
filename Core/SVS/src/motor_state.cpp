@@ -1,6 +1,7 @@
 #include "motor_state.h"
 #include <math.h>
 #include "motor/motor.h"
+#include "objective.h"
 
 motor_state::motor_state(std::shared_ptr<motor> m, std::string n) : mtr(m),
                                                                     state_name(n),
@@ -115,6 +116,30 @@ std::map<int, double> motor_state::trajectory_lengths(int id) {
 }
 
 void motor_state::new_objective_callback(int id, objective* obj) {
+    if (objectives.count(id) == 0) {
+        objectives[id] = std::map<std::string, objective*>();
+    }
+    objectives[id][obj->get_name()] = obj;
+    std::cout << "Added " << obj->get_name() << " to the motor state." << std::endl;
+
+    notify_listener();
+}
+
+int motor_state::num_objectives(int set_id) {
+    return objectives[set_id].size();
+}
+
+std::vector<std::string> motor_state::objective_names(int set_id) {
+    std::vector<std::string> v;
+    std::map<std::string, objective*>::iterator i = objectives[set_id].begin();
+    for (; i != objectives[set_id].end(); i++) {
+        v.push_back(i->first);
+    }
+    return v;
+}
+
+objective* motor_state::get_objective(int set_id, std::string name) {
+    return objectives[set_id][name];
 }
 
 void motor_state::set_joints(std::map<std::string, double> j) {
@@ -219,7 +244,6 @@ motor_link::motor_link(soar_interface* si, Symbol* ln, motor_state* m)
     update_desc();
 }
 
-
 motor_link::~motor_link() {}
 
 void motor_link::update_desc() {
@@ -239,19 +263,50 @@ void motor_link::update_desc() {
             query_sym_map[*i] = si->get_wme_val(si->make_id_wme(traj_sets_sym,
                                                                 si->make_sym(set_tag)));
             si->make_wme(query_sym_map[*i], command_id_tag, si->make_sym(*i));
-            query_traj_map[*i] = std::vector<Symbol*>();
+            query_traj_map[*i] = std::map<int, Symbol*>();
         }
 
         int curr_num_traj = ms->num_trajectories(*i);
         if (curr_num_traj > query_traj_map[*i].size()) {
             int num_new_traj = curr_num_traj - query_traj_map[*i].size();
             for (int n = num_new_traj; n > 0; n--) {
-                query_traj_map[*i].push_back(
+                int curr_id = curr_num_traj - n; // Zero-indexed id
+                query_traj_map[*i][curr_id] =
                     si->get_wme_val(si->make_id_wme(query_sym_map[*i],
-                                                    si->make_sym(traj_tag))));
-                si->make_wme(query_traj_map[*i].back(),
-                             traj_id_tag,
-                             si->make_sym(curr_num_traj - n)); // Zero-indexed id
+                                                    si->make_sym(traj_tag)));
+                si->make_wme(query_traj_map[*i][curr_id], traj_id_tag, curr_id);
+            }
+        }
+
+        int curr_num_objectives = ms->num_objectives(*i);
+        if (curr_num_objectives > query_obj_map[*i].size()) {
+            int num_new_obj = curr_num_objectives - query_obj_map[*i].size();
+            std::cout << "Link needs to add " << num_new_obj << " new obj" << std::endl;
+            // Need to add new objective symbols for all trajectories in set...
+            std::vector<std::string> state_objs = ms->objective_names(*i);
+            for (std::vector<std::string>::iterator o = state_objs.begin();
+                 o != state_objs.end(); o++) {
+                if (query_obj_map[*i].count(*o) != 0) continue;
+                std::cout << "Objective name: " << *o << std::endl;
+                query_obj_map[*i][*o] = std::map<int, Symbol*>();
+                std::map<int, double> obj_out = ms->get_objective(*i, *o)->get_outputs();
+                std::cout << "Objective outputs: " << obj_out.size() << std::endl;
+                OutputType out_type = ms->get_objective(*i, *o)->output_type();
+                switch (out_type) {
+                case SELECT: {
+                    std::map<int, double>::iterator s = obj_out.begin();
+                    for (; s != obj_out.end(); s++) {
+                        if (s->second == 0) continue;
+                        std::cout << "Trajectory " << s->first << " is selected"
+                                  << std::endl;
+                        query_obj_map[*i][*o][s->first] =
+                            si->get_wme_val(si->make_wme(query_traj_map[*i][s->first],
+                                                         "selected-by", *o));
+                    }
+                } break;
+                default:
+                    break;
+                }
             }
         }
     }

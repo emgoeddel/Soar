@@ -29,8 +29,12 @@ public:
     // Evaluate the objective with results -> values
     virtual bool evaluate() = 0;
     // Turn the values -> outputs based on the OutputType
+    void set_output_type(OutputType o) { ot = o; }
     void update_outputs();
     OutputType output_type() { return ot; }
+
+    std::string get_name() { return name; }
+    std::map<int, double> get_outputs() { return outputs; }
 
     // Put a status on the command object
     void set_status(const std::string& msg);
@@ -38,6 +42,7 @@ public:
 protected:
     Symbol* cmd_rt;
     soar_interface* si;
+    std::string name;
     std::string status;
     wme* status_wme;
 
