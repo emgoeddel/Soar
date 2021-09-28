@@ -29,17 +29,38 @@ void objective::update_outputs() {
         break;
     case SELECT: {
         std::map<int, double>::iterator i = values.begin();
-        int selected = i->first;
-        double min_value = i->second; // XXX Does not take subset_size into acct
+        std::list<int> sel_inds;
+        std::list<double> sel_vals;
         for (; i != values.end(); i++) {
-            if (i->second < min_value) {
-                selected = i->first;
-                min_value = i->second;
+            std::list<double>::iterator j = sel_vals.begin();
+            std::list<int>::iterator k = sel_inds.begin();
+            for (; j != sel_vals.end(); j++) {
+                if (i->second < *j) break;
+                k++;
+            }
+            if (sel_vals.size() < subset_size || j != sel_vals.end()) {
+                sel_vals.insert(j, i->second);
+                sel_inds.insert(k, i->first);
+
+                if (sel_vals.size() > subset_size) {
+                    sel_vals.pop_back();
+                    sel_inds.pop_back();
+                }
             }
         }
+
         i = values.begin();
         for(; i != values.end(); i++) {
-            if (i->first == selected) {
+            std::list<int>::iterator k = sel_inds.begin();
+            bool is_selected = false;
+            for (; k != sel_inds.end(); k++) {
+                if (*k == i->first) {
+                    is_selected = true;
+                    break;
+                }
+            }
+
+            if (is_selected) {
                 outputs[i->first] = 1;
             } else {
                 outputs[i->first] = 0;

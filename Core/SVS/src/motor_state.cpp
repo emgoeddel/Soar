@@ -109,6 +109,7 @@ std::map<int, double> motor_state::trajectory_lengths(int id) {
     int traj_id = 0;
     for(; i != trajectories[id].end(); i++) {
         lens[traj_id] = i->length;
+        //std::cout << "Trajectory " << traj_id << " has length " << i->length << std::endl;
         traj_id++;
     }
 
