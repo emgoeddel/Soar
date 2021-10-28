@@ -1,6 +1,32 @@
 #ifdef ENABLE_ROS
 
 #include "motor_types.h"
+#include "sgnode.h"
+
+void from_sgnode(sgnode* node, obstacle& to) {
+    to.name = node->get_id();
+
+    std::string shape_info;
+    node->get_shape_sgel(shape_info);
+
+    if (shape_info == "") {
+        std::cout << "Trying to turn a group node into an obstacle!" << std::endl;
+        to.geometry = NON_OBSTACLE;
+    } else if (shape_info[0] == 'v') {
+        to.geometry = CONVEX_OBSTACLE;
+        convex_node* c = dynamic_cast<convex_node*>(node);
+        for (std::vector<vec3>::const_iterator i = c->get_verts().begin();
+             i != c->get_verts().end(); i++) {
+            to.convex_pts.push_back(*i);
+        }
+    } else if (shape_info[0] == 'b') {
+        to.geometry = BALL_OBSTACLE;
+        ball_node* b = dynamic_cast<ball_node*>(node);
+        to.ball_radius = b->get_radius();
+    } // XXX Box obstacles if adding
+
+    node->get_trans(to.translation, to.rotation, to.scale);
+}
 
 void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to) {
     to.header.frame_id = from.frame;

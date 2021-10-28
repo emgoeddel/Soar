@@ -34,7 +34,16 @@ void motor_state::new_query(int id, query q) {
     motor_query mq;
     mq.soar_query = q;
     mq.start_state = get_joints();
-    //mq.obstacles = get from scene;
+
+    std::vector<sgnode*> scn_nodes;
+    scn->get_all_nodes(scn_nodes);
+    for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
+         i != scn_nodes.end(); i++) {
+        obstacle o;
+        from_sgnode(*i, o);
+        mq.obstacles.push_back(o);
+    }
+
     queries[id] = mq;
     if (!mtr->new_planner_query(id, mq, this)) {
         std::cout << "Warning: Could not start planning for query " << id << std::endl;

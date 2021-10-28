@@ -59,7 +59,8 @@ struct query {
 enum ObstacleType {
     BALL_OBSTACLE,
     BOX_OBSTACLE,
-    CONVEX_OBSTACLE
+    CONVEX_OBSTACLE,
+    NON_OBSTACLE
 };
 
 
@@ -73,7 +74,11 @@ struct obstacle {
 
     vec3 translation;
     vec3 rotation;
+    vec3 scale;
 };
+
+class sgnode;
+void from_sgnode(sgnode* node, obstacle& to);
 
 /*
  * motor_query struct
