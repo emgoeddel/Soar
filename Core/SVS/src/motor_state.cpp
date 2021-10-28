@@ -2,10 +2,14 @@
 #include <math.h>
 #include "motor/motor.h"
 #include "objective.h"
+#include "scene.h"
 
-motor_state::motor_state(std::shared_ptr<motor> m, std::string n) : mtr(m),
-                                                                    state_name(n),
-                                                                    joints_type("none")
+motor_state::motor_state(std::shared_ptr<motor> m,
+                         scene* s,
+                         std::string n) : mtr(m),
+                                          scn(s),
+                                          state_name(n),
+                                          joints_type("none")
 {
     base_xform = transform3::identity();
 }

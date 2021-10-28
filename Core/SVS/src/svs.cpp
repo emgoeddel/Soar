@@ -257,7 +257,7 @@ void svs_state::init()
     }
 
     if (!ms) {
-        ms = new motor_state(svsp->get_motor(), name);
+        ms = new motor_state(svsp->get_motor(), scn, name);
 
         if (parent) {
             ms->copy_from(parent->ms);

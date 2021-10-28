@@ -25,10 +25,11 @@
 class motor;
 class motor_link;
 class objective;
+class scene;
 
 class motor_state {
 public:
-    motor_state(std::shared_ptr<motor> m, std::string n);
+    motor_state(std::shared_ptr<motor> m, scene* s, std::string n);
     void copy_from(motor_state* other);
 
     //// Trajectory planning ////
@@ -76,6 +77,7 @@ private:
     void notify_listener();
 
     std::shared_ptr<motor> mtr;
+    scene* scn;
 
     std::string state_name;
 

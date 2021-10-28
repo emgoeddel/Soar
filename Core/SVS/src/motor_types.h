@@ -51,6 +51,31 @@ struct query {
 };
 
 /*
+ * obstacle struct
+ *
+ * Holds geometry-only information about an object in the scene
+ */
+
+enum ObstacleType {
+    BALL_OBSTACLE,
+    BOX_OBSTACLE,
+    CONVEX_OBSTACLE
+};
+
+
+struct obstacle {
+    std::string name;
+
+    ObstacleType geometry;
+    vec3 box_dim; // used for BOX_OBSTACLE
+    double ball_radius; // used for BALL_OBSTACLE
+    std::vector<vec3> convex_pts; //used for CONVEX_OBSTACLE
+
+    vec3 translation;
+    vec3 rotation;
+};
+
+/*
  * motor_query struct
  *
  * Holds motor-level information about a planning query
@@ -58,7 +83,7 @@ struct query {
 
 struct motor_query {
     query soar_query;
-    //std::vector<obstacle> obstacles; XXX
+    std::vector<obstacle> obstacles;
     std::map<std::string, double> start_state;
 
     // Utility functions
