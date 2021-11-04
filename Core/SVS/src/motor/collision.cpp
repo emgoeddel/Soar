@@ -74,6 +74,16 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
 
 collision_checker::~collision_checker() {
     if (robot) delete robot;
+
+    std::vector<fcl::CollisionObject*>::iterator o = world_objects.begin();
+    for (; o != world_objects.end(); o++) {
+        delete *o;
+    }
+    std::vector<object_data*>::iterator d = world_obj_datas.begin();
+    for (; d != world_obj_datas.end(); d++) {
+        delete *d;
+    }
+
     if (world) delete world;
 }
 
@@ -103,6 +113,8 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
         world_objects.back()->setUserData(world_obj_datas.back());
 
         world->registerObject(world_objects.back());
+
+        std::cout << "Added " << i->name << " to the world." << std::endl;
     }
 }
 

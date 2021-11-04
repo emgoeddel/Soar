@@ -10,7 +10,7 @@ void from_sgnode(sgnode* node, obstacle& to) {
     node->get_shape_sgel(shape_info);
 
     if (shape_info == "") {
-        std::cout << "Trying to turn a group node into an obstacle!" << std::endl;
+        std::cout << "Warning: Trying to turn a group node into an obstacle!" << std::endl;
         to.geometry = NON_OBSTACLE;
     } else if (shape_info[0] == 'v') {
         to.geometry = CONVEX_OBSTACLE;
