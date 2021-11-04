@@ -7,6 +7,7 @@
 #include <fcl/broadphase/broadphase_dynamic_AABB_tree.h>
 #include <fcl/collision.h>
 #include "robot_model.h"
+#include "motor_types.h"
 
 /*
  * collision_data struct
@@ -44,20 +45,28 @@ public:
     collision_checker(const ompl::base::SpaceInformationPtr& si);
     collision_checker(ompl::base::SpaceInformation* si,
                       std::shared_ptr<robot_model> m,
-                      std::string group);
+                      std::string group,
+                      std::vector<obstacle>& obstacles);
     collision_checker(const ompl::base::SpaceInformationPtr& si,
                       std::shared_ptr<robot_model> m,
-                      std::string group);
+                      std::string group,
+                      std::vector<obstacle>& obstacles);
     ~collision_checker();
 
     bool isValid(const ompl::base::State* state) const override;
 
 private:
+    void setup_obstacles(std::vector<obstacle>& obstacles);
+
     std::vector<std::string> joint_names;
     std::shared_ptr<robot_model> model;
 
     fcl::BroadPhaseCollisionManager* robot;
+
     fcl::BroadPhaseCollisionManager* world;
+    std::vector<fcl::CollisionObject*> world_objects;
+    std::vector<std::shared_ptr<fcl::CollisionGeometry> > world_obj_geoms;
+    std::vector<object_data*> world_obj_datas;
 };
 
 #endif

@@ -44,7 +44,8 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si)
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si,
                                      std::shared_ptr<robot_model> m,
-                                     std::string group)
+                                     std::string group,
+                                     std::vector<obstacle>& obstacles)
     : ompl::base::StateValidityChecker(si),
     model(m)
 {
@@ -52,11 +53,14 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
 
     robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
+
+    setup_obstacles(obstacles);
 }
 
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
                                      std::shared_ptr<robot_model> m,
-                                     std::string group)
+                                     std::string group,
+                                     std::vector<obstacle>& obstacles)
     : ompl::base::StateValidityChecker(si),
     model(m)
 {
@@ -64,11 +68,42 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
 
     robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
+
+    setup_obstacles(obstacles);
 }
 
 collision_checker::~collision_checker() {
     if (robot) delete robot;
     if (world) delete world;
+}
+
+// Non-robot obstacles are set up once per planning problem
+void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
+    std::vector<obstacle>::iterator i = obstacles.begin();
+    for (; i != obstacles.end(); i++) {
+        transform3 t(i->translation, i->rotation, i->scale);
+
+        vec4 quat;
+        t.rotation(quat);
+        fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
+
+        vec3 pos;
+        i->translation;
+        fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
+
+        fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
+
+        world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(0)));
+
+        world_objects.push_back(new fcl::CollisionObject(world_obj_geoms.back(),
+                                                         fcl_xf));
+
+        world_obj_datas.push_back(new object_data());
+        world_obj_datas.back()->name = i->name;
+        world_objects.back()->setUserData(world_obj_datas.back());
+
+        world->registerObject(world_objects.back());
+    }
 }
 
 bool collision_checker::isValid(const ompl::base::State* state) const {
@@ -78,6 +113,7 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     const ompl::base::RealVectorStateSpace::StateType* vecstate =
         state->as<ompl::base::RealVectorStateSpace::StateType>();
 
+    // Robot parts are updated for every state
     std::map<std::string, double> joint_state;
     for (int i = 0; i < joint_names.size(); i++) {
         joint_state[joint_names[i]] = (*vecstate)[i];

@@ -86,7 +86,8 @@ void planning_problem::run_planner() {
     // create a collision checker for this thread
     cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(
                                         new collision_checker(cur_ss->getSpaceInformation(),
-                                                              model, joint_group)));
+                                                              model, joint_group,
+                                                              query.obstacles)));
 
     // copy the start state into SimpleSetup
     ompl::base::ScopedState<> start(space);
