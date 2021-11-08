@@ -648,6 +648,44 @@ double ball_node::min_project_on_axis(const vec3& axis) const
     return get_centroid().dot(axis) - world_radius;
 }
 
+box_node::box_node(const std::string& id, vec3 d) : geometry_node(id),
+                                                    dim(dim) {}
+
+void box_node::get_shape_sgel(string& s) const {
+    stringstream ss;
+    ss << "x " << dim(0) << " " << dim(1) << " " << dim(2);
+    s = ss.str();
+}
+
+void box_node::set_dimensions(vec3 d) {
+    dim = d;
+    set_shape_dirty();
+}
+
+void box_node::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
+    sgnode::proxy_use_sub(args, os);
+    os << endl << "dimensions: "
+       << dim(0) << " " << dim(1) << " " << dim(2) << endl;
+}
+
+double box_node::max_project_on_axis(const vec3& axis) const {
+    return 0;
+}
+
+double box_node::min_project_on_axis(const vec3& axis) const {
+    return 0;
+}
+
+void box_node::gjk_local_support(const vec3& dir, vec3& support) const {
+}
+
+void box_node::update_shape() {
+}
+
+sgnode* box_node::clone_sub() const {
+    return new box_node(get_id(), dim);
+}
+
 const tag_map& sgnode::get_all_tags() const
 {
     return tags;

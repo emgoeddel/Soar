@@ -251,6 +251,28 @@ class ball_node : public geometry_node
         double radius;
 };
 
+class box_node : public geometry_node {
+public:
+    box_node(const std::string& id, vec3 d);
+    void get_shape_sgel(std::string& s) const;
+
+    vec3 get_dimensions() const { return dim; }
+    void set_dimensions(vec3 d);
+
+    void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
+
+    double max_project_on_axis(const vec3& axis) const;
+    double min_project_on_axis(const vec3& axis) const;
+
+    void gjk_local_support(const vec3& dir, vec3& support) const;
+
+private:
+    void update_shape();
+    sgnode* clone_sub() const;
+
+    vec3 dim;
+};
+
 class sgnode_listener
 {
     public:
