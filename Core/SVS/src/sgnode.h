@@ -270,6 +270,9 @@ private:
     void update_shape();
     sgnode* clone_sub() const;
 
+    void get_points_local(ptlist& pts) const;
+    void get_points_world(ptlist& pts) const;
+
     vec3 dim;
 };
 

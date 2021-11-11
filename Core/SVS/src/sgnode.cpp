@@ -669,21 +669,90 @@ void box_node::proxy_use_sub(const std::vector<std::string>& args, std::ostream&
 }
 
 double box_node::max_project_on_axis(const vec3& axis) const {
-    return 0;
+    double max = get_centroid().dot(axis);
+
+    ptlist corners;
+    get_points_world(corners);
+
+    for (ptlist::iterator i = corners.begin(); i != corners.end(); i++) {
+        double proj = i->dot(axis);
+        if (proj > max) max = proj;
+    }
+
+    return max;
 }
 
 double box_node::min_project_on_axis(const vec3& axis) const {
-    return 0;
+    double min = get_centroid().dot(axis);
+
+    ptlist corners;
+    get_points_world(corners);
+
+    for (ptlist::iterator i = corners.begin(); i != corners.end(); i++) {
+        double proj = i->dot(axis);
+        if (proj < min) min = proj;
+    }
+
+    return min;
 }
 
 void box_node::gjk_local_support(const vec3& dir, vec3& support) const {
+    ptlist corners;
+    get_points_world(corners);
+
+    double dp, best = 0.0;
+    int best_i = -1;
+
+    for (int i = 0; i < corners.size(); ++i)
+    {
+        dp = dir.dot(corners[i]);
+        if (best_i == -1 || dp > best)
+        {
+            best = dp;
+            best_i = i;
+        }
+    }
+    support = corners[best_i];
 }
 
 void box_node::update_shape() {
+    ptlist corners;
+    get_points_world(corners);
+    set_bounds(bbox(corners));
 }
 
 sgnode* box_node::clone_sub() const {
     return new box_node(get_id(), dim);
+}
+
+void box_node::get_points_local(ptlist& pts) const {
+    pts.clear();
+
+    // Add all the corners of the box to list
+    // Locally, the center is (0, 0, 0), so this just requires dim
+    for (int i = -1; i <= 1; i++) {
+        if (i == 0) continue;
+        for (int j = -1; j <= 1; j++) {
+            if (j == 0) continue;
+            for (int k = -1; k <= 1; k++) {
+                if (k == 0) continue;
+                pts.push_back(vec3(i * dim(0) / 2,
+                                   j * dim(1) / 2,
+                                   k * dim(2) / 2));
+            }
+        }
+    }
+}
+
+void box_node::get_points_world(ptlist& pts) const {
+    ptlist local;
+    get_points_local(local);
+    transform3 wt = get_world_trans();
+
+    pts.clear();
+    for (ptlist::iterator i = pts.begin(); i != pts.end(); i++) {
+        pts.push_back(wt(*i));
+    }
 }
 
 const tag_map& sgnode::get_all_tags() const
