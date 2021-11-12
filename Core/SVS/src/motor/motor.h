@@ -24,6 +24,7 @@ public:
     // Robot model and state queries
     std::string get_robot_name() { return model->get_robot_name(); }
     std::vector<std::string> get_link_names();
+    std::map<std::string, vec3> get_link_boxes();
     std::map<std::string, transform3>
     get_link_transforms_at(std::map<std::string, double> j);
 

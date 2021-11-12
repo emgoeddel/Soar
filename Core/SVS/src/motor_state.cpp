@@ -201,6 +201,10 @@ std::map<std::string, transform3> motor_state::get_link_transforms() {
     return mtr->get_link_transforms_at(joints);
 }
 
+std::map<std::string, vec3> motor_state::get_link_boxes() {
+    return mtr->get_link_boxes();
+}
+
 std::string motor_state::robot_name() {
     return mtr->get_robot_name();
 }

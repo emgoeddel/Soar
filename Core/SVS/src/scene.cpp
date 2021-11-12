@@ -217,6 +217,7 @@ bool parse_mods(vector<string>& f, int& start, string& mods, vector<ptlist>& val
             case 'p':
             case 'r':
             case 's':
+            case 'x':
                 v.push_back(vec3());
                 if (!parse_vec3(f, ++start, v[0], error))
                 {
@@ -258,7 +259,8 @@ int scene::parse_add(vector<string>& f, string& error)
     vector<ptlist> vals;
     ptlist vertices;
     double radius = 0.0;
-    bool is_convex, is_ball;
+    vec3 dims;
+    bool is_convex, is_ball, is_box;
     
     if (f.size() < 1)
     {
@@ -289,6 +291,7 @@ int scene::parse_add(vector<string>& f, string& error)
     */
     is_convex = false;
     is_ball = false;
+    is_box = false;
     for (size_t i = 0, iend = mods.size(); i < iend; ++i)
     {
         switch (mods[i])
@@ -301,9 +304,15 @@ int scene::parse_add(vector<string>& f, string& error)
                 radius = vals[i][0](0);
                 is_ball = true;
                 break;
+            case 'x':
+                dims = vals[i][0];
+                is_box = true;
+                break;
         }
     }
-    if (is_convex && is_ball)
+    if ((is_convex && is_ball) ||
+        (is_convex && is_box) ||
+        (is_box && is_ball))
     {
         error = "conflicting node type";
         return 0; // don't know how to find a more accurate position
@@ -315,6 +324,10 @@ int scene::parse_add(vector<string>& f, string& error)
     else if (is_ball)
     {
         n = new ball_node(id, radius);
+    }
+    else if (is_box)
+    {
+        n = new box_node(id, dims);
     }
     else
     {
@@ -361,6 +374,7 @@ int scene::parse_change(vector<string>& f, string& error)
     sgnode* n;
     convex_node* cn;
     ball_node* bn;
+    box_node* xn;
     string mods;
     vector<ptlist> vals;
     
@@ -405,6 +419,14 @@ int scene::parse_change(vector<string>& f, string& error)
                     return 0;
                 }
                 bn->set_radius(vals[i][0](0));
+                break;
+            case 'x':
+                xn = dynamic_cast<box_node*>(n);
+                if (!xn)
+                {
+                    return 0;
+                }
+                xn->set_dimensions(vals[i][0]);
                 break;
         }
     }

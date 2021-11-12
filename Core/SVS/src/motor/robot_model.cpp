@@ -439,6 +439,21 @@ std::set<std::string> robot_model::get_allowed_collisions(std::string link_name)
     return allowed[link_name];
 }
 
+std::map<std::string, vec3> robot_model::models_as_boxes() {
+    std::map<std::string, vec3> boxes;
+    for (std::set<std::string>::iterator i = links_of_interest.begin();
+         i != links_of_interest.end(); i++) {
+        all_links[*i].collision_model->computeLocalAABB();
+        vec3 box_dims;
+        box_dims(0) = all_links[*i].collision_model->aabb_local.width();
+        box_dims(1) = all_links[*i].collision_model->aabb_local.depth();
+        box_dims(2) = all_links[*i].collision_model->aabb_local.height();
+        boxes[*i] = box_dims;
+    }
+
+    return boxes;
+}
+
 // Calculate and return link positions for joint pose p
 std::map<std::string, transform3>
 robot_model::link_transforms(std::map<std::string, double> p) {

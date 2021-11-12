@@ -26,6 +26,10 @@ std::vector<std::string> motor::get_link_names() {
     return link_names;
 }
 
+std::map<std::string, vec3> motor::get_link_boxes() {
+    return model->models_as_boxes();
+}
+
 std::map<std::string, transform3>
 motor::get_link_transforms_at(std::map<std::string, double> j) {
     return model->link_transforms(j);

@@ -81,6 +81,7 @@ public:
 
     std::shared_ptr<fcl::BVHModel<fcl::OBBRSS> > get_collision_model(std::string link_name);
     std::set<std::string> get_allowed_collisions(std::string link_name);
+    std::map<std::string, vec3> models_as_boxes();
 
     // Kinematics
     std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints);

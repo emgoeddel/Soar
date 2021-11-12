@@ -403,7 +403,7 @@ std::string change_cmd(std::string name, transform3 xform) {
     return cmd.str();
 }
 
-std::string add_cmd(std::string name, std::string parent, transform3 xform) {
+std::string add_grp_cmd(std::string name, std::string parent, transform3 xform) {
     vec3 p;
     xform.position(p);
     Eigen::Quaterniond q;
@@ -414,6 +414,22 @@ std::string add_cmd(std::string name, std::string parent, transform3 xform) {
     cmd << "add " << name << " " << parent;
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
     cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string add_cmd(std::string name, std::string parent, transform3 xform, vec3 size) {
+    vec3 p;
+    xform.position(p);
+    Eigen::Quaterniond q;
+    xform.rotation(q);
+    vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
+
+    std::stringstream cmd;
+    cmd << "add " << name << " " << parent;
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << " x " << size.x() << " " << size.y() << " " << size.z();
     cmd << std::endl;
     return cmd.str();
 }
@@ -439,11 +455,13 @@ void svs_state::sync_scene_robot()
     // Check if Fetch is in the scene, and if not just add it
     if (!scn->get_node(ms->robot_name())) {
         robot_changed = true;
-        cmds.push_back(add_cmd(ms->robot_name(), "world", ms->get_base_xform()));
+        cmds.push_back(add_grp_cmd(ms->robot_name(), "world", ms->get_base_xform()));
         std::map<std::string, transform3> links = ms->get_link_transforms();
+        std::map<std::string, vec3> link_boxes = ms->get_link_boxes();
         for (std::map<std::string, transform3>::iterator i = links.begin();
              i != links.end(); i++) {
-            cmds.push_back(add_cmd(i->first, ms->robot_name(), i->second));
+            cmds.push_back(add_cmd(i->first, ms->robot_name(), i->second,
+                                   link_boxes[i->first]));
         }
     } else {
         // Check if the Fetch base has moved and update if so
