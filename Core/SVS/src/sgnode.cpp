@@ -649,7 +649,7 @@ double ball_node::min_project_on_axis(const vec3& axis) const
 }
 
 box_node::box_node(const std::string& id, vec3 d) : geometry_node(id),
-                                                    dim(dim) {}
+                                                    dim(d) {}
 
 void box_node::get_shape_sgel(string& s) const {
     stringstream ss;

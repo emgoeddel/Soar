@@ -485,6 +485,30 @@ void set_geom_vertices(geometry *g, real *vertices, int nverts) {
 	}
 }
 
+void set_geom_box_vertices(geometry *g, real *dims) {
+    int nverts = 8;
+    real verts[nverts*3];
+    int v_i = 0;
+
+    for (int i = -1; i <= 1; i++) {
+        if (i == 0) continue;
+        for (int j = -1; j <= 1; j++) {
+            if (j == 0) continue;
+            for (int k = -1; k <= 1; k++) {
+                if (k == 0) continue;
+                verts[v_i] = i * dims[0] / 2;
+                v_i++;
+                verts[v_i] = j * dims[1] / 2;
+                v_i++;
+                verts[v_i] = k * dims[2] / 2;
+                v_i++;
+            }
+        }
+    }
+
+    set_geom_vertices(g, verts, nverts);
+}
+
 void set_geom_radius(geometry *g, real radius) {
 	free_geom_shape(g);
 	g->radius = radius;

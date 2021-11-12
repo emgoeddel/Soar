@@ -427,10 +427,11 @@ std::string add_cmd(std::string name, std::string parent, transform3 xform, vec3
 
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
+    cmd << " x " << size.x() << " " << size.y() << " " << size.z();
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
     cmd << " r " << r.x() << " " << r.y() << " " << r.z();
-    cmd << " x " << size.x() << " " << size.y() << " " << size.z();
     cmd << std::endl;
+    //std::cout << cmd.str();
     return cmd.str();
 }
 
@@ -461,6 +462,7 @@ void svs_state::sync_scene_robot()
         for (std::map<std::string, transform3>::iterator i = links.begin();
              i != links.end(); i++) {
             cmds.push_back(add_cmd(i->first, ms->robot_name(), i->second,
+                                   //vec3(0.1, 0.1, 0.1)));
                                    link_boxes[i->first]));
         }
     } else {

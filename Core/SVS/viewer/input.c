@@ -130,14 +130,15 @@ int proc_cmd(char *fields[]) {
 }
 
 int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
-	real pos[3], rot[4], scale[3], color[3], verts[MAX_FIELDS];
+        real pos[3], rot[4], scale[3], dims[3], color[3], verts[MAX_FIELDS];
 	real radius, line_width, layer;
-	int i, f, nverts, pos_set, rot_set, scale_set, color_set;
+	int i, f, nverts, pos_set, rot_set, scale_set, dims_set, color_set;
 	char *text;
 	
 	pos_set = 0;
 	rot_set = 0;
 	scale_set = 0;
+        dims_set = 0;
 	color_set = 0;
 	radius = -1.0;
 	line_width = -1.0;
@@ -204,6 +205,14 @@ int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
 				}
 				f += 2;
 				break;
+                        case 'x':  /* box */
+				if (parse_nums(&fields[f+1], 3, dims) != 3) {
+					fprintf(stderr, "invalid dimensions\n");
+					return 0;
+				}
+                                dims_set = 1;
+				f += 4;
+				break;
 			case 't':  /* text */
 				text = fields[f+1];
 				f += 2;
@@ -235,7 +244,9 @@ int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
 		
 		if (radius >= 0.0) {
 			set_geom_radius(gs[i], radius);
-		} else if (nverts != -1) {
+		} else if (dims_set) {
+                        set_geom_box_vertices(gs[i], dims);
+                } else if (nverts != -1) {
 			set_geom_vertices(gs[i], verts, nverts);
 		} else if (text != NULL) {
 			set_geom_text(gs[i], text);
