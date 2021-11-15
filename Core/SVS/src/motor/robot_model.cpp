@@ -446,8 +446,8 @@ std::map<std::string, vec3> robot_model::models_as_boxes() {
         all_links[*i].collision_model->computeLocalAABB();
         vec3 box_dims;
         box_dims(0) = all_links[*i].collision_model->aabb_local.width();
-        box_dims(1) = all_links[*i].collision_model->aabb_local.depth();
-        box_dims(2) = all_links[*i].collision_model->aabb_local.height();
+        box_dims(1) = all_links[*i].collision_model->aabb_local.height();
+        box_dims(2) = all_links[*i].collision_model->aabb_local.depth();
         boxes[*i] = box_dims;
     }
 
