@@ -48,6 +48,10 @@ typedef struct Geometry {
 	GLuint *indexes;
 	int ninds;
 	real *normals;
+
+        /* for boxes */
+        vec3 dimensions;
+        real corners[24];
 	
 	/* for spheres */
 	GLUquadricObj *quadric;
@@ -100,7 +104,7 @@ void apply_camera(camera *c);
 
 void init_geom(geometry *g, char *name);
 void set_geom_vertices(geometry *g, real *vertices, int nverts);
-void set_geom_box_vertices(geometry *g, real *dims);
+void set_geom_box(geometry *g, real *dims);
 void set_geom_radius(geometry *g, real radius);
 void set_geom_text(geometry *g, char *text);
 void destroy_geom(geometry *g);

@@ -39,6 +39,19 @@ static real geom_label_color[] =        { 1.0, 0.0, 0.0 };
 static GLfloat geom_specular[] =        { 1.0, 1.0, 1.0, 1.0 };
 static GLfloat geom_shininess[] =       { 100.0 };
 
+// pairs of vertices that form lines for a box
+static GLuint box_line_pairs[] = {0, 1,
+                                  0, 2,
+                                  0, 4,
+                                  1, 3,
+                                  1, 5,
+                                  2, 3,
+                                  2, 6,
+                                  3, 7,
+                                  4, 5,
+                                  4, 6,
+                                  5, 7,
+                                  6, 7};
 static scene *scene_head = NULL;
 static scene *curr_scene = NULL;
 static int scr_width = 640;
@@ -441,11 +454,14 @@ void free_geom_shape(geometry *g) {
 		gluDeleteQuadric(g->quadric);
 		g->quadric = NULL;
 	}
-	g->radius = 0.0;
+	g->radius = -1.0;
 	if (g->text) {
 		free(g->text);
 		g->text = NULL;
 	}
+        for (int i = 0; i < 3; i++) {
+            g->dimensions[i] = 0.0;
+        }
 }
 
 void set_geom_vertices(geometry *g, real *vertices, int nverts) {
@@ -485,28 +501,29 @@ void set_geom_vertices(geometry *g, real *vertices, int nverts) {
 	}
 }
 
-void set_geom_box_vertices(geometry *g, real *dims) {
-    int nverts = 8;
-    real verts[nverts*3];
-    int v_i = 0;
+void set_geom_box(geometry *g, real *dims) {
+    free_geom_shape(g);
 
+    // store the dimensions explicitly
+    copy_vec3(dims, g->dimensions);
+
+    // store vertices (but NOT in the vertices variable, ugh)
+    int v_i = 0;
     for (int i = -1; i <= 1; i++) {
         if (i == 0) continue;
         for (int j = -1; j <= 1; j++) {
             if (j == 0) continue;
             for (int k = -1; k <= 1; k++) {
                 if (k == 0) continue;
-                verts[v_i] = i * dims[0] / 2;
+                g->corners[v_i] = i * dims[0] / 2;
                 v_i++;
-                verts[v_i] = j * dims[1] / 2;
+                g->corners[v_i] = j * dims[1] / 2;
                 v_i++;
-                verts[v_i] = k * dims[2] / 2;
+                g->corners[v_i] = k * dims[2] / 2;
                 v_i++;
             }
         }
     }
-
-    set_geom_vertices(g, verts, nverts);
 }
 
 void set_geom_radius(geometry *g, real radius) {
@@ -549,7 +566,7 @@ void draw_geom(geometry *g) {
 	glTranslated(g->pos[0], g->pos[1], g->pos[2]);
 	glRotated(g->angle * 180 / PI, g->axis[0], g->axis[1], g->axis[2]);
 	glScaled(g->scale[0], g->scale[1], g->scale[2]);
-	
+
 	if (g->ninds >= 0) {
 		glVertexPointer(3, GL_DOUBLE, 0, g->vertices);
 		if (g->ninds == 1) {
@@ -576,7 +593,19 @@ void draw_geom(geometry *g) {
 			gluQuadricNormals(g->quadric, GLU_SMOOTH);
 		}
 		gluSphere(g->quadric, g->radius, 10, 10);
-	} else if (g->text) {
+	} else if (g->dimensions[0] > 0.0 &&
+                   g->dimensions[1] > 0.0 &&
+                   g->dimensions[2] > 0.0) {
+            glVertexPointer(3, GL_DOUBLE, 0, g->corners);
+            glBegin(GL_LINES);
+            for (int l = 0; l < 12*2; ) {
+                glArrayElement(box_line_pairs[l]);
+                l++;
+                glArrayElement(box_line_pairs[l]);
+                l++;
+            }
+            glEnd();
+        } else if (g->text) {
 		draw_text(g->text, 0, 0);
 	} else {
 		fprintf(stderr, "geometry %s has no shape\n", g->name);

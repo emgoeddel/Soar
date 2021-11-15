@@ -245,7 +245,7 @@ int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
 		if (radius >= 0.0) {
 			set_geom_radius(gs[i], radius);
 		} else if (dims_set) {
-                        set_geom_box_vertices(gs[i], dims);
+                        set_geom_box(gs[i], dims);
                 } else if (nverts != -1) {
 			set_geom_vertices(gs[i], verts, nverts);
 		} else if (text != NULL) {
