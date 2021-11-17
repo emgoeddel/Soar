@@ -30,8 +30,12 @@ static layer layers[NLAYERS];
 static GLfloat light_color[] =          { 0.2, 0.2, 0.2, 1.0 };
 static real bg_color[] =                { 0.2, 0.2, 0.2, 1.0 };
 static real grid_color[] =              { 0.3, 0.3, 0.3, 0.5 };
-static real grid_x_color[] =            { 0.7, 0.0, 0.0, 0.5 };
-static real grid_y_color[] =            { 0.0, 0.7, 0.0, 0.5 };
+static real grid_pos_x_color[] =        { 0.7, 0.0, 0.0, 0.5 };
+static real grid_neg_x_color[] =        { 0.4, 0.0, 0.0, 0.5 };
+static real grid_pos_y_color[] =        { 0.0, 0.7, 0.0, 0.5 };
+static real grid_neg_y_color[] =        { 0.0, 0.4, 0.0, 0.5 };
+static real grid_pos_z_color[] =        { 0.0, 0.0, 0.7, 0.5 };
+static real grid_neg_z_color[] =        { 0.0, 0.0, 0.4, 0.5 };
 static real scene_text_color[] =        { 1.0, 0.0, 0.0 };
 static real active_scene_text_color[] = { 1.0, 1.0, 0.0 };
 static real geom_default_color[] =      { 0.8, 0.8, 0.8 };
@@ -285,16 +289,40 @@ void draw_grid() {
 	glVertexPointer(2, GL_DOUBLE, 0, grid_verts);
 	glDrawArrays(GL_LINES, 0, GRID_VERTS_SIZE / 2);
 	
-	glColor4dv(grid_x_color);
+	glColor4dv(grid_pos_x_color);
 	glBegin(GL_LINES);
-		glVertex3f(0.0, -g, 0.0);
-		glVertex3f(0.0, g, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(g, 0.0, 0.0);
 	glEnd();
 	
-	glColor4dv(grid_y_color);
+	glColor4dv(grid_pos_y_color);
 	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, g, 0.0);
+	glEnd();
+
+        glColor4dv(grid_pos_z_color);
+	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 0.0, g);
+	glEnd();
+
+        glColor4dv(grid_neg_x_color);
+	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
 		glVertex3f(-g, 0.0, 0.0);
-		glVertex3f(g, 0.0, 0.0);
+	glEnd();
+	
+	glColor4dv(grid_neg_y_color);
+	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, -g, 0.0);
+	glEnd();
+
+        glColor4dv(grid_neg_z_color);
+	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 0.0, -g);
 	glEnd();
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -596,6 +624,7 @@ void draw_geom(geometry *g) {
 	} else if (g->dimensions[0] > 0.0 &&
                    g->dimensions[1] > 0.0 &&
                    g->dimensions[2] > 0.0) {
+            glLineWidth(2.0);
             glVertexPointer(3, GL_DOUBLE, 0, g->corners);
             glBegin(GL_LINES);
             for (int l = 0; l < 12*2; ) {
