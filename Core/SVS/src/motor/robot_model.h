@@ -47,6 +47,8 @@ struct link_info {
     transform3 collision_origin;
     ptlist vertices;
     std::shared_ptr<fcl::BVHModel<fcl::OBBRSS> > collision_model;
+    transform3 aabb_origin;
+    vec3 aabb_size;
 };
 
 /*
@@ -84,7 +86,8 @@ public:
     std::map<std::string, vec3> models_as_boxes();
 
     // Kinematics
-    std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints);
+    std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints,
+                                                      bool box_translation);
     std::vector<double> solve_ik(vec3 ee_pt);
     vec3 end_effector_pos(std::map<std::string, double> joints);
 

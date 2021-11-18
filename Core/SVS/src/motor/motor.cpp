@@ -32,7 +32,8 @@ std::map<std::string, vec3> motor::get_link_boxes() {
 
 std::map<std::string, transform3>
 motor::get_link_transforms_at(std::map<std::string, double> j) {
-    return model->link_transforms(j);
+    // Asking for the transforms FOR THE BOX MODELS FOR SVS
+    return model->link_transforms(j, true);
 }
 
 bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {

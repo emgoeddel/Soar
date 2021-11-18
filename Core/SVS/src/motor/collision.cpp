@@ -130,7 +130,8 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     for (int i = 0; i < joint_names.size(); i++) {
         joint_state[joint_names[i]] = (*vecstate)[i];
     }
-    std::map<std::string, transform3> xforms = model->link_transforms(joint_state);
+    // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
 
     std::vector<fcl::CollisionObject*> obj_ptrs;
     std::vector<object_data*> obj_datas;

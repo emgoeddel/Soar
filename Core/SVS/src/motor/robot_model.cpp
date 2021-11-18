@@ -149,6 +149,13 @@ bool robot_model::init(std::string robot_desc) {
         all_links[n].collision_model->addSubModel(points, triangles);
         all_links[n].collision_model->endModel();
 
+        all_links[n].collision_model->computeLocalAABB();
+        all_links[n].aabb_size(0) = all_links[n].collision_model->aabb_local.width();
+        all_links[n].aabb_size(1) = all_links[n].collision_model->aabb_local.height();
+        all_links[n].aabb_size(2) = all_links[n].collision_model->aabb_local.depth();
+        fcl::Vec3f ctr = all_links[n].collision_model->aabb_local.center();
+        all_links[n].aabb_origin = transform3('p', vec3(ctr[0], ctr[1], ctr[2]));
+
         delete mesh_obj;
     }
 
@@ -160,6 +167,7 @@ bool robot_model::init(std::string robot_desc) {
     // to know where the e-stop is, for example). This holds the links
     // we actually need.
     links_of_interest.insert("base_link");
+    links_of_interest.insert("torso_fixed_link");
     links_of_interest.insert("torso_lift_link");
     links_of_interest.insert("head_pan_link");
     links_of_interest.insert("head_tilt_link");
@@ -208,7 +216,7 @@ bool robot_model::init(std::string robot_desc) {
     //allowed["base_link"].insert("r_wheel_link");
     allowed["base_link"].insert("shoulder_lift_link");
     allowed["base_link"].insert("shoulder_pan_link");
-    //allowed["base_link"].insert("torso_fixed_link");
+    allowed["base_link"].insert("torso_fixed_link");
     allowed["base_link"].insert("torso_lift_link");
     allowed["base_link"].insert("upperarm_roll_link");
     // allowed["bellows_link"].insert("bellows_link2");
@@ -280,14 +288,14 @@ bool robot_model::init(std::string robot_desc) {
     //allowed["head_pan_link"].insert("r_wheel_link");
     allowed["head_pan_link"].insert("shoulder_lift_link");
     allowed["head_pan_link"].insert("shoulder_pan_link");
-    //allowed["head_pan_link"].insert("torso_fixed_link");
+    allowed["head_pan_link"].insert("torso_fixed_link");
     allowed["head_pan_link"].insert("torso_lift_link");
     //allowed["head_tilt_link"].insert("l_wheel_link");
     //allowed["head_tilt_link"].insert("laser_link");
     //allowed["head_tilt_link"].insert("r_wheel_link");
     allowed["head_tilt_link"].insert("shoulder_lift_link");
     allowed["head_tilt_link"].insert("shoulder_pan_link");
-    //allowed["head_tilt_link"].insert("torso_fixed_link");
+    allowed["head_tilt_link"].insert("torso_fixed_link");
     allowed["head_tilt_link"].insert("torso_lift_link");
     //allowed["l_gripper_finger_link"].insert("l_wheel_link");
     allowed["l_gripper_finger_link"].insert("r_gripper_finger_link");
@@ -325,10 +333,10 @@ bool robot_model::init(std::string robot_desc) {
     allowed["shoulder_lift_link"].insert("upperarm_roll_link");
     allowed["shoulder_lift_link"].insert("wrist_flex_link");
     allowed["shoulder_lift_link"].insert("wrist_roll_link");
-    //allowed["shoulder_pan_link"].insert("torso_fixed_link");
+    allowed["shoulder_pan_link"].insert("torso_fixed_link");
     allowed["shoulder_pan_link"].insert("torso_lift_link");
     allowed["shoulder_pan_link"].insert("wrist_flex_link");
-    //allowed["torso_fixed_link"].insert("torso_lift_link");
+    allowed["torso_fixed_link"].insert("torso_lift_link");
     allowed["upperarm_roll_link"].insert("wrist_flex_link");
     allowed["upperarm_roll_link"].insert("wrist_roll_link");
     allowed["wrist_flex_link"].insert("wrist_roll_link");
@@ -441,14 +449,11 @@ std::set<std::string> robot_model::get_allowed_collisions(std::string link_name)
 
 std::map<std::string, vec3> robot_model::models_as_boxes() {
     std::map<std::string, vec3> boxes;
-    for (std::set<std::string>::iterator i = links_of_interest.begin();
-         i != links_of_interest.end(); i++) {
-        all_links[*i].collision_model->computeLocalAABB();
-        vec3 box_dims;
-        box_dims(0) = all_links[*i].collision_model->aabb_local.width();
-        box_dims(1) = all_links[*i].collision_model->aabb_local.height();
-        box_dims(2) = all_links[*i].collision_model->aabb_local.depth();
-        boxes[*i] = box_dims;
+    if (!initialized) return boxes;
+
+    for (std::map<std::string, link_info>::iterator i = all_links.begin();
+         i != all_links.end(); i++) {
+        boxes[i->first] = i->second.aabb_size;
     }
 
     return boxes;
@@ -456,7 +461,8 @@ std::map<std::string, vec3> robot_model::models_as_boxes() {
 
 // Calculate and return link positions for joint pose p
 std::map<std::string, transform3>
-robot_model::link_transforms(std::map<std::string, double> p) {
+robot_model::link_transforms(std::map<std::string, double> p,
+                             bool box_translation) {
     std::map<std::string, transform3> xforms;
     if (!initialized) return xforms;
 
@@ -464,9 +470,18 @@ robot_model::link_transforms(std::map<std::string, double> p) {
     // the kinematic chains as identity
     xforms[root_link] = transform3::identity();
 
+    // Walk the kinematic chain
     for (std::set<std::string>::iterator i = links_of_interest.begin();
          i != links_of_interest.end(); i++) {
         calculate_link_xform(*i, p, xforms);
+    }
+
+    // Pass back through to introduce local xforms
+    for (std::map<std::string, transform3>::iterator x = xforms.begin();
+         x != xforms.end(); x++) {
+        if (box_translation)
+            x->second = (x->second)*(all_links[x->first].aabb_origin);
+        else x->second = (x->second)*(all_links[x->first].collision_origin);
     }
 
     return xforms;
