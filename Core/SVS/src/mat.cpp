@@ -452,9 +452,9 @@ transform3::transform3(char type, const vec3& v)
             trans = Eigen::Translation<double, 3>(v);
             break;
         case 'r':
-            trans = Eigen::AngleAxisd(v(2), Eigen::Vector3d::UnitZ()) *
+            trans = Eigen::AngleAxisd(v(0), Eigen::Vector3d::UnitX()) *
                     Eigen::AngleAxisd(v(1), Eigen::Vector3d::UnitY()) *
-                    Eigen::AngleAxisd(v(0), Eigen::Vector3d::UnitX()) ;
+                    Eigen::AngleAxisd(v(2), Eigen::Vector3d::UnitZ()) ;
             break;
         case 's':
             trans = Eigen::Scaling(v);
@@ -467,9 +467,9 @@ transform3::transform3(char type, const vec3& v)
 transform3::transform3(const vec3& p, const vec3& r, const vec3& s)
 {
     trans = Eigen::Translation<double, 3>(p) *
-            Eigen::AngleAxisd(r(2), Eigen::Vector3d::UnitZ()) *
-            Eigen::AngleAxisd(r(1), Eigen::Vector3d::UnitY()) *
             Eigen::AngleAxisd(r(0), Eigen::Vector3d::UnitX()) *
+            Eigen::AngleAxisd(r(1), Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(r(2), Eigen::Vector3d::UnitZ()) *
             Eigen::Scaling(s);
 }
 

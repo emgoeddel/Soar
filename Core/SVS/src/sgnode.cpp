@@ -245,10 +245,16 @@ void sgnode::proxy_use_sub(const vector<string>& args, ostream& os)
     {
         t1 << pos(i);
     }
-    t1.add_row() << "rot:";
+    t1.add_row() << "rot (euler):";
     for (int i = 0; i < 3; ++i)
     {
         t1 << rot(i);
+    }
+    ltransform.rotation(lr);
+    t1.add_row() << "rot (quaternion):";
+    for (int i = 0; i < 4; ++i)
+    {
+        t1 << lr(i);
     }
     t1.add_row() << "scale:";
     for (int i = 0; i < 3; ++i)
