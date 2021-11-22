@@ -538,6 +538,16 @@ void transform3::rotation(Eigen::Quaterniond& r) const
     r = q;
 }
 
+void transform3::scale(vec3& s) const
+{
+    Eigen::Matrix3d rm, sm;
+    trans.computeRotationScaling(&rm, &sm);
+
+    s(0) = sm(0, 0);
+    s(1) = sm(1, 1);
+    s(2) = sm(2, 2);
+}
+
 std::string transform3::to_str() const {
     std::stringstream ss;
 

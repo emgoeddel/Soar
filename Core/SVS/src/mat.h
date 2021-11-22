@@ -442,6 +442,7 @@ public:
         void position(vec3& p) const;
         void rotation(vec4& r) const;
         void rotation(Eigen::Quaterniond& r) const;
+        void scale(vec3& s) const;
         
         vec3 operator()(const vec3& v) const
         {
