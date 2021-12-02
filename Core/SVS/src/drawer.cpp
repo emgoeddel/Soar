@@ -114,6 +114,9 @@ void drawer::change(const string& scn, const sgnode* n, int props)
     
     n->get_world_trans().to_prs(p, q, s);
     ss << "+" << scn << " +" << n->get_id() << " ";
+    if (n->is_me()) {
+        ss << "m ";
+    }
     if (props & SHAPE)
     {
         string shape;

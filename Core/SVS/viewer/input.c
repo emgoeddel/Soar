@@ -132,7 +132,7 @@ int proc_cmd(char *fields[]) {
 int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
         real pos[3], rot[4], scale[3], dims[3], color[3], verts[MAX_FIELDS];
 	real radius, line_width, layer;
-	int i, f, nverts, pos_set, rot_set, scale_set, dims_set, color_set;
+	int i, f, nverts, pos_set, rot_set, scale_set, dims_set, color_set, is_me;
 	char *text;
 	
 	pos_set = 0;
@@ -140,6 +140,7 @@ int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
 	scale_set = 0;
         dims_set = 0;
 	color_set = 0;
+        is_me = 0;
 	radius = -1.0;
 	line_width = -1.0;
 	layer = -1.0;
@@ -154,6 +155,10 @@ int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
 		}
 		
 		switch (fields[f][0]) {
+                        case 'm': /* me */
+                                is_me = 1;
+                                f++;
+                                break;
 			case 'p':  /* position */
 				if (parse_nums(&fields[f+1], 3, pos) != 3) {
 					fprintf(stderr, "invalid position\n");
@@ -241,6 +246,7 @@ int proc_geom_cmd(geometry *gs[], int ngeoms, char *fields[]) {
 		if (scale_set) copy_vec3(scale, gs[i]->scale);
 		if (color_set) copy_vec3(color, gs[i]->color);
 		if (rot_set)   quat_to_axis_angle(rot, gs[i]->axis, &gs[i]->angle);
+                if (is_me)     set_vec3(gs[i]->color, 0.9, 0.9, 0.0);
 		
 		if (radius >= 0.0) {
 			set_geom_radius(gs[i], radius);
