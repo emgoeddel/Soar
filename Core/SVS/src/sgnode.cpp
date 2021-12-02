@@ -16,7 +16,7 @@ typedef vector<sgnode*>::iterator childiter;
 typedef vector<sgnode*>::const_iterator const_childiter;
 
 sgnode::sgnode(const string& id, bool group)
-    : parent(NULL), group(group), id(id),
+    : parent(NULL), group(group), id(id), me(false),
       trans_dirty(true), shape_dirty(true), bounds_dirty(true),
       pos(0.0, 0.0, 0.0), rot(0.0, 0.0, 0.0), scale(1.0, 1.0, 1.0)
 {
@@ -234,7 +234,7 @@ void sgnode::proxy_use_sub(const vector<string>& args, ostream& os)
     vec4 lr, wr;
     table_printer t, t1, t2, t3;
     
-    t.add_row() << "id:"   << id;
+    t.add_row() << "id:"   << id << (me ? " (myself)" : "");
     t.add_row() << "parent:" << (parent ? parent->get_id() : "none");
     t.print(os);
     

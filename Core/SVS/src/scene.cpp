@@ -240,6 +240,10 @@ bool parse_mods(vector<string>& f, int& start, string& mods, vector<ptlist>& val
                 }
                 ++start;
                 break;
+           case 'm':
+               v.push_back(vec3()); // meaningless
+               ++start;
+               break;
             default:
                 // end of modifiers
                 return true;
@@ -260,7 +264,7 @@ int scene::parse_add(vector<string>& f, string& error)
     ptlist vertices;
     double radius = 0.0;
     vec3 dims;
-    bool is_convex, is_ball, is_box;
+    bool is_convex, is_ball, is_box, is_me;
     
     if (f.size() < 1)
     {
@@ -292,6 +296,7 @@ int scene::parse_add(vector<string>& f, string& error)
     is_convex = false;
     is_ball = false;
     is_box = false;
+    is_me = false;
     for (size_t i = 0, iend = mods.size(); i < iend; ++i)
     {
         switch (mods[i])
@@ -307,6 +312,9 @@ int scene::parse_add(vector<string>& f, string& error)
             case 'x':
                 dims = vals[i][0];
                 is_box = true;
+                break;
+            case 'm':
+                is_me = true;
                 break;
         }
     }
@@ -333,7 +341,9 @@ int scene::parse_add(vector<string>& f, string& error)
     {
         n = new group_node(id);
     }
-    
+
+    n->set_me(is_me);
+
     /*
      Go through again to apply transforms
     */

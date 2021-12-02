@@ -411,10 +411,11 @@ std::string add_grp_cmd(std::string name, std::string parent, transform3 xform) 
     vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
 
     std::stringstream cmd;
-    cmd << "add " << name << " " << parent;
+    cmd << "add " << name << " " << parent << " m";
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
     cmd << " r " << r.x() << " " << r.y() << " " << r.z();
     cmd << std::endl;
+
     return cmd.str();
 }
 
@@ -426,7 +427,7 @@ std::string add_cmd(std::string name, std::string parent, transform3 xform, vec3
     vec3 r = q.toRotationMatrix().eulerAngles(0, 1, 2);
 
     std::stringstream cmd;
-    cmd << "add " << name << " " << parent;
+    cmd << "add " << name << " " << parent << " m";
     cmd << " x " << size.x() << " " << size.y() << " " << size.z();
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
     cmd << " r " << r.x() << " " << r.y() << " " << r.z();

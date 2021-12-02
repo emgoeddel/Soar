@@ -45,7 +45,14 @@ class sgnode : public cliproxy
         {
             id = new_id;
         }
-        
+
+        const bool is_me() const {
+           return me;
+        }
+        void set_me(bool new_me) {
+           me = new_me;
+        }
+
         group_node* get_parent()
         {
             return parent;
@@ -121,6 +128,7 @@ class sgnode : public cliproxy
         std::string id;
         group_node* parent;
         bool        group;
+        bool        me;
         vec3        pos;
         vec3        rot;
         vec3        scale;
