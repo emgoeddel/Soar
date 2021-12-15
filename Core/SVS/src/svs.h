@@ -29,6 +29,7 @@ class basic_image;
 class motor;
 class motor_state;
 class motor_link;
+class model_database;
 
 /* working memory scene graph object - mediates between wmes and scene graph nodes */
 class sgwme : public sgnode_listener
@@ -269,6 +270,7 @@ class svs : public svs_interface, public cliproxy
         std::mutex                loc_in_mtx;
 #endif
         std::shared_ptr<motor>    mtr;
+        std::shared_ptr<model_database> models;
 
         soar_interface*           si;
         std::vector<svs_state*>   state_stack;

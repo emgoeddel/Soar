@@ -24,6 +24,7 @@
 
 #include "motor/motor.h"
 #include "motor_state.h"
+#include "model_database.h"
 
 using namespace std;
 
@@ -520,11 +521,14 @@ svs::svs(agent* a)
     si = new soar_interface(a);
     draw = new drawer();
 
+    models = std::make_shared<model_database>();
+
 #ifdef ENABLE_ROS
     ros_interface::init_ros();
-    ri = new ros_interface(this);
+    ri = new ros_interface(this, models);
     ri->start_ros();
 #endif
+
     mtr = std::make_shared<motor>(ri->get_robot_desc());
 }
 

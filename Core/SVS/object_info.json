@@ -1,0 +1,432 @@
+{
+    "objects" : [
+        {
+            "name" : "cup_glass",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.04, 0.04, 0.9],
+                    "transform" : {
+                        "translation" : [0, 0, 0],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.05, 0.0, 0.0, 1.5708, 0.0, 0.0],
+                    "second" : [0.03, 0.0, 0.0, 1.5708, 0.0, 0.0]
+                },
+                {
+                    "first" : [-0.05, 0.0, 0.0, -1.5708, 0.0, 0.0],
+                    "second" : [-0.03, 0.0, 0.0, -1.5708, 0.0, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.05, 0.0, 0.0, 0.0, -1.5708],
+                    "second" : [0.0, 0.03, 0.0, 0.0, 0.0, -1.5708]
+                },
+                {
+                    "first" : [0.0, -0.05, 0.0, 0.0, 0.0, 1.5708],
+                    "second" : [0.03, -0.03, 0.0, 0.0, 0.0, 1.5708]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.08, 0.0, 1.5708, 0.0],
+                    "second" : [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, -0.08, 0.0, -1.5708, 0.0],
+                    "second" : [0.0, 0.0, -0.03, 0.0, -1.5708, 0.0]
+                }
+
+            ]
+        },
+        {
+            "name" : "coca_cola",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.035, 0.035, 0.12]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.09, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.1, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.04, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "plate_1",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.17, 0.17, 0.03]
+                }
+            ]
+        },
+        {
+            "name" : "basic_wall",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [2.0, 0.3, 2.5]
+                }
+            ]
+        },
+        {
+            "name" : "basic_column",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.1, 0.1, 2.5]
+                }
+            ]
+        },
+        {
+            "name" : "lamp_large",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.15, 0.15, 0.04],
+                    "transform" : {
+                        "translation" : [0, 0, 0.02],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.02, 0.02, 1.55],
+                    "transform" : {
+                        "translation" : [0, 0, 0.7925],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.24, 0.24, 0.04],
+                    "transform" : {
+                        "translation" : [0, 0, 0.78],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.205, 0.205, 0.04],
+                    "transform" : {
+                        "translation" : [0, 0, 0.04],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.17, 0.17, 0.04],
+                    "transform" : {
+                        "translation" : [0, 0, 0.04],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.135, 0.135, 0.04],
+                    "transform" : {
+                        "translation" : [0, 0, 0.04],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.1, 0.1, 0.04],
+                    "transform" : {
+                        "translation" : [0, 0, 0.04],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "lamp_table_metal",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.07, 0.07, 0.04],
+                    "transform" : {
+                        "translation" : [0, 0, 0.02],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.01, 0.01, 0.22],
+                    "transform" : {
+                        "translation" : [0, 0, 0.13],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.17, 0.17, 0.16],
+                    "transform" : {
+                        "translation" : [0, 0, 0.18],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "bottle_red_wine",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.045, 0.045, 0.25],
+                    "transform" : {
+                        "translation" : [0, 0, 0.1],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                },
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.02, 0.02, 0.09],
+                    "transform" : {
+                        "translation" : [0, 0, 0.17],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "clock_digital",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.21, 0.08, 0.11],
+                    "transform" : {
+                        "translation" : [0, 0, 0.055],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "blue_cube3cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.03, 0.03, 0.03]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.06, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.02, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "red_cube3cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.03, 0.03, 0.03]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.06, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.02, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "blue_cube5cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.05, 0.05, 0.05]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.07, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.02, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.08, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "red_cube5cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.05, 0.05, 0.05]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.07, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.02, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.08, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "blue_cube7cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.07, 0.07, 0.07]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.08, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.02, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.09, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "red_cube7cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.07, 0.07, 0.07]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.08, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.02, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.09, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "blue_cube9cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.09, 0.09, 0.09]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.09, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.1, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.04, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "red_cube9cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.09, 0.09, 0.09]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.09, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.03, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.1, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.04, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "blue_cube11cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.11, 0.11, 0.11]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.1, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.04, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.11, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.05, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "red_cube11cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.11, 0.11, 0.11]
+                }
+            ],
+            "grasps" : [
+                {
+                    "first" : [0.0, 0.0, 0.1, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.04, 0.0, 1.5708, 0.0]
+                },
+                {
+                    "first" : [0.0, 0.0, 0.11, 0.0, 1.5708, 0.0],
+                    "second" :  [0.0, 0.0, 0.05, 0.0, 1.5708, 0.0]
+                }
+            ]
+        },
+        {
+            "name" : "blue_cube13cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.13, 0.13, 0.13]
+                }
+            ]
+        },
+        {
+            "name" : "red_cube13cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.13, 0.13, 0.13]
+                }
+            ]
+        },
+        {
+            "name" : "blue_cube15cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.15, 0.15, 0.15]
+                }
+            ]
+        },
+        {
+            "name" : "red_cube15cm",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.15, 0.15, 0.15]
+                }
+            ]
+        }
+    ]
+}

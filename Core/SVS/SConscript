@@ -77,7 +77,7 @@ svs_env = env.Clone()
 svs_env['LIBS'] = []
 
 srcdirs = ['src', 'src/filters', 'src/commands', 'src/objectives', 'src/models', 'src/motor']
-incdirs = [env.Dir(d).srcnode() for d in 'src src/models eigen ccd'.split()]
+incdirs = [env.Dir(d).srcnode() for d in 'src src/models eigen ccd rapidjson'.split()]
 scu_src = ['SVS.cxx']
 
 if compiler == 'g++':

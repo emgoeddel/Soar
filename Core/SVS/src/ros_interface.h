@@ -19,6 +19,7 @@
 #include "motor_types.h"
 
 class svs;
+class model_database;
 
 /*
  * ros_interface class
@@ -41,7 +42,7 @@ class svs;
 
 class ros_interface : public cliproxy {
 public:
-    ros_interface(svs* sp);
+    ros_interface(svs* sp, std::shared_ptr<model_database> md);
     ~ros_interface();
     static void init_ros();
     void start_ros();
@@ -94,6 +95,7 @@ private:
     std::string robot_name;
 
     svs* svs_ptr;
+    std::shared_ptr<model_database> model_db;
     std::map<std::string, transform3> last_objs;
 };
 

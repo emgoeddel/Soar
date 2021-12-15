@@ -10,14 +10,16 @@
 #include <urdf/model.h>
 
 #include "svs.h"
+#include "model_database.h"
 
 const std::string ros_interface::IMAGE_NAME = "image";
 const std::string ros_interface::OBJECTS_NAME = "objects";
 
-ros_interface::ros_interface(svs* sp)
+ros_interface::ros_interface(svs* sp, std::shared_ptr<model_database> md)
     : image_source("none"),
       spinner(NULL),
-      axn_client(n, "/arm_controller/follow_joint_trajectory", true)
+      axn_client(n, "/arm_controller/follow_joint_trajectory", true),
+      model_db(md)
 {
     svs_ptr = sp;
     set_help("Control connections to ROS topics.");

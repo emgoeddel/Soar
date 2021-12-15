@@ -36,6 +36,7 @@
 #include "src/filter_table.cpp"
 #include "src/mat.cpp"
 #include "src/scene.cpp"
+#include "src/model_database.cpp"
 #include "src/motor_types.cpp"
 #include "src/motor_state.cpp"
 #include "src/image.cpp"
