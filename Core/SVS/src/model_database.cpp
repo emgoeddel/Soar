@@ -121,70 +121,104 @@ void model_database::init() {
 
   // GO THROUGH ALL THE OBJECTS
   for (int i = 0; i < objs.Size(); i++) {
-    if(!objs[i].HasMember("shapes") || !objs[i]["shapes"].IsArray()) {
-        std::cout << "Database object " << objs[i]["name"].GetString()
-                  << " has no shapes, will not be added." << std::endl;
-      continue;
-    }
-
-    std::vector<sub_shape> shapeVec;
-    for (int j = 0; j < objs[i]["shapes"].Size(); j++) {
-      obstacle shape;
-      if (objs[i]["shapes"][j]["shape"] == "box") {
-        shape.geometry = BOX_OBSTACLE;
-      } else {
-          std::cout << "Unknown object type " << objs[i]["shape"].GetString()
-                    << " found!" << std::endl;
-          shape.geometry = NON_OBSTACLE;
+      if(!objs[i].HasMember("shapes") || !objs[i]["shapes"].IsArray()) {
+          std::cout << "Database object " << objs[i]["name"].GetString()
+                    << " has no shapes, will not be added." << std::endl;
           continue;
       }
 
-      if (shape.geometry == BOX_OBSTACLE) {
-        if (objs[i]["shapes"][j]["dimensions"].Size() != 3) {
-            std::cout << "Boxes need three elements in their dimensions." << std::endl;
-            continue;
-        }
-        shape.box_dim[0] = objs[i]["shapes"][j]["dimensions"][0].GetDouble();
-        shape.box_dim[1] = objs[i]["shapes"][j]["dimensions"][1].GetDouble();
-        shape.box_dim[2] = objs[i]["shapes"][j]["dimensions"][2].GetDouble();
+      std::vector<sub_shape> shapeVec;
+      bool shape_err = false;
+      std::string err_str = "";
+      for (int j = 0; j < objs[i]["shapes"].Size(); j++) {
+          obstacle shape;
+          if (objs[i]["shapes"][j]["shape"] == "box") {
+              shape.geometry = BOX_OBSTACLE;
+          } else if (objs[i]["shapes"][j]["shape"] == "sphere") {
+              shape.geometry = BALL_OBSTACLE;
+          } else if (objs[i]["shapes"][j]["shape"] == "convex") {
+              shape.geometry = CONVEX_OBSTACLE;
+          } else {
+              shape_err = true;
+              err_str = "Unknown object type.";
+              break;
+          }
+
+          if (shape.geometry == BOX_OBSTACLE) {
+              if (objs[i]["shapes"][j]["dimensions"].Size() != 3) {
+                  shape_err = true;
+                  err_str = "Boxes need three elements in their dimensions.";
+                  break;
+              }
+              shape.box_dim[0] = objs[i]["shapes"][j]["dimensions"][0].GetDouble();
+              shape.box_dim[1] = objs[i]["shapes"][j]["dimensions"][1].GetDouble();
+              shape.box_dim[2] = objs[i]["shapes"][j]["dimensions"][2].GetDouble();
+          } else if (shape.geometry == BALL_OBSTACLE) {
+              if (objs[i]["shapes"][j]["dimensions"].Size() != 1) {
+                  shape_err = true;
+                  err_str = "Spheres need one element in their dimensions.";
+                  break;
+              }
+              shape.ball_radius = objs[i]["shapes"][j]["dimensions"][0].GetDouble();
+          } else if (shape.geometry == CONVEX_OBSTACLE) {
+              if ((objs[i]["shapes"][j]["dimensions"].Size() % 3) != 0) {
+                  shape_err = true;
+                  err_str = "Convex shapes need three values for each point.";
+                  break;
+              }
+
+              for (int k = 0; k < objs[i]["shapes"][j]["dimensions"].Size(); k += 3) {
+                  vec3 pt;
+                  pt[0] = objs[i]["shapes"][j]["dimensions"][k].GetDouble();
+                  pt[1] = objs[i]["shapes"][j]["dimensions"][k+1].GetDouble();
+                  pt[2] = objs[i]["shapes"][j]["dimensions"][k+2].GetDouble();
+                  shape.convex_pts.push_back(pt);
+              }
+          }
+
+          transform3 xform;
+          if (!objs[i]["shapes"][j].HasMember("transform")) {
+              xform = transform3::identity();
+          } else {
+              if (!objs[i]["shapes"][j]["transform"].HasMember("translation") ||
+                  !objs[i]["shapes"][j]["transform"]["translation"].IsArray() ||
+                  !objs[i]["shapes"][j]["transform"].HasMember("rotation") ||
+                  !objs[i]["shapes"][j]["transform"]["rotation"].IsArray()) {
+                  shape_err = true;
+                  err_str = "Shape transform info is not correct.";
+                  break;
+              }
+              vec3 trans(objs[i]["shapes"][j]["transform"]["translation"][0].GetDouble(),
+                         objs[i]["shapes"][j]["transform"]["translation"][1].GetDouble(),
+                         objs[i]["shapes"][j]["transform"]["translation"][2].GetDouble());
+
+              vec4 rot(objs[i]["shapes"][j]["transform"]["rotation"][0].GetDouble(),
+                       objs[i]["shapes"][j]["transform"]["rotation"][1].GetDouble(),
+                       objs[i]["shapes"][j]["transform"]["rotation"][2].GetDouble(),
+                       objs[i]["shapes"][j]["transform"]["rotation"][3].GetDouble());
+
+              xform = transform3(trans, rot);
+          }
+
+          sub_shape ss = std::make_pair(xform, shape);
+          shapeVec.push_back(ss);
       }
 
-      transform3 xform;
-      if (!objs[i]["shapes"][j].HasMember("transform")) {
-          xform = transform3::identity();
-      } else {
-        if (!objs[i]["shapes"][j]["transform"].HasMember("translation") ||
-            !objs[i]["shapes"][j]["transform"]["translation"].IsArray() ||
-            !objs[i]["shapes"][j]["transform"].HasMember("rotation") ||
-            !objs[i]["shapes"][j]["transform"]["rotation"].IsArray()) {
-            std::cout << "Shape transform info is not correct." << std::endl;
-            continue;
-        }
-        vec3 trans(objs[i]["shapes"][j]["transform"]["translation"][0].GetDouble(),
-                   objs[i]["shapes"][j]["transform"]["translation"][1].GetDouble(),
-                   objs[i]["shapes"][j]["transform"]["translation"][2].GetDouble());
-
-        vec4 rot(objs[i]["shapes"][j]["transform"]["rotation"][0].GetDouble(),
-                 objs[i]["shapes"][j]["transform"]["rotation"][1].GetDouble(),
-                 objs[i]["shapes"][j]["transform"]["rotation"][2].GetDouble(),
-                 objs[i]["shapes"][j]["transform"]["rotation"][3].GetDouble());
-
-        xform = transform3(trans, rot);
+      if (shape_err) {
+          std::cout << "Error importing shapes for " << objs[i]["name"].GetString() << ": "
+                    << err_str << std::endl;
+          continue;
       }
+      collision_models.insert(std::pair<std::string,
+                              std::vector<sub_shape> >(objs[i]["name"].GetString(),
+                                                       shapeVec));
 
-      sub_shape ss = std::make_pair(xform, shape);
-      shapeVec.push_back(ss);
+    if(!objs[i].HasMember("grasps") || !objs[i]["grasps"].IsArray()) {
+        //std::cout << "Database object " << objs[i]["name"].GetString()
+        //          <<" has no grasp information, only collision model." << std::endl;
+        continue;
     }
 
-    collision_models.insert(std::pair<std::string,
-                           std::vector<sub_shape> >(objs[i]["name"].GetString(),
-                                                   shapeVec));
-
-    // if(!objs[i].HasMember("grasps") || !objs[i]["grasps"].IsArray()) {
-    //     std::cout << "Database object " << objs[i]["name"].GetString()
-    //               <<" has no grasp information, only collision model." << std::endl;
-    //     continue;
-    // }
     std::vector<grasp_pair> allGrasps;
     for (int j = 0; j < objs[i]["grasps"].Size(); j++) {
       if (objs[i]["grasps"][j]["first"].Size() != 6 ||
