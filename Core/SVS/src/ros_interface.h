@@ -56,7 +56,13 @@ public:
     std::string get_robot_desc() { return robot_desc; }
 
 private:
-    static std::string add_cmd(std::string name, std::string parent, vec3 p, vec3 r);
+    static std::string add_grp_cmd(std::string name, std::string parent, vec3 p, vec3 r);
+    static std::string add_box_cmd(std::string name, std::string parent,
+                                   vec3 dim, vec3 p, vec3 r);
+    static std::string add_ball_cmd(std::string name, std::string parent,
+                                      double rad, vec3 p, vec3 r);
+    static std::string add_convex_cmd(std::string name, std::string parent,
+                                      ptlist vs, vec3 p, vec3 r);
     static std::string change_cmd(std::string name, vec3 p, vec3 r);
     static std::string del_cmd(std::string name);
 

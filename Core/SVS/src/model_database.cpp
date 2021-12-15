@@ -35,6 +35,13 @@ bool model_database::db_has_model(std::string id) {
   return false;
 }
 
+bool model_database::model_is_complex(std::string id) {
+    if (!db_has_model(id)) return false;
+
+    if (collision_models[id].size() == 1) return false;
+    else return true;
+}
+
 std::string model_database::find_db_name(std::string id) {
   for (std::map<std::string, std::vector<grasp_pair> >::iterator j =
          grasps.begin(); j != grasps.end(); j++) {

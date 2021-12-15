@@ -25,6 +25,7 @@ public:
     bool is_in_database(std::string id);
     bool db_has_grasps(std::string id);
     bool db_has_model(std::string id);
+    bool model_is_complex(std::string id);
     std::string find_db_name(std::string id);
 
     std::vector<sub_shape> get_model(std::string db_name);

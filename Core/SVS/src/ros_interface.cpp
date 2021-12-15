@@ -103,11 +103,50 @@ std::string ros_interface::execution_result() {
 }
 
 // SGEL helper functions
-std::string ros_interface::add_cmd(std::string name, std::string parent, vec3 p, vec3 r) {
+std::string ros_interface::add_grp_cmd(std::string name, std::string parent, vec3 p, vec3 r) {
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
     cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string add_box_cmd(std::string name, std::string parent,
+                        vec3 dim, vec3 p, vec3 r)
+{
+    std::stringstream cmd;
+    cmd << "add " << name << " " << parent;
+    cmd << " x " << dim.x() << " " << dim.y() << " " << dim.z();
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string add_ball_cmd(std::string name, std::string parent,
+                         double rad, vec3 p, vec3 r)
+{
+    std::stringstream cmd;
+    cmd << "add " << name << " " << parent;
+    cmd << " b " << rad;
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << std::endl;
+    return cmd.str();
+}
+
+std::string add_convex_cmd(std::string name, std::string parent,
+                           ptlist vs, vec3 p, vec3 r)
+{
+    std::stringstream cmd;
+    cmd << "add " << name << " " << parent;
+    cmd << " p " << p.x() << " " << p.y() << " " << p.z();
+    cmd << " r " << r.x() << " " << r.y() << " " << r.z();
+    cmd << " v ";
+    for (ptlist::iterator i = vs.begin(); i != vs.end(); i++) {
+        cmd << i->x() << " " << i->y() << " " << i->z() << " ";
+    }
     cmd << std::endl;
     return cmd.str();
 }
@@ -240,7 +279,18 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
             i->second.rotation(rq);
             vec3 cur_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
 
-            cmds << add_cmd(n, "world", cur_pose, cur_rot);
+            // Get geometry from the databate
+            std::string db_id = model_db->find_db_name(n);
+            if (db_id == "") {
+                cmds << add_grp_cmd(n, "world", cur_pose, cur_rot);
+                continue;
+            }
+
+            if (!model_db->model_is_complex(db_id)) {
+                std::cout << "Need to add a singleton object" << std::endl;
+            } else {
+                std::cout << "Need to add a complex object" << std::endl;
+            }
         }
     }
 
