@@ -112,8 +112,8 @@ std::string ros_interface::add_grp_cmd(std::string name, std::string parent, vec
     return cmd.str();
 }
 
-std::string add_box_cmd(std::string name, std::string parent,
-                        vec3 dim, vec3 p, vec3 r)
+std::string ros_interface::add_box_cmd(std::string name, std::string parent,
+                                       vec3 dim, vec3 p, vec3 r)
 {
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
@@ -124,8 +124,8 @@ std::string add_box_cmd(std::string name, std::string parent,
     return cmd.str();
 }
 
-std::string add_ball_cmd(std::string name, std::string parent,
-                         double rad, vec3 p, vec3 r)
+std::string ros_interface::add_ball_cmd(std::string name, std::string parent,
+                                        double rad, vec3 p, vec3 r)
 {
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
@@ -136,8 +136,8 @@ std::string add_ball_cmd(std::string name, std::string parent,
     return cmd.str();
 }
 
-std::string add_convex_cmd(std::string name, std::string parent,
-                           ptlist vs, vec3 p, vec3 r)
+std::string ros_interface::add_convex_cmd(std::string name, std::string parent,
+                                          ptlist vs, vec3 p, vec3 r)
 {
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
@@ -279,15 +279,28 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
             i->second.rotation(rq);
             vec3 cur_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
 
-            // Get geometry from the databate
+            // Find out what this object would be called in the db
             std::string db_id = model_db->find_db_name(n);
             if (db_id == "") {
                 cmds << add_grp_cmd(n, "world", cur_pose, cur_rot);
                 continue;
             }
 
+            // Handle objects that have only one subpart more simply than
+            // objects that have multiple subparts...
+            std::vector<sub_shape> geoms = model_db->get_model(db_id);
             if (!model_db->model_is_complex(db_id)) {
-                std::cout << "Need to add a singleton object" << std::endl;
+                // XXX Need to incorporate the transform3 part of the sub_shape!!
+                if (geoms[0].second.geometry == BALL_OBSTACLE) {
+                    cmds << add_ball_cmd(n, "world", geoms[0].second.ball_radius,
+                                         cur_pose, cur_rot);
+                } else if (geoms[0].second.geometry == BOX_OBSTACLE) {
+                    cmds << add_box_cmd(n, "world", geoms[0].second.box_dim,
+                                        cur_pose, cur_rot);
+                } else if (geoms[0].second.geometry == CONVEX_OBSTACLE) {
+                    cmds << add_convex_cmd(n, "world", geoms[0].second.convex_pts,
+                                           cur_pose, cur_rot);
+                }
             } else {
                 std::cout << "Need to add a complex object" << std::endl;
             }
