@@ -5,7 +5,7 @@
             "shapes" : [
                 {
                     "shape" : "box",
-                    "dimensions" : [0.04, 0.04, 0.9],
+                    "dimensions" : [0.04, 0.04, 0.09],
                     "transform" : {
                         "translation" : [0, 0, 0],
                         "rotation" : [0, 0, 0, 1]

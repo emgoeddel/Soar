@@ -103,7 +103,13 @@ std::string ros_interface::execution_result() {
 }
 
 // SGEL helper functions
-std::string ros_interface::add_grp_cmd(std::string name, std::string parent, vec3 p, vec3 r) {
+std::string ros_interface::add_grp_cmd(std::string name, std::string parent, transform3 t) {
+    vec3 p;
+    t.position(p);
+    Eigen::Quaterniond rq;
+    t.rotation(rq);
+    vec3 r = rq.toRotationMatrix().eulerAngles(0, 1, 2);
+
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
@@ -113,8 +119,14 @@ std::string ros_interface::add_grp_cmd(std::string name, std::string parent, vec
 }
 
 std::string ros_interface::add_box_cmd(std::string name, std::string parent,
-                                       vec3 dim, vec3 p, vec3 r)
+                                       vec3 dim, transform3 t)
 {
+    vec3 p;
+    t.position(p);
+    Eigen::Quaterniond rq;
+    t.rotation(rq);
+    vec3 r = rq.toRotationMatrix().eulerAngles(0, 1, 2);
+
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
     cmd << " x " << dim.x() << " " << dim.y() << " " << dim.z();
@@ -125,8 +137,14 @@ std::string ros_interface::add_box_cmd(std::string name, std::string parent,
 }
 
 std::string ros_interface::add_ball_cmd(std::string name, std::string parent,
-                                        double rad, vec3 p, vec3 r)
+                                        double rad, transform3 t)
 {
+    vec3 p;
+    t.position(p);
+    Eigen::Quaterniond rq;
+    t.rotation(rq);
+    vec3 r = rq.toRotationMatrix().eulerAngles(0, 1, 2);
+
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
     cmd << " b " << rad;
@@ -137,8 +155,14 @@ std::string ros_interface::add_ball_cmd(std::string name, std::string parent,
 }
 
 std::string ros_interface::add_convex_cmd(std::string name, std::string parent,
-                                          ptlist vs, vec3 p, vec3 r)
+                                          ptlist vs, transform3 t)
 {
+    vec3 p;
+    t.position(p);
+    Eigen::Quaterniond rq;
+    t.rotation(rq);
+    vec3 r = rq.toRotationMatrix().eulerAngles(0, 1, 2);
+
     std::stringstream cmd;
     cmd << "add " << name << " " << parent;
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
@@ -151,7 +175,13 @@ std::string ros_interface::add_convex_cmd(std::string name, std::string parent,
     return cmd.str();
 }
 
-std::string ros_interface::change_cmd(std::string name, vec3 p, vec3 r) {
+std::string ros_interface::change_cmd(std::string name, transform3 t) {
+    vec3 p;
+    t.position(p);
+    Eigen::Quaterniond rq;
+    t.rotation(rq);
+    vec3 r = rq.toRotationMatrix().eulerAngles(0, 1, 2);
+
     std::stringstream cmd;
     cmd << "change " << name;
     cmd << " p " << p.x() << " " << p.y() << " " << p.z();
@@ -272,17 +302,13 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
          i != objs.end(); i++) {
         if (last_objs.count(i->first) == 0) {
             objs_changed = true;
+            transform3 obj_xform = i->second;
             std::string n = i->first;
-            vec3 cur_pose;
-            i->second.position(cur_pose);
-            Eigen::Quaterniond rq;
-            i->second.rotation(rq);
-            vec3 cur_rot = rq.toRotationMatrix().eulerAngles(0, 1, 2);
 
             // Find out what this object would be called in the db
             std::string db_id = model_db->find_db_name(n);
             if (db_id == "") {
-                cmds << add_grp_cmd(n, "world", cur_pose, cur_rot);
+                cmds << add_grp_cmd(n, "world", obj_xform);
                 continue;
             }
 
@@ -290,16 +316,17 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
             // objects that have multiple subparts...
             std::vector<sub_shape> geoms = model_db->get_model(db_id);
             if (!model_db->model_is_complex(db_id)) {
-                // XXX Need to incorporate the transform3 part of the sub_shape!!
+                obj_xform = obj_xform * geoms[0].first;
+
                 if (geoms[0].second.geometry == BALL_OBSTACLE) {
                     cmds << add_ball_cmd(n, "world", geoms[0].second.ball_radius,
-                                         cur_pose, cur_rot);
+                                         obj_xform);
                 } else if (geoms[0].second.geometry == BOX_OBSTACLE) {
                     cmds << add_box_cmd(n, "world", geoms[0].second.box_dim,
-                                        cur_pose, cur_rot);
+                                        obj_xform);
                 } else if (geoms[0].second.geometry == CONVEX_OBSTACLE) {
                     cmds << add_convex_cmd(n, "world", geoms[0].second.convex_pts,
-                                           cur_pose, cur_rot);
+                                           obj_xform);
                 }
             } else {
                 std::cout << "Need to add a complex object" << std::endl;
@@ -321,20 +348,21 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
         // CHANGE commands for objects that are present in both the msg and
         // SVS scene graph but have changed position or rotation
         std::string n = i->first;
-        vec3 last_pose;
-        i->second.position(last_pose);
-        vec3 cur_pose;
-        objs[n].position(cur_pose);
-        Eigen::Quaterniond last_rot;
-        i->second.rotation(last_rot);
-        Eigen::Quaterniond cur_rot;
-        objs[n].rotation(cur_rot);
-        vec3 cur_rot_rpy = cur_rot.toRotationMatrix().eulerAngles(0, 1, 2);
+        transform3 last_xform = i->second;
+        transform3 cur_xform = objs[n];
+
+        std::string db_id = model_db->find_db_name(n);
+        if (db_id != "") {
+            std::vector<sub_shape> geoms = model_db->get_model(db_id);
+            if (!model_db->model_is_complex(db_id)) {
+                cur_xform = cur_xform * geoms[0].first;
+            }
+        }
 
         // Check that at least one of the differences is above the thresholds
-        if (transform3::t_diff(i->second, objs[n])) {
+        if (transform3::t_diff(last_xform, cur_xform)) {
             objs_changed = true;
-            cmds << change_cmd(n, cur_pose, cur_rot_rpy);
+            cmds << change_cmd(n, cur_xform);
         }
     }
 

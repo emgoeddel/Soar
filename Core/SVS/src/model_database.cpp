@@ -59,7 +59,7 @@ std::string model_database::find_db_name(std::string id) {
     }
   }
 
-  std::cout << "Could not find database entry for " << id << std::endl;
+  //std::cout << "Could not find database entry for " << id << std::endl;
   return "";
 }
 
