@@ -45,7 +45,7 @@
             "shapes" : [
                 {
                     "shape" : "box",
-                    "dimensions" : [0.035, 0.035, 0.12]
+                    "dimensions" : [0.07, 0.07, 0.12]
                 }
             ],
             "grasps" : [
@@ -64,7 +64,7 @@
             "shapes" : [
                 {
                     "shape" : "box",
-                    "dimensions" : [0.17, 0.17, 0.03]
+                    "dimensions" : [0.34, 0.34, 0.03]
                 }
             ]
         },
@@ -82,7 +82,7 @@
             "shapes" : [
                 {
                     "shape" : "box",
-                    "dimensions" : [0.1, 0.1, 2.5]
+                    "dimensions" : [0.2, 0.2, 2.5]
                 }
             ]
         },
@@ -91,7 +91,7 @@
             "shapes" : [
                 {
                     "shape" : "box",
-                    "dimensions" : [0.15, 0.15, 0.04],
+                    "dimensions" : [0.3, 0.3, 0.04],
                     "transform" : {
                         "translation" : [0, 0, 0.02],
                         "rotation" : [0, 0, 0, 1]
@@ -99,7 +99,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.02, 0.02, 1.55],
+                    "dimensions" : [0.04, 0.04, 1.55],
                     "transform" : {
                         "translation" : [0, 0, 0.7925],
                         "rotation" : [0, 0, 0, 1]
@@ -107,7 +107,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.24, 0.24, 0.04],
+                    "dimensions" : [0.48, 0.48, 0.04],
                     "transform" : {
                         "translation" : [0, 0, 0.78],
                         "rotation" : [0, 0, 0, 1]
@@ -115,7 +115,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.205, 0.205, 0.04],
+                    "dimensions" : [0.41, 0.41, 0.04],
                     "transform" : {
                         "translation" : [0, 0, 0.04],
                         "rotation" : [0, 0, 0, 1]
@@ -123,7 +123,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.17, 0.17, 0.04],
+                    "dimensions" : [0.34, 0.34, 0.04],
                     "transform" : {
                         "translation" : [0, 0, 0.04],
                         "rotation" : [0, 0, 0, 1]
@@ -131,7 +131,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.135, 0.135, 0.04],
+                    "dimensions" : [0.27, 0.27, 0.04],
                     "transform" : {
                         "translation" : [0, 0, 0.04],
                         "rotation" : [0, 0, 0, 1]
@@ -139,7 +139,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.1, 0.1, 0.04],
+                    "dimensions" : [0.2, 0.2, 0.04],
                     "transform" : {
                         "translation" : [0, 0, 0.04],
                         "rotation" : [0, 0, 0, 1]
@@ -152,7 +152,7 @@
             "shapes" : [
                 {
                     "shape" : "box",
-                    "dimensions" : [0.07, 0.07, 0.04],
+                    "dimensions" : [0.14, 0.14, 0.04],
                     "transform" : {
                         "translation" : [0, 0, 0.02],
                         "rotation" : [0, 0, 0, 1]
@@ -160,7 +160,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.01, 0.01, 0.22],
+                    "dimensions" : [0.02, 0.02, 0.22],
                     "transform" : {
                         "translation" : [0, 0, 0.13],
                         "rotation" : [0, 0, 0, 1]
@@ -168,7 +168,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.17, 0.17, 0.16],
+                    "dimensions" : [0.34, 0.34, 0.16],
                     "transform" : {
                         "translation" : [0, 0, 0.18],
                         "rotation" : [0, 0, 0, 1]
@@ -181,7 +181,7 @@
             "shapes" : [
                 {
                     "shape" : "box",
-                    "dimensions" : [0.045, 0.045, 0.25],
+                    "dimensions" : [0.09, 0.09, 0.25],
                     "transform" : {
                         "translation" : [0, 0, 0.1],
                         "rotation" : [0, 0, 0, 1]
@@ -189,7 +189,7 @@
                 },
                 {
                     "shape" : "box",
-                    "dimensions" : [0.02, 0.02, 0.09],
+                    "dimensions" : [0.04, 0.04, 0.09],
                     "transform" : {
                         "translation" : [0, 0, 0.17],
                         "rotation" : [0, 0, 0, 1]
