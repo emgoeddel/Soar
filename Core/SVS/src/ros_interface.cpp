@@ -328,8 +328,30 @@ void ros_interface::update_objects(std::map<std::string, transform3> objs) {
                     cmds << add_convex_cmd(n, "world", geoms[0].second.convex_pts,
                                            obj_xform);
                 }
-            } else {
-                std::cout << "Need to add a complex object" << std::endl;
+            } else { // Objects with subparts
+                cmds << add_grp_cmd(n, "world", obj_xform);
+                int geom_ind = 0;
+
+                for (std::vector<sub_shape>::iterator i = geoms.begin();
+                     i != geoms.end(); i++) {
+                    std::stringstream nm_ss;
+                    nm_ss << n << "_geom_" << geom_ind;
+                    if (geom_ind == 0) obj_xform = i->first;
+                    else obj_xform = obj_xform * i->first;
+
+                    if (i->second.geometry == BALL_OBSTACLE) {
+                        cmds << add_ball_cmd(nm_ss.str(), n, i->second.ball_radius,
+                                             obj_xform);
+                    } else if (i->second.geometry == BOX_OBSTACLE) {
+                        cmds << add_box_cmd(nm_ss.str(), n, i->second.box_dim,
+                                            obj_xform);
+                    } else if (i->second.geometry == CONVEX_OBSTACLE) {
+                        cmds << add_convex_cmd(nm_ss.str(), n, i->second.convex_pts,
+                                               obj_xform);
+                    }
+
+                    geom_ind++;
+                }
             }
         }
     }
