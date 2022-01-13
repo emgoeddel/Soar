@@ -36,7 +36,7 @@ void motor_state::new_query(int id, query q) {
     mq.start_state = get_joints();
 
     std::vector<sgnode*> scn_nodes;
-    scn->get_all_nodes(scn_nodes);
+    scn->get_nonself_nodes(scn_nodes);
     for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
          i != scn_nodes.end(); i++) {
         obstacle o;

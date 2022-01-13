@@ -166,6 +166,38 @@ void scene::get_all_nodes(vector<const sgnode*>& n) const
     }
 }
 
+void scene::get_self_nodes(vector<sgnode*>& n)
+{
+    n.clear();
+    for (size_t i = 0, iend = nodes.size(); i < iend; ++i) {
+        if (nodes[i]->is_me()) n.push_back(nodes[i]);
+    }
+}
+
+void scene::get_self_nodes(vector<const sgnode*>& n) const
+{
+    n.clear();
+    for (size_t i = 0, iend = nodes.size(); i < iend; ++i) {
+        if (nodes[i]->is_me()) n.push_back(nodes[i]);
+    }
+}
+
+void scene::get_nonself_nodes(vector<sgnode*>& n)
+{
+    n.clear();
+    for (size_t i = 0, iend = nodes.size(); i < iend; ++i) {
+        if (!nodes[i]->is_me()) n.push_back(nodes[i]);
+    }
+}
+
+void scene::get_nonself_nodes(vector<const sgnode*>& n) const
+{
+    n.clear();
+    for (size_t i = 0, iend = nodes.size(); i < iend; ++i) {
+        if (!nodes[i]->is_me()) n.push_back(nodes[i]);
+    }
+}
+
 bool scene::add_node(const string& parent_id, sgnode* n)
 {
     group_node* par = get_group(parent_id);
