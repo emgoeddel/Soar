@@ -10,7 +10,8 @@ void from_sgnode(sgnode* node, obstacle& to) {
     node->get_shape_sgel(shape_info);
 
     if (shape_info == "") {
-        std::cout << "Warning: Trying to turn a group node into an obstacle!" << std::endl;
+        std::cout << "Warning: Trying to turn group node " << to.name
+                  << " into an obstacle!" << std::endl;
         to.geometry = NON_OBSTACLE;
     } else if (shape_info[0] == 'v') {
         to.geometry = CONVEX_OBSTACLE;
@@ -23,7 +24,15 @@ void from_sgnode(sgnode* node, obstacle& to) {
         to.geometry = BALL_OBSTACLE;
         ball_node* b = dynamic_cast<ball_node*>(node);
         to.ball_radius = b->get_radius();
-    } // XXX Box obstacles if adding
+    } else if (shape_info[0] == 'x') {
+        to.geometry = BOX_OBSTACLE;
+        box_node* x = dynamic_cast<box_node*>(node);
+        to.box_dim = x->get_dimensions();
+    } else {
+        std::cout << "Warning: Unexpected geometry type for node " << to.name
+                  << "!" << std::endl;
+        to.geometry = NON_OBSTACLE;
+    }
 
     node->get_trans(to.translation, to.rotation, to.scale);
 }

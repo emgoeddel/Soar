@@ -39,6 +39,7 @@ void motor_state::new_query(int id, query q) {
     scn->get_nonself_nodes(scn_nodes);
     for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
          i != scn_nodes.end(); i++) {
+        if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
         obstacle o;
         from_sgnode(*i, o);
         mq.obstacles.push_back(o);
