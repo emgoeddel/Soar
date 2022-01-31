@@ -39,6 +39,7 @@ class scene : public sgnode_listener, public cliproxy
         void get_all_nodes(std::vector<sgnode*>& nodes);
         void get_all_nodes(std::vector<const sgnode*>& nodes) const;
 
+        group_node* get_self_root();
         void get_self_nodes(std::vector<sgnode*>& nodes);
         void get_self_nodes(std::vector<const sgnode*>& nodes) const;
         void get_nonself_nodes(std::vector<sgnode*>& nodes);

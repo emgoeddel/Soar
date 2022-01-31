@@ -166,6 +166,16 @@ void scene::get_all_nodes(vector<const sgnode*>& n) const
     }
 }
 
+group_node* scene::get_self_root()
+{
+    for (size_t i = 0, iend = nodes.size(); i < iend; ++i) {
+        // XXX Assumes robot does not include sub-groups
+        if (nodes[i]->is_me() && nodes[i]->is_group())
+            return dynamic_cast<group_node*>(nodes[i]);
+    }
+    return NULL;
+}
+
 void scene::get_self_nodes(vector<sgnode*>& n)
 {
     n.clear();

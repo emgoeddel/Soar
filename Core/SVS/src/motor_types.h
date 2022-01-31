@@ -89,6 +89,7 @@ void from_sgnode(sgnode* node, obstacle& to);
 struct motor_query {
     query soar_query;
     std::vector<obstacle> obstacles;
+    transform3 base_pose;
     std::map<std::string, double> start_state;
 
     // Utility functions

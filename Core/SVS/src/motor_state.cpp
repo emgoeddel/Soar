@@ -35,6 +35,10 @@ void motor_state::new_query(int id, query q) {
     mq.soar_query = q;
     mq.start_state = get_joints();
 
+    vec3 base_xyz = scn->get_self_root()->get_trans('p');
+    vec3 base_rpy = scn->get_self_root()->get_trans('r');
+    mq.base_pose = transform3(base_xyz, base_rpy, vec3(1, 1, 1));
+
     std::vector<sgnode*> scn_nodes;
     scn->get_nonself_nodes(scn_nodes);
     for (std::vector<sgnode*>::iterator i = scn_nodes.begin();

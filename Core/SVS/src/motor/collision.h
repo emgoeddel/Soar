@@ -45,10 +45,12 @@ public:
     collision_checker(const ompl::base::SpaceInformationPtr& si);
     collision_checker(ompl::base::SpaceInformation* si,
                       std::shared_ptr<robot_model> m,
+                      transform3 rb,
                       std::string group,
                       std::vector<obstacle>& obstacles);
     collision_checker(const ompl::base::SpaceInformationPtr& si,
                       std::shared_ptr<robot_model> m,
+                      transform3 rb,
                       std::string group,
                       std::vector<obstacle>& obstacles);
     ~collision_checker();
@@ -60,6 +62,7 @@ private:
 
     std::vector<std::string> joint_names;
     std::shared_ptr<robot_model> model;
+    transform3 robot_base;
 
     fcl::BroadPhaseCollisionManager* robot;
 

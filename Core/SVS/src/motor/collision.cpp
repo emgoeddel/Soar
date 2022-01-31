@@ -44,9 +44,11 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si)
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si,
                                      std::shared_ptr<robot_model> m,
+                                     transform3 rb,
                                      std::string group,
                                      std::vector<obstacle>& obstacles)
     : ompl::base::StateValidityChecker(si),
+    robot_base(rb),
     model(m)
 {
     joint_names = model->get_joint_group(group);
@@ -59,9 +61,11 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
 
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
                                      std::shared_ptr<robot_model> m,
+                                     transform3 rb,
                                      std::string group,
                                      std::vector<obstacle>& obstacles)
     : ompl::base::StateValidityChecker(si),
+    robot_base(rb),
     model(m)
 {
     joint_names = model->get_joint_group(group);
@@ -89,6 +93,8 @@ collision_checker::~collision_checker() {
 
 // Non-robot obstacles are set up once per planning problem
 void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
+    world->clear();
+
     std::vector<obstacle>::iterator i = obstacles.begin();
     for (; i != obstacles.end(); i++) {
         transform3 t(i->translation, i->rotation, i->scale);
@@ -97,13 +103,34 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
         t.rotation(quat);
         fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
 
-        vec3 pos;
-        i->translation;
-        fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
+        fcl::Vec3f fcl_vec(i->translation[0],
+                           i->translation[1],
+                           i->translation[2]);
 
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
-        world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(0)));
+        if (i->geometry == BALL_OBSTACLE) {
+            world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(i->ball_radius)));
+        } else if (i->geometry == BOX_OBSTACLE) {
+            world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Box(i->box_dim[0], i->box_dim[1], i->box_dim[2])));
+        } else if (i->geometry == CONVEX_OBSTACLE) {
+            std::cout << "Warning: Collision detection for convex obstacle "
+                      << i->name << " not supported" << std::endl;
+            continue;
+            // XXX FCL does NOT support objects made only of vertices, even though it
+            // seems like the following should work from documentation
+            // std::vector<fcl::Vec3f> points(i->convex_pts.size());
+            // for (int v = 0; v < i->convex_pts.size(); v++) {
+            //     points[v] = fcl::Vec3f(i->convex_pts[v][0],
+            //                            i->convex_pts[v][1],
+            //                            i->convex_pts[v][2]);
+            // }
+            // fcl::BVHModel<fcl::OBBRSS>* mdl = new fcl::BVHModel<fcl::OBBRSS>();
+            // mdl->beginModel();
+            // mdl->addSubModel(points);
+            // mdl->endModel();
+            // world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(mdl));
+        } else continue; // NON_OBSTACLE shouldn't even get here
 
         world_objects.push_back(new fcl::CollisionObject(world_obj_geoms.back(),
                                                          fcl_xf));
@@ -113,8 +140,6 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
         world_objects.back()->setUserData(world_obj_datas.back());
 
         world->registerObject(world_objects.back());
-
-        std::cout << "Added " << i->name << " to the world." << std::endl;
     }
 }
 
@@ -137,11 +162,13 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     std::vector<object_data*> obj_datas;
     for (std::map<std::string, transform3>::iterator t = xforms.begin();
          t != xforms.end(); t++) {
+        transform3 wx = robot_base*t->second;
+
         vec4 quat;
-        t->second.rotation(quat);
+        wx.rotation(quat);
         fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
         vec3 pos;
-        t->second.position(pos);
+        wx.position(pos);
         fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
@@ -154,12 +181,21 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
         robot->registerObject(obj_ptrs.back());
     }
 
-    collision_data cd;
-    cd.request = fcl::CollisionRequest();
-    cd.request.enable_contact = false;
-    cd.request.enable_cost = false;
-    cd.result = fcl::CollisionResult();
-    robot->collide(&cd, collision_function);
+    // Self-collision
+    collision_data cds;
+    cds.request = fcl::CollisionRequest();
+    cds.request.enable_contact = false;
+    cds.request.enable_cost = false;
+    cds.result = fcl::CollisionResult();
+    robot->collide(&cds, collision_function);
+
+    // World collision
+    collision_data cdw;
+    cdw.request = fcl::CollisionRequest();
+    cdw.request.enable_contact = false;
+    cdw.request.enable_cost = false;
+    cdw.result = fcl::CollisionResult();
+    robot->collide(world, &cdw, collision_function);
 
     std::vector<fcl::CollisionObject*>::iterator o = obj_ptrs.begin();
     for (; o != obj_ptrs.end(); o++) {
@@ -171,11 +207,9 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     }
     obj_datas.clear();
 
-    if (cd.result.isCollision()) {
-        //std::cout << "Result: COLLISION" << std::endl;
+    if (cds.result.isCollision() || cdw.result.isCollision())
         return false;
-    }
-    //std::cout << "Result: NO collision" << std::endl;
+
     return true;
 }
 
