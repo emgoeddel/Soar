@@ -96,6 +96,19 @@ void motor_state::new_trajectory_callback(int id, trajectory t) {
     notify_listener();
 }
 
+void motor_state::failure_callback(int id, FailureType ft) {
+    {
+        std::lock_guard<std::mutex> guard(fail_mtx);
+        if (failures.count(id) == 0) {
+            failures[id] = std::vector<int>();
+            failures[id].resize(NUM_FAILURE_TYPES);
+        }
+        failures[id][ft]++;
+    }
+
+    notify_listener();
+}
+
 int motor_state::num_trajectories(int query_id) {
     std::lock_guard<std::mutex> guard(traj_mtx);
     return trajectories[query_id].size();

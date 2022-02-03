@@ -37,6 +37,13 @@ void from_sgnode(sgnode* node, obstacle& to) {
     node->get_trans(to.translation, to.rotation, to.scale);
 }
 
+std::string ft_to_str(FailureType f) {
+    if (f == START_INVALID) return "start-invalid";
+    if (f == GOAL_INVALID) return "goal-invalid";
+    if (f == PLANNING_FAILURE) return "planning-failure";
+    else return "other-error";
+}
+
 void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to) {
     to.header.frame_id = from.frame;
     to.joint_names = from.joints;

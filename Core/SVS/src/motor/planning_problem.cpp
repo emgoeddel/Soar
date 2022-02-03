@@ -128,14 +128,16 @@ void planning_problem::run_planner() {
 
         // run the planner
         ompl::base::PlannerStatus status = cur_ss->solve(*cur_ptc);
-        std::cout << "Resulting planner status is " << status.asString() << std::endl;
 
         bool has_trajectory = false;
         trajectory output_traj;
         int num_solns = 0;
 
         if (!cur_ss->haveExactSolutionPath()) {
-            std::cout << "No path found, no trajectory to add!" << std::endl;
+            ms->failure_callback(query_id, ompl_status_to_failure_type(status));
+            std::cout << "No path found, reporting "
+                      << ft_to_str(ompl_status_to_failure_type(status))
+                      << " to Soar" << std::endl;
         } else {
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
             pg.interpolate();
@@ -208,6 +210,18 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
 
     t.length = sv.size();
     return t;
+}
+
+FailureType planning_problem::ompl_status_to_failure_type(ompl::base::PlannerStatus ps) {
+    if (ps == ompl::base::PlannerStatus::INVALID_START) return START_INVALID;
+
+    if (ps == ompl::base::PlannerStatus::INVALID_GOAL ||
+        ps == ompl::base::PlannerStatus::UNRECOGNIZED_GOAL_TYPE) return GOAL_INVALID;
+
+    if (ps == ompl::base::PlannerStatus::TIMEOUT ||
+        ps == ompl::base::PlannerStatus::APPROXIMATE_SOLUTION) return PLANNING_FAILURE;
+
+    return OTHER_ERROR;
 }
 
 #endif

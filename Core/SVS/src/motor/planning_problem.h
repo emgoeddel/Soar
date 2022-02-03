@@ -37,6 +37,7 @@ private:
     void run_planner();
     trajectory path_to_trajectory(ompl::geometric::PathGeometric& geom,
                                   ompl::geometric::SimpleSetup* ompl_ss);
+    FailureType ompl_status_to_failure_type(ompl::base::PlannerStatus ps);
 
     int query_id;
     motor_query query;

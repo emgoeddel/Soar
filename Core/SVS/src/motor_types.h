@@ -99,6 +99,16 @@ struct motor_query {
     bool has_max_time() { return soar_query.max_time > 0; }
 };
 
+enum FailureType {
+    START_INVALID,
+    GOAL_INVALID,
+    PLANNING_FAILURE,
+    OTHER_ERROR
+};
+
+static const int NUM_FAILURE_TYPES = 4;
+std::string ft_to_str(FailureType f);
+
 /*
  * trajectory struct
  *

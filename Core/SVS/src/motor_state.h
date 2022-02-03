@@ -42,6 +42,7 @@ public:
 
     void query_status_callback(int id, std::string stat);
     void new_trajectory_callback(int id, trajectory t);
+    void failure_callback(int id, FailureType ft);
     int num_trajectories(int query_id);
 
     bool is_start_state_for(trajectory& t);
@@ -95,6 +96,8 @@ private:
     std::map<int, std::map<std::string, objective*> > objectives;
     std::map<int, std::string> statuses;
     std::mutex stat_mtx;
+    std::map<int, std::vector<int> > failures;
+    std::mutex fail_mtx;
 
     motor_link* listener;
 };
