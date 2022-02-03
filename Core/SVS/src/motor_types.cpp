@@ -44,6 +44,19 @@ std::string ft_to_str(FailureType f) {
     else return "other-error";
 }
 
+FailureType int_to_ft(int i) {
+    switch(i) {
+    case 0:
+        return START_INVALID;
+    case 1:
+        return GOAL_INVALID;
+    case 2:
+        return PLANNING_FAILURE;
+    default:
+        return OTHER_ERROR;
+    }
+}
+
 void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to) {
     to.header.frame_id = from.frame;
     to.joint_names = from.joints;

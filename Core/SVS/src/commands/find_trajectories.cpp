@@ -40,6 +40,7 @@ public:
 
     find_trajectories_command(svs_state* state, Symbol* root) : command(state, root),
                                                                 root(root),
+                                                                fails_root(NULL),
                                                                 parsed(false) {
         si = state->get_svs()->get_soar_interface();
         ms = state->get_motor_state();
@@ -54,6 +55,8 @@ public:
         // Each command will have its own unique int ID
         id = next_id;
         next_id++;
+
+        failure_wmes.resize(NUM_FAILURE_TYPES);
     }
 
     std::string description() { return "find-trajectories"; }
@@ -79,11 +82,34 @@ public:
             if (stat != prev_status) {
                 set_status(stat);
             }
+            std::vector<int> fails = ms->get_query_failures(id);
+            if (fails.size() == 0) std::cout << "No failures so far!" << std::endl;
+            else std::cout << "START_INVALID " << fails[0]
+                           << " GOAL_INVALID " << fails[1]
+                           << " PLANNING_FAILURE " << fails[2]
+                           << " OTHER_ERROR " << fails[3] << std::endl;
+            if (fails.size() > 0 && fails != prev_failures) {
+                update_failures(fails);
+            }
         }
         return true;
     }
 
 private:
+    void update_failures(std::vector<int>& fv) {
+        if (!fails_root)
+            fails_root = si->get_wme_val(si->make_id_wme(root, "failures"));
+
+        prev_failures.resize(NUM_FAILURE_TYPES);
+
+        for (int i = 0; i < fv.size(); i++) {
+            if (fv[i] == prev_failures[i]) continue;
+            if (failure_wmes[i]) si->remove_wme(failure_wmes[i]);
+            failure_wmes[i] = si->make_wme(fails_root, ft_to_str(int_to_ft(i)), fv[i]);
+            prev_failures[i] = fv[i];
+        }
+    }
+
     bool parse() {
         std::cout << "Parsing a find-trajectories command!!" << std::endl;
 
@@ -163,10 +189,13 @@ private:
     soar_interface* si;
     motor_state* ms;
     Symbol* root;
+    Symbol* fails_root;
+    std::vector<wme*> failure_wmes;
 
     bool parsed;
     query search_query;
     std::string prev_status;
+    std::vector<int> prev_failures;
 
     int id;
 

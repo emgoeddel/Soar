@@ -108,6 +108,7 @@ enum FailureType {
 
 static const int NUM_FAILURE_TYPES = 4;
 std::string ft_to_str(FailureType f);
+FailureType int_to_ft(int i);
 
 /*
  * trajectory struct

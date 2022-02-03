@@ -60,6 +60,12 @@ std::string motor_state::get_query_status(int id) {
     return statuses[id];
 }
 
+std::vector<int> motor_state::get_query_failures(int id) {
+    std::lock_guard<std::mutex> guard(fail_mtx);
+    if (failures.count(id) == 0) return std::vector<int>();
+    return failures[id];
+}
+
 std::vector<int> motor_state::get_query_ids() {
     std::vector<int> out;
 
@@ -105,8 +111,6 @@ void motor_state::failure_callback(int id, FailureType ft) {
         }
         failures[id][ft]++;
     }
-
-    notify_listener();
 }
 
 int motor_state::num_trajectories(int query_id) {
