@@ -16,6 +16,20 @@
 #include "motor_state.h"
 #include "mat.h"
 
+class svs_goal : ompl::base::Goal {
+public:
+    svs_goal(ompl::base::SpaceInformationPtr si, motor_query mq);
+
+    bool isSatisfied(const ompl::base::State* st);
+    bool isSatisfied(const ompl::base::State* st, double* distance);
+
+private:
+    TargetType target;
+    vec3 center;
+    vec3 box_size; // used for BOX_TARGET
+    double sphere_radius; // used for SPHERE_TARGET
+};
+
 /*
  * Planning_problem class
  *

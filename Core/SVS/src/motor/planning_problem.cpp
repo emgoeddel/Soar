@@ -3,6 +3,17 @@
 #include "planning_problem.h"
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 
+svs_goal::svs_goal(ompl::base::SpaceInformationPtr si, motor_query mq)
+    : ompl::base::Goal(si) {}
+
+bool svs_goal::isSatisfied(const ompl::base::State* st) {
+    return true;
+}
+
+bool svs_goal::isSatisfied(const ompl::base::State* st, double* distance) {
+    return true;
+}
+
 planning_problem::planning_problem(int qid,
                                    motor_query q,
                                    motor_state* msp,
