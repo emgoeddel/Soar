@@ -548,6 +548,22 @@ void transform3::scale(vec3& s) const
     s(2) = sm(2, 2);
 }
 
+double transform3::angle_difference(const transform3& other) {
+    vec4 other_rot;
+    other.rotation(other_rot);
+
+    return angle_difference(other_rot);
+}
+
+double transform3::angle_difference(const vec4& quat) {
+    Eigen::Quaterniond in_rot(quat);
+
+    Eigen::Quaterniond this_rot;
+    rotation(this_rot);
+
+    return (2 * acos(this_rot.dot(in_rot)));
+}
+
 std::string transform3::to_str() const {
     std::stringstream ss;
 

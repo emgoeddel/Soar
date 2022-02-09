@@ -443,19 +443,22 @@ public:
         void rotation(vec4& r) const;
         void rotation(Eigen::Quaterniond& r) const;
         void scale(vec3& s) const;
-        
+
+        double angle_difference(const transform3& other);
+        double angle_difference(const vec4& quat);
+
         vec3 operator()(const vec3& v) const
         {
             return trans * v;
         }
-        
+
         transform3 operator*(const transform3& t) const
         {
             transform3 r;
             r.trans = trans * t.trans;
             return r;
         }
-        
+
         void get_matrix(mat& m) const
         {
             m = trans.matrix();

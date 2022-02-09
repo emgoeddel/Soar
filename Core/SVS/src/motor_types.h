@@ -36,7 +36,7 @@ struct query {
     bool use_orientation;
     vec3 orientation;
     bool use_orientation_flex;
-    vec3 orientation_flex;
+    double orientation_flex;
 
     std::string to_str() {
         std::stringstream ss;

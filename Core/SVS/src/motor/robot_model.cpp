@@ -492,104 +492,66 @@ robot_model::solve_ik(vec3 ee_pt) {
     std::vector<double> out;
     if (!initialized) return out;
 
-    // Prevent multiple threads from querying the IK solver at once
-    std::lock_guard<std::mutex> guard(ik_mtx);
-
-    // XXX Baking in the assumption we are planning for the arm here, bad!
-    if (ik_chain.getNrOfJoints() != joint_groups["arm"].size()) {
-        std::cout << "Error: Kinematic chain does not represent Fetch arm!" << std::endl;
-        return out;
-    }
-
     KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
     KDL::Frame ee_desired(v);
 
-    for (int tries = 0; tries < 20; tries++) {
-        KDL::JntArray rnd_jnt(ik_chain.getNrOfJoints());
-        std::vector<double> rnd = random_valid_pose("arm");
-        for (int i = 0; i < rnd.size(); i++) {
-            rnd_jnt.data[i] = rnd[i];
-        }
+    solve_ik_internal(ee_desired, out);
 
-        KDL::JntArray ik_sol(ik_chain.getNrOfJoints());
-        int result = ik_solver->CartToJnt(rnd_jnt, ee_desired, ik_sol);
-        // std::cout << "Result on it " << tries << " was ";
-        // if (result == KDL::ChainIkSolverPos_LMA::E_NOERROR) {
-        //     std::cout << "E_NOERROR";
-        // } else if (result == KDL::ChainIkSolverPos_LMA::E_GRADIENT_JOINTS_TOO_SMALL) {
-        //     std::cout << "E_GRADIENT_JOINTS_TOO_SMALL";
-        // } else if (result == KDL::ChainIkSolverPos_LMA::E_INCREMENT_JOINTS_TOO_SMALL) {
-        //     std::cout << "E_INCREMENT_JOINTS_TOO_SMALL";
-        // } else if (result == KDL::ChainIkSolverPos_LMA::E_MAX_ITERATIONS_EXCEEDED) {
-        //     std::cout << "E_MAX_ITERATIONS_EXCEEDED";
-        // } else if (result == KDL::ChainIkSolverPos_LMA::E_SIZE_MISMATCH) {
-        //     std::cout << "E_SIZE_MISMATCH";
-        // } else {
-        //     std::cout << "something else, " << result;
-        // }
-        // std::cout << std::endl;
+    return out;
+}
 
-        if (result == KDL::SolverI::E_NOERROR) {
-            // Before considering this iteration a success, check bounds
-            bool in_bounds = true;
-            for (int i = 0; i < ik_sol.rows(); i++) {
-                std::string j_name = joint_groups["arm"][i];
-                if (all_joints[j_name].type == CONTINUOUS) continue;
-                double j_min = all_joints[j_name].min_pos;
-                double j_max = all_joints[j_name].max_pos;
+std::vector<double>
+robot_model::solve_ik(vec3 ee_pt, vec3 ee_rot) {
+    std::vector<double> out;
+    if (!initialized) return out;
 
-                if (ik_sol(i) < j_min || ik_sol(i) > j_max) {
-                    in_bounds = false;
-                    break;
-                }
-            }
+    KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
+    KDL::Rotation r;
+    r.DoRotX(ee_rot[0]);
+    r.DoRotY(ee_rot[1]);
+    r.DoRotZ(ee_rot[2]);
 
-            if (!in_bounds) continue;
+    KDL::Frame ee_desired(r, v); // XXX Does KDL do rot vs. trans in right order?
 
-            for (int i = 0; i < ik_sol.rows(); i++) {
-                out.push_back(ik_sol(i));
-            }
+    solve_ik_internal(ee_desired, out);
 
-            //std::cout << "Valid IK solution found on try " << tries << std::endl;
-            break;
-        }
-    }
-
-    if (out.empty()) std::cout << "Error: No IK solution found" << std::endl;
     return out;
 }
 
 vec3 robot_model::end_effector_pos(std::map<std::string, double> joints) {
     if (!initialized) return vec3();
 
-    KDL::JntArray jnt(ik_chain.getNrOfJoints());
-    std::vector<std::string>::iterator i = joint_groups["arm"].begin();
-    int ind = 0;
-    for (; i != joint_groups["arm"].end(); i++) {
-        jnt.data[ind] = joints[*i];
-    }
-
     KDL::Frame f_out;
-    fk_solver->JntToCart(jnt, f_out);
-
-    // Just for a test...
-    KDL::Chain chn;
-    kin_tree.getChain(root_link, end_effector, chn);
-    KDL::ChainFkSolverPos_recursive base_solver(chn);
-    KDL::Frame tmp;
-    KDL::JntArray fromBase(ik_chain.getNrOfJoints()+1);
-    fromBase.data[0] = 0.2;
-    std::vector<std::string>::iterator j = joint_groups["arm"].begin();
-    ind = 1;
-    for (; j != joint_groups["arm"].end(); j++) {
-        fromBase.data[ind] = joints[*j];
-    }
-    int e = base_solver.JntToCart(fromBase, tmp);
-    std::cout << "If solved from base: " << tmp.p.x() << ", " << tmp.p.y()
-              << ", " << tmp.p.z() << " with err " << e << std::endl;
-    //
+    solve_fk_internal(joints, f_out);
 
     return vec3(f_out.p.x(), f_out.p.y(), f_out.p.z());
+}
+
+vec3 robot_model::end_effector_rot(std::map<std::string, double> joints) {
+    if (!initialized) return vec3();
+
+    KDL::Frame f_out;
+    solve_fk_internal(joints, f_out);
+
+    double roll, pitch, yaw;
+    f_out.M.GetRPY(roll, pitch, yaw); // XXX Angle order??
+
+    return vec3(roll, pitch, yaw);
+}
+
+transform3 robot_model::end_effector_xform(std::map<std::string, double> joints) {
+    if (!initialized) return transform3();
+
+    KDL::Frame f_out;
+    solve_fk_internal(joints, f_out);
+
+    double w, x, y, z;
+    f_out.M.GetQuaternion(x, y, z, w); // XXX Order correct?
+
+    vec3 pos(f_out.p.x(), f_out.p.y(), f_out.p.z());
+    vec4 quat(w, x, y, z);
+
+    return transform3(pos, quat);
 }
 
 // Add the xform for the requested link at pose p, plus any others along its
@@ -671,6 +633,67 @@ std::vector<double> robot_model::random_valid_pose(std::string group) {
     }
 
     return out;
+}
+
+void robot_model::solve_fk_internal(std::map<std::string, double> jnt_in, KDL::Frame& f) {
+    KDL::JntArray jnt(ik_chain.getNrOfJoints());
+    std::vector<std::string>::iterator i = joint_groups["arm"].begin();
+    int ind = 0;
+    for (; i != joint_groups["arm"].end(); i++) {
+        jnt.data[ind] = jnt_in[*i];
+    }
+
+    std::lock_guard<std::mutex> guard(fk_mtx);
+    fk_solver->JntToCart(jnt, f);
+}
+
+void robot_model::solve_ik_internal(KDL::Frame f, std::vector<double>& jnt_out) {
+    jnt_out.clear();
+
+    // Prevent multiple threads from querying the IK solver at once
+    std::lock_guard<std::mutex> guard(ik_mtx);
+
+    // XXX Baking in the assumption we are planning for the arm here, bad!
+    if (ik_chain.getNrOfJoints() != joint_groups["arm"].size()) {
+        std::cout << "Error: Kinematic chain does not represent Fetch arm!" << std::endl;
+        return;
+    }
+
+    for (int tries = 0; tries < 20; tries++) {
+        KDL::JntArray rnd_jnt(ik_chain.getNrOfJoints());
+        std::vector<double> rnd = random_valid_pose("arm");
+        for (int i = 0; i < rnd.size(); i++) {
+            rnd_jnt.data[i] = rnd[i];
+        }
+
+        KDL::JntArray ik_sol(ik_chain.getNrOfJoints());
+        int result = ik_solver->CartToJnt(rnd_jnt, f, ik_sol);
+
+        if (result == KDL::SolverI::E_NOERROR) {
+            // Before considering this iteration a success, check bounds
+            bool in_bounds = true;
+            for (int i = 0; i < ik_sol.rows(); i++) {
+                std::string j_name = joint_groups["arm"][i];
+                if (all_joints[j_name].type == CONTINUOUS) continue;
+                double j_min = all_joints[j_name].min_pos;
+                double j_max = all_joints[j_name].max_pos;
+
+                if (ik_sol(i) < j_min || ik_sol(i) > j_max) {
+                    in_bounds = false;
+                    break;
+                }
+            }
+
+            if (!in_bounds) continue;
+
+            for (int i = 0; i < ik_sol.rows(); i++) {
+                jnt_out.push_back(ik_sol(i));
+            }
+
+            break;
+        }
+    }
+
 }
 
 #endif

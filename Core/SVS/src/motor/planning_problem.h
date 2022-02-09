@@ -10,24 +10,35 @@
 
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/base/goals/GoalLazySamples.h>
 
 #include "collision.h"
 #include "robot_model.h"
 #include "motor_state.h"
 #include "mat.h"
 
-class svs_goal : ompl::base::Goal {
+class svs_goal : ompl::base::GoalLazySamples {
 public:
-    svs_goal(ompl::base::SpaceInformationPtr si, motor_query mq);
+    svs_goal(ompl::base::SpaceInformationPtr si,
+             motor_query mq,
+             std::shared_ptr<robot_model> m);
 
-    bool isSatisfied(const ompl::base::State* st);
-    bool isSatisfied(const ompl::base::State* st, double* distance);
+    bool isSatisfied(const ompl::base::State* st) const override;
+    double distanceGoal(const ompl::base::State *st) const override;
 
 private:
-    TargetType target;
+    TargetType target_type;
     vec3 center;
     vec3 box_size; // used for BOX_TARGET
     double sphere_radius; // used for SPHERE_TARGET
+
+    bool match_orientation;
+    vec3 orientation;
+    bool orientation_flexible;
+    double orientation_tolerance;
+
+    std::shared_ptr<robot_model> model;
+    std::vector<std::string> joint_names;
 };
 
 /*

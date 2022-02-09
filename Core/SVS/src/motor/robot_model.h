@@ -89,7 +89,10 @@ public:
     std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints,
                                                       bool box_translation);
     std::vector<double> solve_ik(vec3 ee_pt);
+    std::vector<double> solve_ik(vec3 ee_pt, vec3 ee_rot);
     vec3 end_effector_pos(std::map<std::string, double> joints);
+    vec3 end_effector_rot(std::map<std::string, double> joints);
+    transform3 end_effector_xform(std::map<std::string, double> joints);
 
 private:
     void calculate_link_xform(std::string link_name,
@@ -97,6 +100,8 @@ private:
                               std::map<std::string, transform3>& out);
     transform3 compose_joint_xform(std::string joint_name, double pos);
     std::vector<double> random_valid_pose(std::string group);
+    void solve_fk_internal(std::map<std::string, double> jnt_in, KDL::Frame& f);
+    void solve_ik_internal(KDL::Frame f, std::vector<double>& jnt_out);
 
     bool initialized;
 
@@ -121,8 +126,9 @@ private:
     KDL::Tree kin_tree;
     KDL::Chain ik_chain;
     KDL::ChainIkSolverPos_LMA* ik_solver;
-    KDL::ChainFkSolverPos_recursive* fk_solver;
     std::mutex ik_mtx;
+    KDL::ChainFkSolverPos_recursive* fk_solver;
+    std::mutex fk_mtx;
 };
 
 #endif

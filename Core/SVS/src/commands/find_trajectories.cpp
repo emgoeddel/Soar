@@ -169,7 +169,7 @@ private:
         } else {
             search_query.use_orientation = false;
         }
-        if (si->get_vec3(target_root, "orientation-flex", search_query.orientation_flex)) {
+        if (si->get_const_attr(target_root, "orientation-flex", search_query.orientation_flex)) {
             if (!search_query.use_orientation) {
                 set_status("orientation-flex used without orientation");
                 return false;

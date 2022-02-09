@@ -3,15 +3,68 @@
 #include "planning_problem.h"
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 
-svs_goal::svs_goal(ompl::base::SpaceInformationPtr si, motor_query mq)
-    : ompl::base::Goal(si) {}
-
-bool svs_goal::isSatisfied(const ompl::base::State* st) {
+bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* st) {
     return true;
 }
 
-bool svs_goal::isSatisfied(const ompl::base::State* st, double* distance) {
+svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
+                   motor_query mq,
+                   std::shared_ptr<robot_model> m)
+    : ompl::base::GoalLazySamples(si, sample_svs_goal),
+    target_type(mq.soar_query.target_type),
+    center(mq.soar_query.target_center),
+    box_size(mq.soar_query.target_box_size),
+    sphere_radius(mq.soar_query.target_sphere_radius),
+    match_orientation(mq.soar_query.use_orientation),
+    orientation(mq.soar_query.orientation),
+    orientation_flexible(mq.soar_query.use_orientation_flex),
+    orientation_tolerance(mq.soar_query.orientation_flex),
+    model(m)
+{
+    joint_names = model->get_joint_group(mq.soar_query.joint_group);
+}
+
+bool svs_goal::isSatisfied(const ompl::base::State* st) const {
+    const ompl::base::RealVectorStateSpace::StateType* rv_state =
+        static_cast<const ompl::base::RealVectorStateSpace::StateType*>(st);
+
+    std::map<std::string, double> joint_vals;
+    for (int i = 0; i < si_->getStateDimension(); i++) {
+        joint_vals[joint_names[i]] = (*rv_state)[i];
+    }
+
+    transform3 ee_xform = model->end_effector_xform(joint_vals);
+
+    if (match_orientation) {
+        transform3 target_xform('r', orientation);
+        if (target_xform.angle_difference(ee_xform) > orientation_tolerance) {
+            return false;
+        }
+    }
+
+    vec3 ee_pos;
+    ee_xform.position(ee_pos);
+
+    if (target_type == POINT_TARGET) {
+        if (sqrt(pow(ee_pos[0] - center[0], 2) +
+                 pow(ee_pos[1] - center[1], 2) +
+                 pow(ee_pos[2] - center[2], 2)) > 1e-3) return false; // XXX Tolerance?
+    } else if (target_type == BOX_TARGET) {
+        for (int i = 0; i < 3; i++) {
+            if (ee_pos[i] > center[i] + (box_size[i]/2) ||
+                ee_pos[i] < center[i] - (box_size[i]/2)) return false;
+        }
+    } else { // SPHERE_TARGET
+        if (sqrt(pow(ee_pos[0] - center[0], 2) +
+                 pow(ee_pos[1] - center[1], 2) +
+                 pow(ee_pos[2] - center[2], 2)) > sphere_radius) return false;
+
+    }
+
     return true;
+}
+
+double svs_goal::distanceGoal(const ompl::base::State *st) const {
 }
 
 planning_problem::planning_problem(int qid,
