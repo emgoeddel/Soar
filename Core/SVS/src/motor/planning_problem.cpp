@@ -4,6 +4,76 @@
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 
 bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* st) {
+    if (gls->getStateCount() > 10) return false;
+
+    const svs_goal* goal = static_cast<const svs_goal*>(gls);
+
+    std::vector<double> jnt_values;
+    if (goal->target_type == POINT_TARGET) {
+        if (goal->match_orientation) {
+            if (!goal->orientation_flexible) {
+                jnt_values = goal->model->solve_ik(goal->center, goal->orientation);
+            } else {
+                // Sample axis/angle to flex the orientation by
+            }
+        } else {
+            jnt_values = goal->model->solve_ik(goal->center);
+        }
+    } else if (goal->target_type == BOX_TARGET) {
+        std::random_device rd;
+        std::default_random_engine dre(rd());
+        std::uniform_real_distribution<double> dist(0, 1);
+
+        vec3 xyz_sample;
+        for (int i = 0; i < 3; i++) {
+            double r = dist(dre);
+            double axis_min = goal->center[i] - (goal->box_size[i] / 2);
+            xyz_sample[i] = axis_min + (r * goal->box_size[i]);
+        }
+
+        if (goal->match_orientation) {
+            if (!goal->orientation_flexible) {
+                jnt_values = goal->model->solve_ik(xyz_sample, goal->orientation);
+            } else {
+                // Sample axis/angle to flex the orientation by
+            }
+        } else {
+            jnt_values = goal->model->solve_ik(xyz_sample);
+        }
+    } else { // SPHERE_TARGET
+        std::random_device rd;
+        std::default_random_engine dre(rd());
+        std::uniform_real_distribution<double> dist(0, 1);
+
+        double d = dist(dre) * goal->sphere_radius;
+        vec3 ax = random_axis();
+
+        vec3 xyz_sample;
+        for (int i = 0; i < 3; i++) {
+            xyz_sample[i] = goal->center[i] + (d * ax[i]);
+        }
+
+        if (goal->match_orientation) {
+            if (!goal->orientation_flexible) {
+                jnt_values = goal->model->solve_ik(xyz_sample, goal->orientation);
+            } else {
+                // Sample axis/angle to flex the orientation by
+            }
+        } else {
+            jnt_values = goal->model->solve_ik(xyz_sample);
+        }
+    }
+
+    if (jnt_values.size() == 0) {
+        std::cout << "Goal sampling attempt failed" << std::endl;
+        return false;
+    }
+
+    for (int i = 0; i < jnt_values.size(); i++) {
+        st->as<ompl::base::RealVectorStateSpace::StateType>()->values[i] = jnt_values[i];
+    }
+
+    std::cout << "Goal sampling attempt succeeded!" << std::endl;
     return true;
 }
 
@@ -25,12 +95,9 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
 }
 
 bool svs_goal::isSatisfied(const ompl::base::State* st) const {
-    const ompl::base::RealVectorStateSpace::StateType* rv_state =
-        static_cast<const ompl::base::RealVectorStateSpace::StateType*>(st);
-
     std::map<std::string, double> joint_vals;
     for (int i = 0; i < si_->getStateDimension(); i++) {
-        joint_vals[joint_names[i]] = (*rv_state)[i];
+        joint_vals[joint_names[i]] = st->as<ompl::base::RealVectorStateSpace::StateType>()->values[i];
     }
 
     transform3 ee_xform = model->end_effector_xform(joint_vals);
@@ -64,9 +131,6 @@ bool svs_goal::isSatisfied(const ompl::base::State* st) const {
     return true;
 }
 
-double svs_goal::distanceGoal(const ompl::base::State *st) const {
-}
-
 planning_problem::planning_problem(int qid,
                                    motor_query q,
                                    motor_state* msp,
@@ -79,6 +143,7 @@ planning_problem::planning_problem(int qid,
     if (joint_group == "") joint_group = m->get_default_joint_group();
     joints = m->get_joint_group(joint_group);
     MAX_THREADS = std::thread::hardware_concurrency();
+    //MAX_THREADS = 1;
     if (MAX_THREADS == 0) {
         std::cout << "Hardware concurrency not computable, defaulting to 4 threads."
                   << std::endl;
@@ -154,6 +219,11 @@ void planning_problem::run_planner() {
                                                               joint_group,
                                                               query.obstacles)));
 
+    // set up the planner
+    ompl::geometric::RRTConnect* rrtc =
+        new ompl::geometric::RRTConnect(cur_ss->getSpaceInformation());
+    cur_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
+
     // copy the start state into SimpleSetup
     ompl::base::ScopedState<> start(space);
     int c = 0;
@@ -164,34 +234,24 @@ void planning_problem::run_planner() {
     }
     cur_ss->setStartState(start);
 
-    // set up the planner
-    ompl::geometric::RRTConnect* rrtc =
-        new ompl::geometric::RRTConnect(cur_ss->getSpaceInformation());
-    cur_ss->setPlanner(ompl::base::PlannerPtr(rrtc));
+    ompl::base::GoalPtr g(new svs_goal(cur_ss->getSpaceInformation(), query, model));
+    cur_ss->setGoal(g);
 
     // check for whether to continue searching after first search finishes
     bool restart_search = false;
 
     do {
-        // use IK to find a goal state
-        //vec3 cur_pos = model->end_effector_pos(query.start_state);
-        //std::cout << "Current ee is " << cur_pos[0] << ", " << cur_pos[1] << ", "
-        //<< cur_pos[2] << std::endl;
-        std::vector<double> goal_vec = model->solve_ik(query.soar_query.target_center);
-        if (goal_vec.empty()) { // Didn't find an IK solution
-            restart_search = true;
-            continue;
-        }
-
-        // copy the goal state into SimpleSetup
-        ompl::base::ScopedState<> goal(cur_ss->getStateSpace());
-        for (int i = 0; i < goal_vec.size(); i++) {
-            goal[i] = goal_vec[i];
-        }
-        cur_ss->setGoalState(goal);
+        g->as<ompl::base::GoalLazySamples>()->clear();
+        cur_ss->clear();
 
         // run the planner
+        g->as<ompl::base::GoalLazySamples>()->startSampling();
         ompl::base::PlannerStatus status = cur_ss->solve(*cur_ptc);
+
+        std::cout << "After planning, state count is "
+                  << g->as<ompl::base::GoalLazySamples>()->getStateCount()
+                  << std::endl;
+        g->as<ompl::base::GoalLazySamples>()->stopSampling();
 
         bool has_trajectory = false;
         trajectory output_traj;
@@ -231,7 +291,6 @@ void planning_problem::run_planner() {
 
         if (!query.has_max_num() || num_solns < query.soar_query.max_num) {
             restart_search = true;
-            cur_ss->clear();
         } else { // Once the max_number is reached, kill the search
             ms->query_status_callback(query_id, "complete");
             restart_search = false;

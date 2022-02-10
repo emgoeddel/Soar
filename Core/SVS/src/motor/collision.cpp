@@ -32,13 +32,11 @@ bool collision_function(fcl::CollisionObject* o1,
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si)
     : ompl::base::StateValidityChecker(si),
-    robot(NULL),
     world(NULL)
 {}
 
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si)
     : ompl::base::StateValidityChecker(si),
-    robot(NULL),
     world(NULL)
 {}
 
@@ -53,7 +51,6 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
 {
     joint_names = model->get_joint_group(group);
 
-    robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
 
     setup_obstacles(obstacles);
@@ -70,15 +67,12 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
 {
     joint_names = model->get_joint_group(group);
 
-    robot = new fcl::DynamicAABBTreeCollisionManager();
     world = new fcl::DynamicAABBTreeCollisionManager();
 
     setup_obstacles(obstacles);
 }
 
 collision_checker::~collision_checker() {
-    if (robot) delete robot;
-
     std::vector<fcl::CollisionObject*>::iterator o = world_objects.begin();
     for (; o != world_objects.end(); o++) {
         delete *o;
@@ -144,7 +138,7 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
 }
 
 bool collision_checker::isValid(const ompl::base::State* state) const {
-    robot->clear();
+    fcl::BroadPhaseCollisionManager* robot = new fcl::DynamicAABBTreeCollisionManager();
 
     // cast the abstract state type to the type we expect
     const ompl::base::RealVectorStateSpace::StateType* vecstate =
@@ -206,6 +200,8 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
         delete *d;
     }
     obj_datas.clear();
+
+    delete robot;
 
     if (cds.result.isCollision() || cdw.result.isCollision())
         return false;

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <random>
 #include "mat.h"
 #include "common.h"
 #include "params.h"
@@ -346,6 +347,19 @@ void randomize_vec(vec3& v, const vec3& min, const vec3& max)
     {
         v[i] = min[i] + (rand() / (double) RAND_MAX) * (max[i] - min[i]);
     }
+}
+
+vec3 random_axis() {
+    std::random_device rd;
+    std::default_random_engine dre(rd());
+    std::uniform_real_distribution<double> dist(0, 1);
+
+    double theta = dist(dre) * 2 * M_PI;
+    double z = -1 + (dist(dre) * 2);
+
+    return vec3(sqrt(1 - pow(z, 2)) * cos(theta),
+                sqrt(1 - pow(z, 2)) * sin(theta),
+                z);
 }
 
 vec3 project(const vec3& v, const vec3& u)

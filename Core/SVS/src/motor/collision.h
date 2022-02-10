@@ -64,8 +64,6 @@ private:
     std::shared_ptr<robot_model> model;
     transform3 robot_base;
 
-    fcl::BroadPhaseCollisionManager* robot;
-
     fcl::BroadPhaseCollisionManager* world;
     std::vector<fcl::CollisionObject*> world_objects;
     std::vector<std::shared_ptr<fcl::CollisionGeometry> > world_obj_geoms;

@@ -215,6 +215,8 @@ bool uniform(const_mat_view X);
 void randomize_vec(rvec& v, const rvec& min, const rvec& max);
 void randomize_vec(vec3& v, const vec3& min, const vec3& max);
 
+vec3 random_axis();
+
 /*
  Return indices of columns that have significantly different values,
  meaning the maximum absolute value of the column is greater than

@@ -17,14 +17,16 @@
 #include "motor_state.h"
 #include "mat.h"
 
-class svs_goal : ompl::base::GoalLazySamples {
+class svs_goal : public ompl::base::GoalLazySamples {
 public:
     svs_goal(ompl::base::SpaceInformationPtr si,
              motor_query mq,
              std::shared_ptr<robot_model> m);
 
     bool isSatisfied(const ompl::base::State* st) const override;
-    double distanceGoal(const ompl::base::State *st) const override;
+
+    friend bool
+    sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* st);
 
 private:
     TargetType target_type;

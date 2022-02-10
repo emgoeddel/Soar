@@ -487,6 +487,7 @@ robot_model::link_transforms(std::map<std::string, double> p,
     return xforms;
 }
 
+// XXX Make this version NOT constrain orientation
 std::vector<double>
 robot_model::solve_ik(vec3 ee_pt) {
     std::vector<double> out;
