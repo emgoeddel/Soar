@@ -543,6 +543,14 @@ void transform3::rotation(vec4& r) const
     r(3) = q.w();
 }
 
+void transform3::rotation(vec3& r) const
+{
+    Eigen::Matrix3d rm, sm;
+    trans.computeRotationScaling(&rm, &sm);
+
+    r = rm.eulerAngles(0, 1, 2);
+}
+
 void transform3::rotation(Eigen::Quaterniond& r) const
 {
     Eigen::Matrix3d rm, sm;

@@ -3,6 +3,15 @@
 #include "planning_problem.h"
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 
+double sample_double(double min, double max) {
+    std::random_device rd;
+    std::default_random_engine dre(rd());
+    std::uniform_real_distribution<double> dist(0, 1);
+
+    double d = dist(dre);
+    return min + (d * (max - min));
+}
+
 bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* st) {
     if (gls->getStateCount() > 10) return false;
 
@@ -14,38 +23,48 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
             if (!goal->orientation_flexible) {
                 jnt_values = goal->model->solve_ik(goal->center, goal->orientation);
             } else {
-                // Sample axis/angle to flex the orientation by
+                double a = sample_double(0, goal->orientation_tolerance);
+                vec3 ax = random_axis();
+
+                transform3 rot_xform = transform3('r', vec3(goal->orientation[0],
+                                                            goal->orientation[1],
+                                                            goal->orientation[2]));
+                rot_xform = rot_xform*transform3(ax, a);
+                vec3 rpy_sample;
+                rot_xform.rotation(rpy_sample);
+                jnt_values = goal->model->solve_ik(goal->center, rpy_sample);
             }
         } else {
             jnt_values = goal->model->solve_ik(goal->center);
         }
     } else if (goal->target_type == BOX_TARGET) {
-        std::random_device rd;
-        std::default_random_engine dre(rd());
-        std::uniform_real_distribution<double> dist(0, 1);
-
         vec3 xyz_sample;
         for (int i = 0; i < 3; i++) {
-            double r = dist(dre);
             double axis_min = goal->center[i] - (goal->box_size[i] / 2);
-            xyz_sample[i] = axis_min + (r * goal->box_size[i]);
+            double axis_max = goal->center[i] + (goal->box_size[i] / 2);
+            xyz_sample[i] = sample_double(axis_min, axis_max);
         }
 
         if (goal->match_orientation) {
             if (!goal->orientation_flexible) {
                 jnt_values = goal->model->solve_ik(xyz_sample, goal->orientation);
             } else {
-                // Sample axis/angle to flex the orientation by
+                double a = sample_double(0, goal->orientation_tolerance);
+                vec3 ax = random_axis();
+
+                transform3 rot_xform = transform3('r', vec3(goal->orientation[0],
+                                                            goal->orientation[1],
+                                                            goal->orientation[2]));
+                rot_xform = rot_xform*transform3(ax, a);
+                vec3 rpy_sample;
+                rot_xform.rotation(rpy_sample);
+                jnt_values = goal->model->solve_ik(goal->center, rpy_sample);
             }
         } else {
             jnt_values = goal->model->solve_ik(xyz_sample);
         }
     } else { // SPHERE_TARGET
-        std::random_device rd;
-        std::default_random_engine dre(rd());
-        std::uniform_real_distribution<double> dist(0, 1);
-
-        double d = dist(dre) * goal->sphere_radius;
+        double d = sample_double(0, goal->sphere_radius);
         vec3 ax = random_axis();
 
         vec3 xyz_sample;
@@ -57,7 +76,16 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
             if (!goal->orientation_flexible) {
                 jnt_values = goal->model->solve_ik(xyz_sample, goal->orientation);
             } else {
-                // Sample axis/angle to flex the orientation by
+                double a = sample_double(0, goal->orientation_tolerance);
+                vec3 ax = random_axis();
+
+                transform3 rot_xform = transform3('r', vec3(goal->orientation[0],
+                                                            goal->orientation[1],
+                                                            goal->orientation[2]));
+                rot_xform = rot_xform*transform3(ax, a);
+                vec3 rpy_sample;
+                rot_xform.rotation(rpy_sample);
+                jnt_values = goal->model->solve_ik(goal->center, rpy_sample);
             }
         } else {
             jnt_values = goal->model->solve_ik(xyz_sample);
