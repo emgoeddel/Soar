@@ -14,6 +14,7 @@
 #include "filter_table.h"
 #include "params.h"
 #include "svs.h"
+#include "model_database.h"
 
 using namespace std;
 
@@ -82,6 +83,8 @@ scene::scene(const string& name, svs* owner)
     root = new group_node(root_id);
     nodes.push_back(root);
     root->listen(this);
+
+    models = owner->get_model_db();
 }
 
 scene::~scene()
@@ -206,6 +209,16 @@ void scene::get_nonself_nodes(vector<const sgnode*>& n) const
     for (size_t i = 0, iend = nodes.size(); i < iend; ++i) {
         if (!nodes[i]->is_me()) n.push_back(nodes[i]);
     }
+}
+
+bool scene::node_has_model(const std::string& id) const
+{
+    return models->db_has_model(models->find_db_name(id));
+}
+
+bool scene::node_has_grasp(const std::string& id) const
+{
+    return models->db_has_grasps(models->find_db_name(id));
 }
 
 bool scene::add_node(const string& parent_id, sgnode* n)

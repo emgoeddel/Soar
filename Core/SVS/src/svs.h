@@ -222,6 +222,11 @@ class svs : public svs_interface, public cliproxy
             return mtr;
         }
 
+        std::shared_ptr<model_database> get_model_db()
+        {
+            return models;
+        }
+
         drawer* get_drawer() const
         {
             return draw;

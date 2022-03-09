@@ -65,6 +65,10 @@ filter_table_entry* intersect_select_filter_entry();
 filter_table_entry* contain_filter_entry();
 filter_table_entry* contain_select_filter_entry();
 
+// filters/contain.cpp
+filter_table_entry* graspable_filter_entry();
+filter_table_entry* graspable_select_filter_entry();
+
 // filters/occlusion.cpp
 filter_table_entry* occlusion_filter_entry();
 
@@ -118,6 +122,9 @@ filter_table::filter_table()
     
     add(contain_filter_entry());
     add(contain_select_filter_entry());
+
+    add(graspable_filter_entry());
+    add(graspable_select_filter_entry());
 
 		add(occlusion_filter_entry());
 

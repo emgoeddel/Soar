@@ -527,9 +527,9 @@ svs::svs(agent* a)
     ros_interface::init_ros();
     ri = new ros_interface(this, models);
     ri->start_ros();
-#endif
 
     mtr = std::make_shared<motor>(ri->get_robot_desc());
+#endif
 }
 
 bool svs::filter_dirty_bit = true;

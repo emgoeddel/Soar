@@ -1,6 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include <memory>
 #include <string>
 #include <map>
 #include <cassert>
@@ -9,7 +10,7 @@
 #include "cliproxy.h"
 
 class svs;
-
+class model_database;
 
 // Returns true if the given property name is a native type
 // If true, type is given either 'p' (pos), 'r' (rot), or 's' (scale)
@@ -44,6 +45,9 @@ class scene : public sgnode_listener, public cliproxy
         void get_self_nodes(std::vector<const sgnode*>& nodes) const;
         void get_nonself_nodes(std::vector<sgnode*>& nodes);
         void get_nonself_nodes(std::vector<const sgnode*>& nodes) const;
+
+        bool node_has_model(const std::string& id) const;
+        bool node_has_grasp(const std::string& id) const;
         
         bool add_node(const std::string& parent_id, sgnode* n);
         bool del_node(const std::string& id);
@@ -75,6 +79,7 @@ class scene : public sgnode_listener, public cliproxy
         std::string  name;
         group_node*  root;
         svs*         owner;
+        std::shared_ptr<model_database> models;
         node_table   nodes;
         bool         draw;
         
