@@ -14,25 +14,29 @@ bool model_database::is_in_database(std::string id) {
 }
 
 bool model_database::db_has_grasps(std::string id) {
-  for (std::map<std::string, std::vector<grasp_pair> >::iterator j =
-         grasps.begin(); j != grasps.end(); j++) {
-    if (j->first.find(id) != std::string::npos ||
-        id.find(j->first) != std::string::npos) {
-      return true;
+    if (id == "") return false;
+
+    for (std::map<std::string, std::vector<grasp_pair> >::iterator j =
+             grasps.begin(); j != grasps.end(); j++) {
+        if (j->first.find(id) != std::string::npos ||
+            id.find(j->first) != std::string::npos) {
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 bool model_database::db_has_model(std::string id) {
-  for (std::map<std::string, std::vector<sub_shape> >::iterator p =
-         collision_models.begin(); p != collision_models.end(); p++) {
-    if (p->first.find(id) != std::string::npos ||
-        id.find(p->first) != std::string::npos) {
-      return true;
+    if (id == "") return false;
+
+    for (std::map<std::string, std::vector<sub_shape> >::iterator p =
+             collision_models.begin(); p != collision_models.end(); p++) {
+        if (p->first.find(id) != std::string::npos ||
+            id.find(p->first) != std::string::npos) {
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 bool model_database::model_is_complex(std::string id) {
