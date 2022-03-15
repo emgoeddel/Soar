@@ -221,6 +221,11 @@ bool scene::node_has_grasp(const std::string& id) const
     return models->db_has_grasps(models->find_db_name(id));
 }
 
+std::vector<std::pair<transform3, transform3> > scene::node_grasps(const std::string& id) const
+{
+    return models->all_grasps(models->find_db_name(id));
+}
+
 bool scene::add_node(const string& parent_id, sgnode* n)
 {
     group_node* par = get_group(parent_id);

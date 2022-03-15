@@ -68,18 +68,23 @@ std::string model_database::find_db_name(std::string id) {
 }
 
 std::vector<sub_shape> model_database::get_model(std::string db_name) {
-  return collision_models[db_name];
+    if (!db_has_model(db_name)) return std::vector<sub_shape>();
+    return collision_models[db_name];
 }
 
 int model_database::num_grasps(std::string db_name) {
-  return grasps[db_name].size();
+    if (!db_has_grasps(db_name)) return 0;
+    return grasps[db_name].size();
 }
 
 std::vector<grasp_pair> model_database::all_grasps(std::string db_name) {
-  return grasps[db_name];
+    if (!db_has_grasps(db_name)) return std::vector<grasp_pair>();
+    return grasps[db_name];
 }
+
 grasp_pair model_database::grasp_at_index(std::string db_name, int index) {
-  return grasps[db_name][index];
+    if (!db_has_grasps(db_name)) return grasp_pair();
+    return grasps[db_name][index];
 }
 
 // Reads in json specifying data about the objects the robot may find

@@ -48,6 +48,7 @@ class scene : public sgnode_listener, public cliproxy
 
         bool node_has_model(const std::string& id) const;
         bool node_has_grasp(const std::string& id) const;
+        std::vector<std::pair<transform3, transform3> > node_grasps(const std::string& id) const;
         
         bool add_node(const std::string& parent_id, sgnode* n);
         bool del_node(const std::string& id);

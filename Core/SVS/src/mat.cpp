@@ -526,6 +526,22 @@ void transform3::to_prs(vec3& p, vec4& r, vec3& s) const
     s(2) = sm(2, 2);
 }
 
+void transform3::xyzrpy(vec6& pr) const
+{
+    vec3 p = trans.translation();
+
+    Eigen::Matrix3d rm, sm;
+    trans.computeRotationScaling(&rm, &sm);
+    vec3 r = rm.eulerAngles(0, 1, 2);
+
+    pr(0) = p(0);
+    pr(1) = p(1);
+    pr(2) = p(2);
+    pr(3) = r(0);
+    pr(4) = r(1);
+    pr(5) = r(2);
+}
+
 void transform3::position(vec3& p) const
 {
     p = trans.translation();
@@ -598,6 +614,10 @@ std::string transform3::to_str() const {
     ss << "S [" << s[0] << ", " << s[1] << ", " << s[2] << "]" << std::endl;
 
     return ss.str();
+}
+
+transform3 transform3::inv() {
+    return transform3(trans.inverse(Eigen::TransformTraits::Affine));
 }
 
 bool transform3::t_diff(const transform3& t1, const transform3& t2) {

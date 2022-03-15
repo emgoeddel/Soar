@@ -23,6 +23,7 @@
 
 typedef Eigen::Vector3d vec3;
 typedef Eigen::Vector4d vec4;
+typedef Eigen::Matrix<double,6,1> vec6;
 typedef std::vector<vec3> ptlist;
 
 typedef Eigen::RowVectorXd rvec;
@@ -441,6 +442,7 @@ public:
         static bool t_diff(const transform3& t1, const transform3& t2);
 
         void to_prs(vec3& p, vec4& r, vec3& s) const;
+        void xyzrpy(vec6& pr) const;
         void position(vec3& p) const;
         void rotation(vec4& r) const;
         void rotation(vec3& r) const;
@@ -449,6 +451,8 @@ public:
 
         double angle_difference(const transform3& other);
         double angle_difference(const vec4& quat);
+
+        transform3 inv();
 
         vec3 operator()(const vec3& v) const
         {

@@ -135,6 +135,18 @@ void inline filter_val_c<vec3>::get_rep(std::map<std::string, std::string>& rep)
 }
 
 template<>
+void inline filter_val_c<vec6>::get_rep(std::map<std::string, std::string>& rep) const
+{
+    rep.clear();
+    rep["x"] = tostring(v[0]);
+    rep["y"] = tostring(v[1]);
+    rep["z"] = tostring(v[2]);
+    rep["roll"] = tostring(v[3]);
+    rep["pitch"] = tostring(v[4]);
+    rep["yaw"] = tostring(v[5]);
+}
+
+template<>
 void inline filter_val_c<bbox>::get_rep(std::map<std::string, std::string>& rep) const
 {
     rep.clear();
