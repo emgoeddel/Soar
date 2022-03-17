@@ -213,6 +213,7 @@ sgnode* sgnode::clone() const
     sgnode* c = clone_sub();
     c->set_trans(pos, rot, scale);
     c->tags = tags;
+    c->me = me;
     return c;
 }
 
