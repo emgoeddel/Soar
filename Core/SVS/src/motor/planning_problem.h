@@ -80,9 +80,14 @@ private:
 
     unsigned int MAX_THREADS;
     std::vector<std::thread> thread_vec;
+
     std::mutex ss_vec_mtx;
     std::vector<ompl::geometric::SimpleSetup*> ss_vec;
-    std::list<ompl::base::PlannerTerminationCondition> ptc_list;
+
+    std::mutex ptc_mtx;
+    std::list<ompl::base::PlannerTerminationCondition> top_ptcs;
+    std::list<std::pair<ompl::base::PlannerTerminationCondition,
+                        ompl::base::PlannerTerminationCondition> > traj_ct_ptcs;
 };
 
 #endif

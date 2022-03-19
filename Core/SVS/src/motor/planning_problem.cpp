@@ -229,15 +229,31 @@ void planning_problem::run_planner() {
     // XXX Parameter
     space->setLongestValidSegmentFraction(0.005);
 
+    double min_plan_time = query.soar_query.min_time; // is -1 if not set, so no problem
+    double max_plan_time = (query.soar_query.max_time == -1 ? 600 : query.soar_query.max_time); // cut off at 10 min of planning if max time is not set
+
     // add a SimpleSetup object for this planning thread
     ompl::geometric::SimpleSetup* cur_ss;
     ompl::base::PlannerTerminationCondition* cur_ptc;
     {
-        std::lock_guard<std::mutex> guard(ss_vec_mtx);
+        std::lock_guard<std::mutex> guard1(ss_vec_mtx);
         ss_vec.push_back(new ompl::geometric::SimpleSetup(space));
         cur_ss = ss_vec.back();
-        ptc_list.push_back(ompl::base::timedPlannerTerminationCondition(60.0));
-        cur_ptc = &(ptc_list.back());
+
+        std::lock_guard<std::mutex> guard2(ptc_mtx);
+        // pair for min, max trajectory limits
+        traj_ct_ptcs.push_back(std::make_pair(ompl::base::plannerNonTerminatingCondition(),
+                                              ompl::base::plannerNonTerminatingCondition()));
+        // (time > min && num_traj > min) && (time > max || num_traj > max)
+        top_ptcs.push_back(
+            ompl::base::plannerAndTerminationCondition(
+                ompl::base::plannerAndTerminationCondition(
+                    ompl::base::timedPlannerTerminationCondition(min_plan_time),
+                    traj_ct_ptcs.back().first),
+                ompl::base::plannerOrTerminationCondition(
+                    ompl::base::timedPlannerTerminationCondition(max_plan_time),
+                    traj_ct_ptcs.back().second)));
+        cur_ptc = &(top_ptcs.back());
     }
 
     // create a collision checker for this thread
@@ -315,6 +331,15 @@ void planning_problem::run_planner() {
             !notified_min_traj) {
             ms->query_status_callback(query_id, "continuing");
             notified_min_traj = true;
+
+            // Tell all the PTCs that the minimum has been reached
+            std::lock_guard<std::mutex> guard(ptc_mtx);
+            std::list<std::pair<ompl::base::PlannerTerminationCondition,
+                                ompl::base::PlannerTerminationCondition> >::iterator p =
+                traj_ct_ptcs.begin();
+            for (; p != traj_ct_ptcs.end(); p++) {
+                p->first.terminate(); // first is for min
+            }
         }
 
         if (!query.has_max_num() || num_solns < query.soar_query.max_num) {
@@ -322,14 +347,14 @@ void planning_problem::run_planner() {
         } else { // Once the max_number is reached, kill the search
             ms->query_status_callback(query_id, "complete");
             restart_search = false;
-            if (has_trajectory) { // If this is the thread that found the last trajectory,
-                                  // it should kill all the other threads
-                std::list<ompl::base::PlannerTerminationCondition>::iterator p = ptc_list.begin();
-                for (; p != ptc_list.end(); p++) {
-                    if (p->eval()) { // Already terminated this thread
-                        continue;
-                    }
-                    p->terminate();
+            if (has_trajectory) {
+                // Tell all the PTCs that the maximum has been reached
+                std::lock_guard<std::mutex> guard(ptc_mtx);
+                std::list<std::pair<ompl::base::PlannerTerminationCondition,
+                                    ompl::base::PlannerTerminationCondition> >::iterator p =
+                    traj_ct_ptcs.begin();
+                for (; p != traj_ct_ptcs.end(); p++) {
+                    p->second.terminate(); // second is for max
                 }
             }
         }
