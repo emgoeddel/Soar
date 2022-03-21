@@ -165,7 +165,12 @@ planning_problem::planning_problem(int qid,
                                    std::shared_ptr<robot_model> m) : query_id(qid),
                                                                      query(q),
                                                                      model(m),                                                                                    ms(msp),
-                                                                     notified_min_traj(false)
+                                                                     reached_min_tc(false),
+                                                                     reached_min_time(false),
+                                                                     reached_max_tc(false),
+                                                                     reached_max_time(false),
+                                                                     notified_cont(false),
+                                                                     notified_comp(false)
 {
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->get_default_joint_group();
@@ -194,6 +199,8 @@ planning_problem::~planning_problem() {
 void planning_problem::start_solve() {
     std::cout << "Starting RRT-Connect with " << MAX_THREADS << " threads." << std::endl;
     ms->query_status_callback(query_id, "running");
+
+    start_time = std::chrono::system_clock::now();
     for (int i = 0; i < MAX_THREADS; i++) {
         thread_vec.push_back(std::thread(&planning_problem::run_planner, this));
     }
@@ -229,9 +236,6 @@ void planning_problem::run_planner() {
     // XXX Parameter
     space->setLongestValidSegmentFraction(0.005);
 
-    double min_plan_time = query.soar_query.min_time; // is -1 if not set, so no problem
-    double max_plan_time = (query.soar_query.max_time == -1 ? 600 : query.soar_query.max_time); // cut off at 10 min of planning if max time is not set
-
     // add a SimpleSetup object for this planning thread
     ompl::geometric::SimpleSetup* cur_ss;
     ompl::base::PlannerTerminationCondition* cur_ptc;
@@ -244,15 +248,18 @@ void planning_problem::run_planner() {
         // pair for min, max trajectory limits
         traj_ct_ptcs.push_back(std::make_pair(ompl::base::plannerNonTerminatingCondition(),
                                               ompl::base::plannerNonTerminatingCondition()));
+
+        // pair for min, max time limits
+        time_ptcs.push_back(std::make_pair(ompl::base::plannerNonTerminatingCondition(),
+                                           ompl::base::plannerNonTerminatingCondition()));
+
         // (time > min && num_traj > min) && (time > max || num_traj > max)
         top_ptcs.push_back(
             ompl::base::plannerAndTerminationCondition(
-                ompl::base::plannerAndTerminationCondition(
-                    ompl::base::timedPlannerTerminationCondition(min_plan_time),
-                    traj_ct_ptcs.back().first),
-                ompl::base::plannerOrTerminationCondition(
-                    ompl::base::timedPlannerTerminationCondition(max_plan_time),
-                    traj_ct_ptcs.back().second)));
+                ompl::base::plannerAndTerminationCondition(time_ptcs.back().first,
+                                                           traj_ct_ptcs.back().first),
+                ompl::base::plannerOrTerminationCondition(time_ptcs.back().second,
+                                                          traj_ct_ptcs.back().second)));
         cur_ptc = &(top_ptcs.back());
     }
 
@@ -325,40 +332,90 @@ void planning_problem::run_planner() {
             num_solns = solutions.size();
         }
 
-        // Once the min_number is reached, change the status but don't stop the search
-        if (query.has_min_num() &&
-            num_solns >= query.soar_query.min_num &&
-            !notified_min_traj) {
-            ms->query_status_callback(query_id, "continuing");
-            notified_min_traj = true;
+        std::chrono::duration<double> tpt = std::chrono::system_clock::now() - start_time;
 
-            // Tell all the PTCs that the minimum has been reached
+        // Check for min time
+        if (!reached_min_time && query.has_min_time() &&
+            tpt.count() > query.soar_query.min_time) {
+            reached_min_time = true;
+            std::cout << "Terminating TIME MIN PTCS" << std::endl;
+            // Tell all the time PTCs that the minimum has been reached
+            std::lock_guard<std::mutex> guard(ptc_mtx);
+            std::list<std::pair<ompl::base::PlannerTerminationCondition,
+                                ompl::base::PlannerTerminationCondition> >::iterator p =
+                time_ptcs.begin();
+            for (; p != time_ptcs.end(); p++) {
+                if (!p->first.eval())
+                    p->first.terminate(); // first is for min
+            }
+        }
+
+        // Check for min number of trajectories
+        if (!reached_min_tc && query.has_min_num() &&
+            num_solns >= query.soar_query.min_num) {
+            reached_min_tc = true;
+            std::cout << "Terminating TRAJ CT MIN PTCS" << std::endl;
+            // Tell all the tc PTCs that the minimum has been reached
             std::lock_guard<std::mutex> guard(ptc_mtx);
             std::list<std::pair<ompl::base::PlannerTerminationCondition,
                                 ompl::base::PlannerTerminationCondition> >::iterator p =
                 traj_ct_ptcs.begin();
             for (; p != traj_ct_ptcs.end(); p++) {
-                p->first.terminate(); // first is for min
+                if (!p->first.eval())
+                    p->first.terminate(); // first is for min
             }
         }
 
-        if (!query.has_max_num() || num_solns < query.soar_query.max_num) {
-            restart_search = true;
-        } else { // Once the max_number is reached, kill the search
-            ms->query_status_callback(query_id, "complete");
-            restart_search = false;
-            if (has_trajectory) {
-                // Tell all the PTCs that the maximum has been reached
-                std::lock_guard<std::mutex> guard(ptc_mtx);
-                std::list<std::pair<ompl::base::PlannerTerminationCondition,
-                                    ompl::base::PlannerTerminationCondition> >::iterator p =
-                    traj_ct_ptcs.begin();
-                for (; p != traj_ct_ptcs.end(); p++) {
+        // Check for max time
+        if (query.has_max_time() &&
+            tpt.count() > query.soar_query.max_time) {
+            reached_max_time = true;
+            std::cout << "Terminating TIME MAX PTCS" << std::endl;
+            // Tell all the time PTCs that the maximum has been reached
+            std::lock_guard<std::mutex> guard(ptc_mtx);
+            std::list<std::pair<ompl::base::PlannerTerminationCondition,
+                                ompl::base::PlannerTerminationCondition> >::iterator p =
+                time_ptcs.begin();
+            for (; p != time_ptcs.end(); p++) {
+                if (!p->second.eval())
                     p->second.terminate(); // second is for max
-                }
             }
         }
-        //std::this_thread::sleep_for(std::chrono::seconds(5)); // dbg status updates
+
+        // Check for max number of trajectories
+        if (query.has_max_num() &&
+            num_solns >= query.soar_query.max_num) {
+            reached_max_tc = true;
+            std::cout << "Terminating TRAJ CT MAX PTCS" << std::endl;
+            // Tell all the tc PTCs that the maximum has been reached
+            std::lock_guard<std::mutex> guard(ptc_mtx);
+            std::list<std::pair<ompl::base::PlannerTerminationCondition,
+                                ompl::base::PlannerTerminationCondition> >::iterator p =
+                traj_ct_ptcs.begin();
+            for (; p != traj_ct_ptcs.end(); p++) {
+                if (!p->second.eval())
+                    p->second.terminate(); // second is for max
+            }
+        }
+
+        bool reached_max = (reached_max_tc || reached_max_time);
+
+        if (reached_min_tc && reached_min_time && !reached_max && !notified_cont) {
+            std::cout << "******************CONTINUING*****************" << std::endl;
+            notified_cont = true;
+            ms->query_status_callback(query_id, "continuing");
+        }
+
+        if (reached_max) {
+            if (!notified_comp) {
+                notified_comp = true;
+                std::cout << "****************COMPLETE*****************" << std::endl;
+                ms->query_status_callback(query_id, "complete");
+            }
+            restart_search = false;
+        } else restart_search = true;
+
+        std::this_thread::sleep_for(std::chrono::seconds(2)); // dbg status updates
     } while (restart_search);
 }
 

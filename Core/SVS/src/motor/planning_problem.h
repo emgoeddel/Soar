@@ -7,6 +7,7 @@
 #include <list>
 #include <thread>
 #include <mutex>
+#include <chrono>
 
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
@@ -76,8 +77,11 @@ private:
 
     std::vector<trajectory> solutions;
     std::mutex soln_mtx;
-    bool notified_min_traj;
+    bool reached_min_tc, reached_min_time;
+    bool reached_max_tc, reached_max_time;
+    bool notified_cont, notified_comp;
 
+    std::chrono::time_point<std::chrono::system_clock> start_time;
     unsigned int MAX_THREADS;
     std::vector<std::thread> thread_vec;
 
@@ -88,6 +92,8 @@ private:
     std::list<ompl::base::PlannerTerminationCondition> top_ptcs;
     std::list<std::pair<ompl::base::PlannerTerminationCondition,
                         ompl::base::PlannerTerminationCondition> > traj_ct_ptcs;
+    std::list<std::pair<ompl::base::PlannerTerminationCondition,
+                        ompl::base::PlannerTerminationCondition> > time_ptcs;
 };
 
 #endif
