@@ -299,9 +299,6 @@ void planning_problem::run_planner() {
         g->as<ompl::base::GoalLazySamples>()->startSampling();
         ompl::base::PlannerStatus status = cur_ss->solve(*cur_ptc);
 
-        std::cout << "After planning, state count is "
-                  << g->as<ompl::base::GoalLazySamples>()->getStateCount()
-                  << std::endl;
         g->as<ompl::base::GoalLazySamples>()->stopSampling();
 
         bool has_trajectory = false;
@@ -309,15 +306,11 @@ void planning_problem::run_planner() {
         int num_solns = 0;
 
         if (!cur_ss->haveExactSolutionPath()) {
-            ms->failure_callback(query_id, ompl_status_to_failure_type(status));
-            std::cout << "No path found, reporting "
-                      << ft_to_str(ompl_status_to_failure_type(status))
-                      << " to Soar" << std::endl;
+            if (!notified_comp)
+                ms->failure_callback(query_id, ompl_status_to_failure_type(status));
         } else {
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
             pg.interpolate();
-            std::cout << "Interpolated trajectory length is " << pg.getStateCount()
-                      << std::endl;
 
             output_traj = path_to_trajectory(pg, cur_ss);
             has_trajectory = true;
