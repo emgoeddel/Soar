@@ -335,10 +335,10 @@ void planning_problem::run_planner() {
         std::chrono::duration<double> tpt = std::chrono::system_clock::now() - start_time;
 
         // Check for min time
-        if (!reached_min_time && query.has_min_time() &&
-            tpt.count() > query.soar_query.min_time) {
+        if (!reached_min_time &&
+            ((query.has_min_time() && tpt.count() > query.soar_query.min_time) ||
+             !query.has_min_time())) {
             reached_min_time = true;
-            std::cout << "Terminating TIME MIN PTCS" << std::endl;
             // Tell all the time PTCs that the minimum has been reached
             std::lock_guard<std::mutex> guard(ptc_mtx);
             std::list<std::pair<ompl::base::PlannerTerminationCondition,
@@ -351,10 +351,10 @@ void planning_problem::run_planner() {
         }
 
         // Check for min number of trajectories
-        if (!reached_min_tc && query.has_min_num() &&
-            num_solns >= query.soar_query.min_num) {
+        if (!reached_min_tc &&
+            ((query.has_min_num() && num_solns >= query.soar_query.min_num) ||
+             !query.has_min_num())) {
             reached_min_tc = true;
-            std::cout << "Terminating TRAJ CT MIN PTCS" << std::endl;
             // Tell all the tc PTCs that the minimum has been reached
             std::lock_guard<std::mutex> guard(ptc_mtx);
             std::list<std::pair<ompl::base::PlannerTerminationCondition,
@@ -367,10 +367,9 @@ void planning_problem::run_planner() {
         }
 
         // Check for max time
-        if (query.has_max_time() &&
+        if (!reached_max_time && query.has_max_time() &&
             tpt.count() > query.soar_query.max_time) {
             reached_max_time = true;
-            std::cout << "Terminating TIME MAX PTCS" << std::endl;
             // Tell all the time PTCs that the maximum has been reached
             std::lock_guard<std::mutex> guard(ptc_mtx);
             std::list<std::pair<ompl::base::PlannerTerminationCondition,
@@ -383,10 +382,9 @@ void planning_problem::run_planner() {
         }
 
         // Check for max number of trajectories
-        if (query.has_max_num() &&
+        if (!reached_max_tc && query.has_max_num() &&
             num_solns >= query.soar_query.max_num) {
             reached_max_tc = true;
-            std::cout << "Terminating TRAJ CT MAX PTCS" << std::endl;
             // Tell all the tc PTCs that the maximum has been reached
             std::lock_guard<std::mutex> guard(ptc_mtx);
             std::list<std::pair<ompl::base::PlannerTerminationCondition,
@@ -401,7 +399,6 @@ void planning_problem::run_planner() {
         bool reached_max = (reached_max_tc || reached_max_time);
 
         if (reached_min_tc && reached_min_time && !reached_max && !notified_cont) {
-            std::cout << "******************CONTINUING*****************" << std::endl;
             notified_cont = true;
             ms->query_status_callback(query_id, "continuing");
         }
@@ -409,13 +406,48 @@ void planning_problem::run_planner() {
         if (reached_max) {
             if (!notified_comp) {
                 notified_comp = true;
-                std::cout << "****************COMPLETE*****************" << std::endl;
                 ms->query_status_callback(query_id, "complete");
             }
             restart_search = false;
         } else restart_search = true;
 
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // dbg status updates
+        // {
+        //     std::lock_guard<std::mutex> guard(ptc_mtx);
+
+        //     std::list<ompl::base::PlannerTerminationCondition>::iterator top =
+        //         top_ptcs.begin();
+        //     std::list<std::pair<ompl::base::PlannerTerminationCondition,
+        //                         ompl::base::PlannerTerminationCondition> >::iterator ct =
+        //         traj_ct_ptcs.begin();
+        //     std::list<std::pair<ompl::base::PlannerTerminationCondition,
+        //                         ompl::base::PlannerTerminationCondition> >::iterator time =
+        //         time_ptcs.begin();
+
+        //     for (; top != top_ptcs.end(); top++) {
+        //         std::cout << "TOP: ";
+        //         if (top->eval()) std::cout << "KILL ";
+        //         else std::cout << "continue ";
+
+        //         std::cout << "TRAJ CTS: ";
+        //         if (ct->first.eval()) std::cout << "KILL ";
+        //         else std::cout << "continue ";
+        //         std::cout << "/ ";
+        //         if (ct->second.eval()) std::cout << "KILL ";
+        //         else std::cout << "continue ";
+
+        //         std::cout << "TIME CTS: ";
+        //         if (time->first.eval()) std::cout << "KILL ";
+        //         else std::cout << "continue ";
+        //         std::cout << "/ ";
+        //         if (time->second.eval()) std::cout << "KILL" << std::endl;
+        //         else std::cout << "continue" << std::endl;
+
+        //         ct++;
+        //         time++;
+        //     }
+        // }
+
+        //std::this_thread::sleep_for(std::chrono::seconds(2)); // dbg status updates
     } while (restart_search);
 }
 
