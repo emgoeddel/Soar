@@ -13,9 +13,9 @@ double sample_double(double min, double max) {
 }
 
 bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* st) {
-    if (gls->getStateCount() > 10) return false;
-
     const svs_goal* goal = static_cast<const svs_goal*>(gls);
+
+    if (gls->getStateCount() >= goal->num_samples) return false;
 
     std::vector<double> jnt_values;
     if (goal->target_type == POINT_TARGET) {
@@ -93,7 +93,6 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
     }
 
     if (jnt_values.size() == 0) {
-        std::cout << "Goal sampling attempt failed" << std::endl;
         return false;
     }
 
@@ -101,7 +100,6 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
         st->as<ompl::base::RealVectorStateSpace::StateType>()->values[i] = jnt_values[i];
     }
 
-    std::cout << "Goal sampling attempt succeeded!" << std::endl;
     return true;
 }
 
@@ -119,6 +117,9 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
     orientation_tolerance(mq.soar_query.orientation_flex),
     model(m)
 {
+    if (mq.has_target_samples()) num_samples = mq.soar_query.target_samples;
+    else num_samples = 1;
+
     joint_names = model->get_joint_group(mq.soar_query.joint_group);
 }
 

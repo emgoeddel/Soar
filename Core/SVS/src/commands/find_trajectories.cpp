@@ -23,6 +23,7 @@
  *    ^max-number - [Optional] maximum number of trajectories to find*
  *    ^min-time - [Optional] minumum seconds to spend planning**
  *    ^max-time - [Optional] maximum seconds to spend planning**
+ *    ^target-samples - [Optional] number of IK solutions to explore for target state
  *
  * * After finding the min number of trajectories, the search will continue and
  *   wait to be cut off, although its status will switch to "continuing". After
@@ -125,13 +126,24 @@ private:
 
         // sanity check
         if (search_query.max_num != -1 && search_query.max_num < search_query.min_num) {
-            set_status("max-number incorrect");
+            set_status("max-num must be larger than min-num");
             return false;
         }
 
         // ^min-time and ^max-time
         si->get_const_attr(root, "min-time", search_query.min_time);
         si->get_const_attr(root, "max-time", search_query.max_time);
+
+        // sanity check
+        if (search_query.max_time != -1 && search_query.max_time < search_query.min_time) {
+            set_status("max-time must be larger than min-time");
+            return false;
+        }
+
+        double samples = 0;
+        si->get_const_attr(root, "target-samples", samples);
+        if (samples > 0) search_query.target_samples = (int) samples;
+        else search_query.target_samples = -1;
 
         // ^target <t>
         wme* target_wme;

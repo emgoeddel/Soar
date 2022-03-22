@@ -30,6 +30,8 @@ public:
     sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* st);
 
 private:
+    int num_samples;
+
     TargetType target_type;
     vec3 center;
     vec3 box_size; // used for BOX_TARGET

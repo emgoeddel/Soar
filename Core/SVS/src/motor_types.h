@@ -27,6 +27,7 @@ struct query {
     int max_num;
     double min_time;
     double max_time;
+    int target_samples;
 
     vec3 target_center;
     TargetType target_type;
@@ -97,6 +98,7 @@ struct motor_query {
     bool has_max_num() { return soar_query.max_num > 1; }
     bool has_min_time() { return soar_query.min_time >= 0; }
     bool has_max_time() { return soar_query.max_time > 0; }
+    bool has_target_samples() { return soar_query.target_samples > 0; }
 };
 
 enum FailureType {
