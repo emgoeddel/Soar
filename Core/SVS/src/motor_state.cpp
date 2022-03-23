@@ -66,6 +66,10 @@ std::vector<int> motor_state::get_query_failures(int id) {
     return failures[id];
 }
 
+void motor_state::stop_query(int id) {
+    mtr->stop_planner_query(id);
+}
+
 std::vector<int> motor_state::get_query_ids() {
     std::vector<int> out;
 

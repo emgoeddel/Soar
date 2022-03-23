@@ -36,6 +36,8 @@ public:
     void new_query(int id, query q);
     std::string get_query_status(int id);
     std::vector<int> get_query_failures(int id);
+    void stop_query(int id);
+
     int num_queries() { return queries.size(); }
     std::vector<int> get_query_ids();
     bool has_query_id(int id); // refers to started queries

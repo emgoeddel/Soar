@@ -42,4 +42,18 @@ bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {
     return true;
 }
 
+void motor::stop_planner_query(int id) {
+    std::vector<planning_problem*>::iterator i = ongoing.begin();
+    bool found = false;
+    for (; i != ongoing.end(); i++) {
+        if ((*i)->get_id() == id) {
+            (*i)->stop_solve();
+            found = true;
+            break;
+        }
+    }
+    if (!found) std::cout << "[WARNING] Attempting to stop a non-existent query!"
+                          << std::endl;
+}
+
 #endif

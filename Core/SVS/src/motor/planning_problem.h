@@ -62,6 +62,8 @@ public:
     ~planning_problem();
 
     void start_solve();
+    void stop_solve();
+    int get_id() const { return query_id; }
 
 private:
     void run_planner();

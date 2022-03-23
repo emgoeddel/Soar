@@ -207,6 +207,10 @@ void planning_problem::start_solve() {
     }
 }
 
+void planning_problem::stop_solve() {
+    std::cout << "*********** KILL SEARCH ***********" << std::endl;
+}
+
 // Note that this implements, via callbacks, the status updates defined in
 // find_trajectories.cpp--it notifies the motor_state when a query should be
 // considered "running" "continuing" or "complete"

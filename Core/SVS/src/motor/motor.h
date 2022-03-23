@@ -30,6 +30,7 @@ public:
 
     // Motion planning
     bool new_planner_query(int id, motor_query q, motor_state* msp);
+    void stop_planner_query(int id);
 
 private:
     std::shared_ptr<robot_model> model;

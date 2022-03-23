@@ -79,6 +79,8 @@ public:
                 return false;
             }
         } else {
+            if (check_stop()) ms->stop_query(id);
+
             std::string stat = ms->get_query_status(id);
             if (stat != prev_status) {
                 set_status(stat);
@@ -97,6 +99,14 @@ public:
     }
 
 private:
+    bool check_stop() {
+        std::string val;
+        si->get_const_attr(root, "stop", val);
+
+        if (val.empty()) return false;
+        return true;
+    }
+
     void update_failures(std::vector<int>& fv) {
         if (!fails_root)
             fails_root = si->get_wme_val(si->make_id_wme(root, "failures"));
