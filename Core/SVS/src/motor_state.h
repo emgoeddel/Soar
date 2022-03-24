@@ -126,6 +126,7 @@ public:
     static const std::string type_tag;
     static const std::string traj_sets_tag;
     static const std::string set_tag;
+    static const std::string traj_count_tag;
     static const std::string target_tag;
     static const std::string traj_tag;
     static const std::string command_id_tag;
@@ -144,6 +145,7 @@ private:
     std::string joints_type;
 
     std::map<int, Symbol*> query_sym_map;
+    std::map<int, wme*> query_count_map;
     std::map<int, std::map<int, Symbol*> > query_traj_map;
     std::map<int, std::map<std::string, std::map<int, Symbol*> > > query_obj_map;
 };

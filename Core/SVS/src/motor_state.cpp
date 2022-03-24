@@ -273,6 +273,7 @@ const std::string motor_link::traj_sets_tag = "trajectories";
 const std::string motor_link::set_tag = "set";
 const std::string motor_link::target_tag = "target";
 const std::string motor_link::traj_tag = "trajectory";
+const std::string motor_link::traj_count_tag = "trajectory-count";
 const std::string motor_link::command_id_tag = "command-id";
 const std::string motor_link::traj_id_tag = "id";
 
@@ -303,7 +304,10 @@ void motor_link::update_desc() {
     // Update trajectory information
     std::vector<int> queries = ms->get_query_ids();
     for (std::vector<int>::iterator i = queries.begin(); i != queries.end(); i++) {
+
+        bool query_new = false;
         if (query_sym_map.count(*i) == 0) {
+            query_new = true;
             query_sym_map[*i] = si->get_wme_val(si->make_id_wme(traj_sets_sym,
                                                                 si->make_sym(set_tag)));
             si->make_wme(query_sym_map[*i], command_id_tag, si->make_sym(*i));
@@ -311,7 +315,15 @@ void motor_link::update_desc() {
         }
 
         int curr_num_traj = ms->num_trajectories(*i);
-        if (curr_num_traj > query_traj_map[*i].size()) {
+        if (curr_num_traj == 0 && query_new) {
+            query_count_map[*i] = si->make_wme(query_sym_map[*i],
+                                               traj_count_tag,
+                                               si->make_sym(0));
+        } else if (curr_num_traj > query_traj_map[*i].size()) {
+            if (query_count_map.count(*i) != 0) si->remove_wme(query_count_map[*i]);
+            query_count_map[*i] = si->make_wme(query_sym_map[*i],
+                                               traj_count_tag,
+                                               si->make_sym(curr_num_traj));
             int num_new_traj = curr_num_traj - query_traj_map[*i].size();
             for (int n = num_new_traj; n > 0; n--) {
                 int curr_id = curr_num_traj - n; // Zero-indexed id
