@@ -83,6 +83,7 @@ private:
     std::mutex soln_mtx;
     bool reached_min_tc, reached_min_time;
     bool reached_max_tc, reached_max_time;
+    bool agent_stopped;
     bool notified_cont, notified_comp;
 
     std::chrono::time_point<std::chrono::system_clock> start_time;
@@ -94,6 +95,7 @@ private:
 
     std::mutex ptc_mtx;
     std::list<ompl::base::PlannerTerminationCondition> top_ptcs;
+    std::list<ompl::base::PlannerTerminationCondition> agent_ptcs;
     std::list<std::pair<ompl::base::PlannerTerminationCondition,
                         ompl::base::PlannerTerminationCondition> > traj_ct_ptcs;
     std::list<std::pair<ompl::base::PlannerTerminationCondition,

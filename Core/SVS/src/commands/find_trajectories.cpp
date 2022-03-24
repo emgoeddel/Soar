@@ -79,18 +79,19 @@ public:
                 return false;
             }
         } else {
-            if (check_stop()) ms->stop_query(id);
-
             std::string stat = ms->get_query_status(id);
+
+            if (stat != "stopped" && check_stop()) ms->stop_query(id);
+
             if (stat != prev_status) {
                 set_status(stat);
             }
             std::vector<int> fails = ms->get_query_failures(id);
-            if (fails.size() == 0) std::cout << "No failures so far!" << std::endl;
-            else std::cout << "START_INVALID " << fails[0]
-                           << " GOAL_INVALID " << fails[1]
-                           << " PLANNING_FAILURE " << fails[2]
-                           << " OTHER_ERROR " << fails[3] << std::endl;
+            //if (fails.size() == 0) std::cout << "No failures so far!" << std::endl;
+            // else std::cout << "START_INVALID " << fails[0]
+            //                << " GOAL_INVALID " << fails[1]
+            //                << " PLANNING_FAILURE " << fails[2]
+            //                << " OTHER_ERROR " << fails[3] << std::endl;
             if (fails.size() > 0 && fails != prev_failures) {
                 update_failures(fails);
             }

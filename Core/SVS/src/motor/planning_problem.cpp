@@ -170,6 +170,7 @@ planning_problem::planning_problem(int qid,
                                                                      reached_min_time(false),
                                                                      reached_max_tc(false),
                                                                      reached_max_time(false),
+                                                                     agent_stopped(false),
                                                                      notified_cont(false),
                                                                      notified_comp(false)
 {
@@ -177,7 +178,7 @@ planning_problem::planning_problem(int qid,
     if (joint_group == "") joint_group = m->get_default_joint_group();
     joints = m->get_joint_group(joint_group);
     MAX_THREADS = std::thread::hardware_concurrency();
-    //MAX_THREADS = 1;
+    //MAX_THREADS = 1; dbg
     if (MAX_THREADS == 0) {
         std::cout << "Hardware concurrency not computable, defaulting to 4 threads."
                   << std::endl;
@@ -186,11 +187,23 @@ planning_problem::planning_problem(int qid,
 }
 
 planning_problem::~planning_problem() {
-    for (std::vector<std::thread>::iterator i = thread_vec.begin();
-         i != thread_vec.end(); i++) {
-        i->join();
+    // Kill all the searches
+    {
+        std::lock_guard<std::mutex> guard1(ptc_mtx);
+        std::list<ompl::base::PlannerTerminationCondition>::iterator p = top_ptcs.begin();
+        for (; p != top_ptcs.end(); p++) {
+            if (!p->eval()) p->terminate();
+        }
     }
 
+    // Wait for the threads to join
+    for (std::vector<std::thread>::iterator i = thread_vec.begin();
+         i != thread_vec.end(); i++) {
+        std::cout << "attempting to join" << std::endl;
+        if (i->joinable()) i->join();
+    }
+
+    // Delete all the setups
     for (std::vector<ompl::geometric::SimpleSetup*>::iterator j = ss_vec.begin();
          j != ss_vec.end(); j++) {
         delete *j; // deletes collision checkers along with
@@ -208,7 +221,20 @@ void planning_problem::start_solve() {
 }
 
 void planning_problem::stop_solve() {
-    std::cout << "*********** KILL SEARCH ***********" << std::endl;
+    {
+        std::lock_guard<std::mutex> guard1(ptc_mtx);
+        std::list<ompl::base::PlannerTerminationCondition>::iterator p = agent_ptcs.begin();
+        for (; p != agent_ptcs.end(); p++) {
+            if (!p->eval()) p->terminate();
+        }
+        agent_stopped = true;
+    }
+
+    for (std::vector<std::thread>::iterator i = thread_vec.begin();
+         i != thread_vec.end(); i++) {
+        if (i->joinable()) i->join();
+    }
+    thread_vec.clear();
 }
 
 // Note that this implements, via callbacks, the status updates defined in
@@ -248,7 +274,9 @@ void planning_problem::run_planner() {
         std::lock_guard<std::mutex> guard1(ss_vec_mtx);
         ss_vec.push_back(new ompl::geometric::SimpleSetup(space));
         cur_ss = ss_vec.back();
+    }
 
+    {
         std::lock_guard<std::mutex> guard2(ptc_mtx);
         // pair for min, max trajectory limits
         traj_ct_ptcs.push_back(std::make_pair(ompl::base::plannerNonTerminatingCondition(),
@@ -258,13 +286,17 @@ void planning_problem::run_planner() {
         time_ptcs.push_back(std::make_pair(ompl::base::plannerNonTerminatingCondition(),
                                            ompl::base::plannerNonTerminatingCondition()));
 
-        // (time > min && num_traj > min) && (time > max || num_traj > max)
+        agent_ptcs.push_back(ompl::base::plannerNonTerminatingCondition());
+
+        // agent || (time > min && num_traj > min) && (time > max || num_traj > max)
         top_ptcs.push_back(
-            ompl::base::plannerAndTerminationCondition(
-                ompl::base::plannerAndTerminationCondition(time_ptcs.back().first,
-                                                           traj_ct_ptcs.back().first),
-                ompl::base::plannerOrTerminationCondition(time_ptcs.back().second,
-                                                          traj_ct_ptcs.back().second)));
+            ompl::base::plannerOrTerminationCondition(
+                agent_ptcs.back(),
+                ompl::base::plannerAndTerminationCondition(
+                    ompl::base::plannerAndTerminationCondition(time_ptcs.back().first,
+                                                               traj_ct_ptcs.back().first),
+                    ompl::base::plannerOrTerminationCondition(time_ptcs.back().second,
+                                                              traj_ct_ptcs.back().second))));
         cur_ptc = &(top_ptcs.back());
     }
 
@@ -311,7 +343,7 @@ void planning_problem::run_planner() {
         int num_solns = 0;
 
         if (!cur_ss->haveExactSolutionPath()) {
-            if (!notified_comp)
+            if (!agent_stopped)
                 ms->failure_callback(query_id, ompl_status_to_failure_type(status));
         } else {
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
@@ -328,6 +360,18 @@ void planning_problem::run_planner() {
             std::lock_guard<std::mutex> guard(soln_mtx);
             if (has_trajectory) solutions.push_back(output_traj);
             num_solns = solutions.size();
+        }
+
+        {
+            std::lock_guard<std::mutex> guard(ptc_mtx);
+            if (top_ptcs.front().eval()) {
+                restart_search = false;
+
+                if (agent_ptcs.front().eval())
+                    ms->query_status_callback(query_id, "stopped");
+
+                continue;
+            }
         }
 
         std::chrono::duration<double> tpt = std::chrono::system_clock::now() - start_time;
