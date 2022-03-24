@@ -199,7 +199,6 @@ planning_problem::~planning_problem() {
     // Wait for the threads to join
     for (std::vector<std::thread>::iterator i = thread_vec.begin();
          i != thread_vec.end(); i++) {
-        std::cout << "attempting to join" << std::endl;
         if (i->joinable()) i->join();
     }
 
@@ -343,7 +342,7 @@ void planning_problem::run_planner() {
         int num_solns = 0;
 
         if (!cur_ss->haveExactSolutionPath()) {
-            if (!agent_stopped)
+            if (!agent_stopped && !notified_comp)
                 ms->failure_callback(query_id, ompl_status_to_failure_type(status));
         } else {
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
