@@ -342,8 +342,11 @@ void planning_problem::run_planner() {
         int num_solns = 0;
 
         if (!cur_ss->haveExactSolutionPath()) {
-            if (!agent_stopped && !notified_comp)
-                ms->failure_callback(query_id, ompl_status_to_failure_type(status));
+            if (!agent_stopped && !notified_comp) {
+                if (g->as<ompl::base::GoalLazySamples>()->getStateCount() == 0)
+                    ms->failure_callback(query_id, GOAL_INVALID);
+                else ms->failure_callback(query_id, ompl_status_to_failure_type(status));
+            }
         } else {
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
             pg.interpolate();
