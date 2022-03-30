@@ -496,32 +496,6 @@ void planning_problem::run_planner() {
     } while (restart_search);
 }
 
-trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& geom,
-                                                ompl::geometric::SimpleSetup* ompl_ss) {
-    std::vector<ompl::base::State*> sv = geom.getStates();
-    trajectory t;
-
-    for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++) {
-        t.joints.push_back(*j);
-    }
-
-    // XXX Need actual time parameterization
-    double fake_time = 0.0;
-    std::vector<ompl::base::State*>::iterator i = sv.begin();
-    for (; i != sv.end(); i++) {
-        ompl::base::ScopedState<> ss(ompl_ss->getStateSpace(), *i);
-        t.waypoints.push_back(std::vector<double>());
-        for (int i = 0; i < ompl_ss->getStateSpace()->getDimension(); i++) {
-            t.waypoints.back().push_back(ss[i]);
-        }
-        t.times.push_back(fake_time);
-        fake_time += 1.0;
-    }
-
-    t.length = sv.size();
-    return t;
-}
-
 FailureType planning_problem::ompl_status_to_failure_type(ompl::base::PlannerStatus ps) {
     if (ps == ompl::base::PlannerStatus::INVALID_START) return START_INVALID;
 
@@ -532,6 +506,63 @@ FailureType planning_problem::ompl_status_to_failure_type(ompl::base::PlannerSta
         ps == ompl::base::PlannerStatus::APPROXIMATE_SOLUTION) return PLANNING_FAILURE;
 
     return OTHER_ERROR;
+}
+
+trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& geom,
+                                                ompl::geometric::SimpleSetup* ompl_ss) {
+    std::vector<ompl::base::State*> sv = geom.getStates();
+    trajectory t;
+
+    for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++) {
+        t.joints.push_back(*j);
+    }
+
+    std::vector<ompl::base::State*>::iterator i = sv.begin();
+    for (; i != sv.end(); i++) {
+        ompl::base::ScopedState<> ss(ompl_ss->getStateSpace(), *i);
+        t.waypoints.push_back(std::vector<double>());
+        for (int i = 0; i < ompl_ss->getStateSpace()->getDimension(); i++) {
+            t.waypoints.back().push_back(ss[i]);
+        }
+    }
+    t.length = t.waypoints.size();
+
+    unwind_trajectory(t);
+
+    // XXX Need actual time parameterization
+    double fake_time = 0.0;
+    for (int w = 0; w != t.length; w++) {
+        t.times.push_back(fake_time);
+        fake_time += 1.0;
+    }
+
+    return t;
+}
+
+void planning_problem::unwind_trajectory(trajectory& t) {
+    if (t.length == 0) return;
+
+    for (int j = 0; j != t.joints.size(); j++) {
+        if (model->get_joint_type(t.joints[j]) != CONTINUOUS)
+            continue;
+
+        double running_offset = 0.0;
+        double last_value = t.waypoints[0][j];
+
+        for (int w = 1; w != t.length; w++) {
+            double current_value = t.waypoints[w][j];
+
+            if (last_value > current_value + M_PI) running_offset += (2 * M_PI);
+            else if (current_value > last_value + M_PI) running_offset -= (2 * M_PI);
+
+            last_value = current_value;
+            if (running_offset > std::numeric_limits<double>::epsilon() ||
+                running_offset < -std::numeric_limits<double>::epsilon()) {
+                current_value += running_offset;
+                t.waypoints[w][j] = current_value;
+            }
+        }
+    }
 }
 
 #endif
