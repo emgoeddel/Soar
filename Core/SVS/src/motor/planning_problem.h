@@ -73,6 +73,9 @@ private:
                                   ompl::geometric::SimpleSetup* ompl_ss);
     // Time parameterization helpers; re-implementation of MoveIt functionality
     void unwind_trajectory(trajectory& t);
+    void apply_vel_constraints(trajectory& t,
+                               std::vector<double>& time_diff,
+                               double max_vel_factor = 0.9);
 
     int query_id;
     motor_query query;

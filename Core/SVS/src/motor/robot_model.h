@@ -78,6 +78,8 @@ public:
     joint_type get_joint_type(std::string joint_name);
     double get_joint_min(std::string joint_name);
     double get_joint_max(std::string joint_name);
+    double get_joint_max_velocity(std::string joint_name);
+    double get_joint_max_effort(std::string joint_name);
 
     std::set<std::string> get_links_of_interest();
 

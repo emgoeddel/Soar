@@ -431,6 +431,16 @@ double robot_model::get_joint_max(std::string joint_name) {
     return all_joints[joint_name].max_pos;
 }
 
+double robot_model::get_joint_max_velocity(std::string joint_name) {
+    if (!initialized) return 0;
+    return all_joints[joint_name].max_velocity;
+}
+
+double robot_model::get_joint_max_effort(std::string joint_name) {
+    if (!initialized) return 0;
+    return all_joints[joint_name].max_effort;
+}
+
 std::set<std::string> robot_model::get_links_of_interest() {
     if (!initialized) return std::set<std::string>();
     return links_of_interest;

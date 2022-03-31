@@ -178,7 +178,7 @@ planning_problem::planning_problem(int qid,
     if (joint_group == "") joint_group = m->get_default_joint_group();
     joints = m->get_joint_group(joint_group);
     MAX_THREADS = std::thread::hardware_concurrency();
-    //MAX_THREADS = 1; dbg
+    //MAX_THREADS = 1; //dbg
     if (MAX_THREADS == 0) {
         std::cout << "Hardware concurrency not computable, defaulting to 4 threads."
                   << std::endl;
@@ -529,6 +529,10 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
 
     unwind_trajectory(t);
 
+    std::vector<double> time_diff(t.length-1, 0.0);
+
+    apply_vel_constraints(t, time_diff);
+
     // XXX Need actual time parameterization
     double fake_time = 0.0;
     for (int w = 0; w != t.length; w++) {
@@ -561,6 +565,26 @@ void planning_problem::unwind_trajectory(trajectory& t) {
                 current_value += running_offset;
                 t.waypoints[w][j] = current_value;
             }
+        }
+    }
+}
+
+void planning_problem::apply_vel_constraints(trajectory& t,
+                                             std::vector<double>& time_diff,
+                                             double max_vel_factor) {
+    for (int i = 0; i < t.length - 1; i++)
+    {
+        std::vector<double> curr_waypoint = t.waypoints[i];
+        std::vector<double> next_waypoint = t.waypoints[i + 1];
+
+        for (int j = 0; j < t.joints.size(); j++)
+        {
+            double v_max = model->get_joint_max_velocity(t.joints[j]) * max_vel_factor;
+            const double dq1 = curr_waypoint[j];
+            const double dq2 = next_waypoint[j];
+            const double t_min = std::abs(dq2 - dq1) / v_max;
+            if (t_min > time_diff[i])
+                time_diff[i] = t_min;
         }
     }
 }
