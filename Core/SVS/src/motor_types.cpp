@@ -65,6 +65,10 @@ void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to) {
         trajectory_msgs::JointTrajectoryPoint p;
         p.time_from_start = ros::Duration(from.times[i]);
         p.positions = from.waypoints[i];
+        if (from.velocities.size() == from.waypoints.size())
+            p.velocities = from.velocities[i];
+        if (from.accelerations.size() == from.waypoints.size())
+            p.accelerations = from.accelerations[i];
         to.points.push_back(p);
     }
 }
@@ -76,6 +80,10 @@ void from_ros_msg(trajectory_msgs::JointTrajectory& from, trajectory& to) {
     for (int i = 0; i < from.points.size(); i++) {
         trajectory_msgs::JointTrajectoryPoint p = from.points[i];
         to.waypoints.push_back(p.positions);
+        if (p.velocities.size() == p.positions.size())
+            to.velocities.push_back(p.velocities);
+        if (p.accelerations.size() == p.positions.size())
+            to.accelerations.push_back(p.accelerations);
         to.times.push_back(p.time_from_start.toSec());
     }
 }

@@ -531,14 +531,8 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
 
     std::vector<double> time_diff(t.length-1, 0.0);
 
-    apply_vel_constraints(t, time_diff);
-
-    // XXX Need actual time parameterization
-    double fake_time = 0.0;
-    for (int w = 0; w != t.length; w++) {
-        t.times.push_back(fake_time);
-        fake_time += 1.0;
-    }
+    apply_vel_constraints(t, time_diff, 0.3);
+    update_trajectory(t, time_diff);
 
     return t;
 }
@@ -585,6 +579,103 @@ void planning_problem::apply_vel_constraints(trajectory& t,
             const double t_min = std::abs(dq2 - dq1) / v_max;
             if (t_min > time_diff[i])
                 time_diff[i] = t_min;
+        }
+    }
+}
+
+// Assumes trajectory t holds waypoints already; fills in times, velocities, and
+// accelerations based on the given time_diff vector
+void planning_problem::update_trajectory(trajectory& t, std::vector<double>& time_diff) {
+    if (time_diff.empty()) return;
+
+    double time_sum = 0.0;
+
+
+    int num_points = t.length;
+    t.times = std::vector<double>(num_points);
+    t.times[0] = time_sum;
+
+    // Times
+    for (int i = 1; i < num_points; i++) {
+        time_sum += time_diff[i-1];
+        t.times[i] = time_sum;
+    }
+
+    // Return if there is only one point in the trajectory!
+    if (num_points <= 1) return;
+
+    int prev_waypoint = 0;
+    int curr_waypoint = 0;
+    int next_waypoint = 0;
+
+    t.velocities = std::vector<std::vector<double> >(num_points);
+    t.accelerations = std::vector<std::vector<double> >(num_points);
+
+    // Accelerations and velocities
+    for (int k = 0; k < num_points; k++) {
+        t.velocities[k] = std::vector<double>(t.joints.size());
+        t.accelerations[k] = std::vector<double>(t.joints.size());
+    }
+
+    for (; curr_waypoint < num_points; curr_waypoint++) {
+        if (curr_waypoint > 0) prev_waypoint = curr_waypoint - 1;
+
+        if (curr_waypoint < num_points - 1)
+            next_waypoint = curr_waypoint + 1;
+
+        for (int j = 0; j < t.joints.size(); j++) {
+            double q1;
+            double q2;
+            double q3;
+            double dt1;
+            double dt2;
+
+            if (curr_waypoint == 0) {
+                // First point
+                q1 = t.waypoints[next_waypoint][j];
+                q2 = t.waypoints[curr_waypoint][j];
+                q3 = q1;
+
+                dt1 = dt2 = time_diff[curr_waypoint];
+            } else if (curr_waypoint < num_points - 1) {
+                // Middle points
+                q1 = t.waypoints[prev_waypoint][j];
+                q2 = t.waypoints[curr_waypoint][j];
+                q3 = t.waypoints[next_waypoint][j];
+
+                dt1 = time_diff[curr_waypoint - 1];
+                dt2 = time_diff[curr_waypoint];
+            } else {
+                // Last point
+                q1 = t.waypoints[prev_waypoint][j];
+                q2 = t.waypoints[curr_waypoint][j];
+                q3 = q1;
+
+                dt1 = dt2 = time_diff[curr_waypoint - 1];
+            }
+
+            double v1, v2, a;
+            //bool start_velocity = false;
+
+            if (dt1 == 0.0 || dt2 == 0.0) {
+                v1 = 0.0;
+                v2 = 0.0;
+                a = 0.0;
+            } else {
+                // if (curr_waypoint == 0) {
+                //   if (curr_waypoint->hasVelocities())
+                //   {
+                //     start_velocity = true;
+                //     v1 = curr_waypoint->getVariableVelocity(idx[j]);
+                //   }
+                // }
+                v1 = (q2 - q1) / dt1;
+                v2 = (q3 - q2) / dt2;
+                a = 2.0 * (v2 - v1) / (dt1 + dt2);
+            }
+
+            t.velocities[curr_waypoint][j] = (v1 + v2) / 2.0;
+            t.accelerations[curr_waypoint][j] = a;
         }
     }
 }

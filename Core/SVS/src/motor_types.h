@@ -123,6 +123,8 @@ struct trajectory {
     std::string frame; // base transform name
     std::vector<std::string> joints; // in-order names of joints
     std::vector<std::vector<double> > waypoints; // position at each waypoint
+    std::vector<std::vector<double> > velocities; // velocity of each joint at waypoints
+    std::vector<std::vector<double> > accelerations; // accel of each joint at waypoints
     std::vector<double> times; // time from start of each waypoint
 };
 
