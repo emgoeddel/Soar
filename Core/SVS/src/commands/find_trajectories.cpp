@@ -18,7 +18,7 @@
  *        ^center <vec3> - center of the target area
  *        ^size <vec3> OR <double> - if vec3, half box dimensions; if double, radius
  *        ^orientation <vec3> - [Optional] gripper orientation rpy
- *        ^orientation-flex <vec3> - [Optional] accpetable variation from target orientation
+ *        ^orientation-flex <double> - [Optional] accpetable variation from target orientation
  *    ^min-number - [Optional] minimum number of trajectories to find*
  *    ^max-number - [Optional] maximum number of trajectories to find*
  *    ^min-time - [Optional] minumum seconds to spend planning**
