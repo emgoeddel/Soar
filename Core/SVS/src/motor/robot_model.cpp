@@ -351,7 +351,7 @@ bool robot_model::init(std::string robot_desc) {
     }
     kin_tree.getChain("torso_lift_link", end_effector, ik_chain);
     const Eigen::Matrix<double, 6, 1> xyz_weights = (Eigen::Matrix<double, 6, 1>() << 1.0, 1.0, 1.0, 0.0, 0.0, 0.0).finished();
-    ik_solver_xyz = new KDL::ChainIkSolverPos_LMA(ik_chain,);
+    ik_solver_xyz = new KDL::ChainIkSolverPos_LMA(ik_chain, xyz_weights);
     ik_solver_xyzrpy = new KDL::ChainIkSolverPos_LMA(ik_chain);
     fk_solver = new KDL::ChainFkSolverPos_recursive(ik_chain);
 
