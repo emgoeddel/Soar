@@ -10,11 +10,13 @@
 
 robot_model::robot_model() : initialized(false),
                              name("none"),
-                             ik_solver(NULL),
+                             ik_solver_xyz(NULL),
+                             ik_solver_xyzrpy(NULL),
                              fk_solver(NULL) {}
 
 robot_model::~robot_model() {
-    if (ik_solver) delete ik_solver;
+    if (ik_solver_xyz) delete ik_solver_xyz;
+    if (ik_solver_xyzrpy) delete ik_solver_xyzrpy;
     if (fk_solver) delete fk_solver;
 }
 
@@ -348,7 +350,9 @@ bool robot_model::init(std::string robot_desc) {
         return false;
     }
     kin_tree.getChain("torso_lift_link", end_effector, ik_chain);
-    ik_solver = new KDL::ChainIkSolverPos_LMA(ik_chain);
+    const Eigen::Matrix<double, 6, 1> xyz_weights = (Eigen::Matrix<double, 6, 1>() << 1.0, 1.0, 1.0, 0.0, 0.0, 0.0).finished();
+    ik_solver_xyz = new KDL::ChainIkSolverPos_LMA(ik_chain,);
+    ik_solver_xyzrpy = new KDL::ChainIkSolverPos_LMA(ik_chain);
     fk_solver = new KDL::ChainFkSolverPos_recursive(ik_chain);
 
     initialized = true;
@@ -497,7 +501,6 @@ robot_model::link_transforms(std::map<std::string, double> p,
     return xforms;
 }
 
-// XXX Make this version NOT constrain orientation
 std::vector<double>
 robot_model::solve_ik(vec3 ee_pt) {
     std::vector<double> out;
@@ -506,7 +509,7 @@ robot_model::solve_ik(vec3 ee_pt) {
     KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
     KDL::Frame ee_desired(v);
 
-    solve_ik_internal(ee_desired, out);
+    solve_ik_internal(ee_desired, false, out);
 
     return out;
 }
@@ -524,7 +527,7 @@ robot_model::solve_ik(vec3 ee_pt, vec3 ee_rot) {
 
     KDL::Frame ee_desired(r, v); // XXX Does KDL do rot vs. trans in right order?
 
-    solve_ik_internal(ee_desired, out);
+    solve_ik_internal(ee_desired, true, out);
 
     return out;
 }
@@ -658,7 +661,7 @@ void robot_model::solve_fk_internal(std::map<std::string, double> jnt_in, KDL::F
     fk_solver->JntToCart(jnt, f);
 }
 
-void robot_model::solve_ik_internal(KDL::Frame f, std::vector<double>& jnt_out) {
+void robot_model::solve_ik_internal(KDL::Frame f, bool rpy, std::vector<double>& jnt_out) {
     jnt_out.clear();
 
     // Prevent multiple threads from querying the IK solver at once
@@ -678,7 +681,13 @@ void robot_model::solve_ik_internal(KDL::Frame f, std::vector<double>& jnt_out) 
         }
 
         KDL::JntArray ik_sol(ik_chain.getNrOfJoints());
-        int result = ik_solver->CartToJnt(rnd_jnt, f, ik_sol);
+        int result;
+
+        if (rpy) {
+            result = ik_solver_xyzrpy->CartToJnt(rnd_jnt, f, ik_sol);
+        } else {
+            result = ik_solver_xyz->CartToJnt(rnd_jnt, f, ik_sol);
+        }
 
         if (result == KDL::SolverI::E_NOERROR) {
             // Before considering this iteration a success, check bounds

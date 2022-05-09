@@ -103,7 +103,7 @@ private:
     transform3 compose_joint_xform(std::string joint_name, double pos);
     std::vector<double> random_valid_pose(std::string group);
     void solve_fk_internal(std::map<std::string, double> jnt_in, KDL::Frame& f);
-    void solve_ik_internal(KDL::Frame f, std::vector<double>& jnt_out);
+    void solve_ik_internal(KDL::Frame f, bool rpy, std::vector<double>& jnt_out);
 
     bool initialized;
 
@@ -127,10 +127,11 @@ private:
 
     KDL::Tree kin_tree;
     KDL::Chain ik_chain;
-    KDL::ChainIkSolverPos_LMA* ik_solver;
     std::mutex ik_mtx;
-    KDL::ChainFkSolverPos_recursive* fk_solver;
+    KDL::ChainIkSolverPos_LMA* ik_solver_xyz;
+    KDL::ChainIkSolverPos_LMA* ik_solver_xyzrpy;
     std::mutex fk_mtx;
+    KDL::ChainFkSolverPos_recursive* fk_solver;
 };
 
 #endif
