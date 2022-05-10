@@ -28,7 +28,7 @@ public:
 
     // Evaluate the objective with results -> values
     virtual bool evaluate() = 0;
-    void update_outputs();
+    bool update_outputs();
     OutputType output_type() { return ot; }
 
     std::string get_name() { return name; }

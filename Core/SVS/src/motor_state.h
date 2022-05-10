@@ -53,6 +53,11 @@ public:
 
     //// Objective reporting ////
     void new_objective_callback(int id, objective* obj);
+    void update_objective_callback(int id, std::string obj_name);
+
+    bool has_objective_updates(int id);
+    bool has_objective_updates(int id, std::string obj_name);
+    void reset_objective_updates(int id, std::string obj_name);
 
     int num_objectives(int set_id);
     std::vector<std::string> objective_names(int set_id);
@@ -97,6 +102,8 @@ private:
     std::map<int, std::vector<trajectory> > trajectories;
     std::mutex traj_mtx;
     std::map<int, std::map<std::string, objective*> > objectives;
+    std::map<int, std::map<std::string, bool> > obj_has_update;
+    std::mutex obj_mtx;
     std::map<int, std::string> statuses;
     std::mutex stat_mtx;
     std::map<int, std::vector<int> > failures;
@@ -147,7 +154,7 @@ private:
     std::map<int, Symbol*> query_sym_map;
     std::map<int, wme*> query_count_map;
     std::map<int, std::map<int, Symbol*> > query_traj_map;
-    std::map<int, std::map<std::string, std::map<int, Symbol*> > > query_obj_map;
+    std::map<int, std::map<std::string, std::map<int, wme*> > > query_obj_map;
 };
 
 #endif

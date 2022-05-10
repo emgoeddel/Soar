@@ -149,7 +149,6 @@ std::map<int, double> motor_state::trajectory_lengths(int id) {
     int traj_id = 0;
     for(; i != trajectories[id].end(); i++) {
         lens[traj_id] = i->length;
-        //std::cout << "Trajectory " << traj_id << " has length " << i->length << std::endl;
         traj_id++;
     }
 
@@ -157,13 +156,51 @@ std::map<int, double> motor_state::trajectory_lengths(int id) {
 }
 
 void motor_state::new_objective_callback(int id, objective* obj) {
-    if (objectives.count(id) == 0) {
-        objectives[id] = std::map<std::string, objective*>();
+    {
+        std::lock_guard<std::mutex> guard(obj_mtx);
+        if (objectives.count(id) == 0) {
+            objectives[id] = std::map<std::string, objective*>();
+            obj_has_update[id] = std::map<std::string, bool>();
+        }
+
+        objectives[id][obj->get_name()] = obj;
+        obj_has_update[id][obj->get_name()] = true;
     }
-    objectives[id][obj->get_name()] = obj;
-    std::cout << "Added " << obj->get_name() << " to the motor state." << std::endl;
 
     notify_listener();
+}
+
+void motor_state::update_objective_callback(int id, std::string obj_name) {
+    {
+        std::lock_guard<std::mutex> guard(obj_mtx);
+        obj_has_update[id][obj_name] = true;
+    }
+
+    notify_listener();
+}
+
+bool motor_state::has_objective_updates(int id) {
+    std::lock_guard<std::mutex> guard(obj_mtx);
+
+    std::map<std::string, bool>::iterator o = obj_has_update[id].begin();
+    for (; o != obj_has_update[id].end(); o++) {
+        if (o->second) return true;
+    }
+
+    return false;
+}
+
+bool motor_state::has_objective_updates(int id, std::string obj_name) {
+    std::lock_guard<std::mutex> guard(obj_mtx);
+
+    if (obj_has_update[id][obj_name]) return true;
+    return false;
+}
+
+void motor_state::reset_objective_updates(int id, std::string obj_name) {
+    std::lock_guard<std::mutex> guard(obj_mtx);
+
+    obj_has_update[id][obj_name] = false;
 }
 
 int motor_state::num_objectives(int set_id) {
@@ -257,9 +294,6 @@ bool motor_state::match_trajectory(int set_id, int traj_id, trajectory& out) {
         return false;
     }
 
-    std::cout << "Found a matching trajectory with length "
-              << trajectories[set_id][traj_id].length
-              << std::endl;
     out = trajectories[set_id][traj_id];
     return true;
 }
@@ -335,20 +369,24 @@ void motor_link::update_desc() {
             }
         }
 
-        int curr_num_objectives = ms->num_objectives(*i);
-        if (curr_num_objectives > query_obj_map[*i].size()) {
-            int num_new_obj = curr_num_objectives - query_obj_map[*i].size();
-            std::cout << "Link needs to add " << num_new_obj << " new obj" << std::endl;
+        if (ms->has_objective_updates(*i)) {
             // Need to add new objective symbols for all trajectories in set...
             std::vector<std::string> state_objs = ms->objective_names(*i);
             for (std::vector<std::string>::iterator o = state_objs.begin();
                  o != state_objs.end(); o++) {
-                if (query_obj_map[*i].count(*o) != 0) continue;
-                std::cout << "Objective name: " << *o << std::endl;
-                query_obj_map[*i][*o] = std::map<int, Symbol*>();
+                if (!ms->has_objective_updates(*i, *o)) continue;
+
+                ms->reset_objective_updates(*i, *o);
+
+                bool obj_is_new = false;
+                if (query_obj_map[*i].count(*o) == 0) {
+                    obj_is_new = true;
+                    query_obj_map[*i][*o] = std::map<int, wme*>();
+                }
+
                 std::map<int, double> obj_out = ms->get_objective(*i, *o)->get_outputs();
-                std::cout << "Objective outputs: " << obj_out.size() << std::endl;
                 OutputType out_type = ms->get_objective(*i, *o)->output_type();
+
                 switch (out_type) {
                 case RANK: {
                     std::stringstream ss;
@@ -357,29 +395,44 @@ void motor_link::update_desc() {
 
                     std::map<int, double>::iterator s = obj_out.begin();
                     for (; s != obj_out.end(); s++) {
-                        query_obj_map[*i][*o][s->first] =
-                            si->get_wme_val(si->make_wme<int>(query_traj_map[*i][s->first],
-                                                              soar_desc, (int)s->second));
+                        if (obj_is_new || query_obj_map[*i][*o].count(s->first) == 0) {
+                            query_obj_map[*i][*o][s->first] =
+                                si->make_wme<int>(
+                                    query_traj_map[*i][s->first],
+                                    soar_desc, (int)s->second);
+                        }
                     }
                 } break;
                 case VALUE: {
                     std:
                     std::map<int, double>::iterator s = obj_out.begin();
                     for (; s != obj_out.end(); s++) {
-                        query_obj_map[*i][*o][s->first] =
-                            si->get_wme_val(si->make_wme(query_traj_map[*i][s->first],
-                                                         *o, s->second));
+                        if (obj_is_new || query_obj_map[*i][*o].count(s->first) == 0) {
+                            query_obj_map[*i][*o][s->first] =
+                                si->make_wme(query_traj_map[*i][s->first],
+                                             *o, s->second);
+                        }
                     }
                 } break;
                 case SELECT: {
                     std::map<int, double>::iterator s = obj_out.begin();
                     for (; s != obj_out.end(); s++) {
-                        if (s->second == 0) continue;
-                        std::cout << "Trajectory " << s->first << " is selected"
-                                  << std::endl;
-                        query_obj_map[*i][*o][s->first] =
-                            si->get_wme_val(si->make_wme(query_traj_map[*i][s->first],
-                                                         "selected-by", *o));
+                        if (obj_is_new) { // Easier case, no removals
+                            if (s->second == 0) continue;
+                            query_obj_map[*i][*o][s->first] =
+                                si->make_wme(query_traj_map[*i][s->first],
+                                             "selected-by", *o);
+                        } else {
+                            // If the trajectory was previously selected and now is not
+                            if (s->second == 0 && query_obj_map[*i][*o].count(s->first)) {
+                                si->remove_wme(query_obj_map[*i][*o][s->first]);
+                                query_obj_map[*i][*o].erase(s->first); // Have to remove it
+                                continue;
+                            }
+                            query_obj_map[*i][*o][s->first] =
+                                si->make_wme(query_traj_map[*i][s->first],
+                                             "selected-by", *o);
+                        }
                     }
                 } break;
                 default:

@@ -31,7 +31,9 @@ bool pair_comp(std::pair<int, double> a, std::pair<int, double> b) {
 }
 
 // Assumes values have already been computed
-void objective::update_outputs() {
+bool objective::update_outputs() {
+    int prev_size = outputs.size();
+
     switch (ot) {
     case RANK: {
         std::map<int, double>::iterator i = values.begin();
@@ -74,6 +76,9 @@ void objective::update_outputs() {
         }
     } break;
     }
+
+    if (outputs.size() > prev_size) return true;
+    return false;
 }
 
 void objective::set_status(const std::string& msg) {

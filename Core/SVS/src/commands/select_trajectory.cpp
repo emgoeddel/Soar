@@ -55,8 +55,8 @@ public:
                 return false;
             }
 
-            obj->update_outputs();
-            // XXX ms->new_objective_callback(set_id, obj); Need update callback
+            if (obj->update_outputs())
+                ms->update_objective_callback(traj_set_id, obj->get_name());
         }
 
         return true;
@@ -71,8 +71,8 @@ private:
             set_status("no set-id found");
             return false;
         }
-        int set_id = (int)set;
-        if (!ms->has_set_id(set_id)) {
+        traj_set_id = (int)set;
+        if (!ms->has_set_id(traj_set_id)) {
             set_status("set-id not found in motor state");
             return false;
         }
@@ -100,7 +100,7 @@ private:
         (*input)["output-type"] = new filter_val_c<std::string>(out_type);
         (*input)["name"] = new filter_val_c<std::string>(obj_name);
         (*input)["number"] = new filter_val_c<int>(num_traj);
-        (*input)["set-id"] = new filter_val_c<int>(set_id);
+        (*input)["set-id"] = new filter_val_c<int>(traj_set_id);
         obj = get_objective_table().make_objective(obj_name,
                                                    root,
                                                    si,
@@ -112,8 +112,8 @@ private:
             return false;
         }
 
-        obj->update_outputs(); // XXX Better way to do this?
-        ms->new_objective_callback(set_id, obj);
+        obj->update_outputs();
+        ms->new_objective_callback(traj_set_id, obj);
 
         return true;
     }
@@ -127,6 +127,7 @@ private:
 
     bool parsed;
     bool update;
+    int traj_set_id;
 };
 
 command* _make_select_trajectory_command_(svs_state* state, Symbol* root)
