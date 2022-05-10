@@ -15,7 +15,7 @@ class motor_state;
 enum OutputType {
     VALUE, // ^objective_name <value>
     RANK, // ^objective_name-rank <rank>
-    SELECT // ^objective_name-selected <yes/no>
+    SELECT // ^selected-by objective_name (or not)
 };
 
 class objective {
@@ -28,8 +28,6 @@ public:
 
     // Evaluate the objective with results -> values
     virtual bool evaluate() = 0;
-    // Turn the values -> outputs based on the OutputType
-    void set_output_type(OutputType o) { ot = o; }
     void update_outputs();
     OutputType output_type() { return ot; }
 
@@ -40,6 +38,8 @@ public:
     void set_status(const std::string& msg);
 
 protected:
+    OutputType str_to_output(std::string s);
+
     Symbol* cmd_rt;
     soar_interface* si;
     std::string name;

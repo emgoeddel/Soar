@@ -3,6 +3,8 @@
 #include "objective.h"
 #include "motor_state.h"
 
+#include <algorithm>
+
 objective::objective(Symbol* cmd_rt,
                      soar_interface* si,
                      motor_state* ms,
@@ -16,61 +18,61 @@ objective::objective(Symbol* cmd_rt,
     subset_size = n_fv->get_value();
     filter_val_c<std::string>* nm_fv = dynamic_cast<filter_val_c<std::string>*>((*input)["name"]);
     name = nm_fv->get_value();
+    filter_val_c<std::string>* type_fv = dynamic_cast<filter_val_c<std::string>*>((*input)["output-type"]);
+    ot = str_to_output(type_fv->get_value());
 }
 
 objective::~objective() {
     delete input;
 }
 
+bool pair_comp(std::pair<int, double> a, std::pair<int, double> b) {
+    return a.second < b.second;
+}
+
 // Assumes values have already been computed
 void objective::update_outputs() {
     switch (ot) {
-    case RANK:
-        break;
-    case SELECT: {
+    case RANK: {
         std::map<int, double>::iterator i = values.begin();
-        std::list<int> sel_inds;
-        std::list<double> sel_vals;
+        std::vector<std::pair<int, double> > sorted;
         for (; i != values.end(); i++) {
-            std::list<double>::iterator j = sel_vals.begin();
-            std::list<int>::iterator k = sel_inds.begin();
-            for (; j != sel_vals.end(); j++) {
-                if (i->second < *j) break;
-                k++;
-            }
-            if (sel_vals.size() < subset_size || j != sel_vals.end()) {
-                sel_vals.insert(j, i->second);
-                sel_inds.insert(k, i->first);
-
-                if (sel_vals.size() > subset_size) {
-                    sel_vals.pop_back();
-                    sel_inds.pop_back();
-                }
-            }
+            sorted.push_back(std::pair<int, double>(i->first, i->second));
         }
 
-        i = values.begin();
-        for(; i != values.end(); i++) {
-            std::list<int>::iterator k = sel_inds.begin();
-            bool is_selected = false;
-            for (; k != sel_inds.end(); k++) {
-                if (*k == i->first) {
-                    is_selected = true;
-                    break;
-                }
-            }
+        std::sort(sorted.begin(), sorted.end(), pair_comp);
 
-            if (is_selected) {
-                outputs[i->first] = 1;
-            } else {
-                outputs[i->first] = 0;
-            }
+        int rank = 1;
+        std::vector<std::pair<int, double> >::iterator j = sorted.begin();
+        for (; j != sorted.end(); j++) {
+            outputs[j->first] = rank;
+            rank++;
+        }
+    } break;
+    case SELECT: {
+        std::map<int, double>::iterator i = values.begin();
+        std::vector<std::pair<int, double> > sorted;
+        for (; i != values.end(); i++) {
+            sorted.push_back(std::pair<int, double>(i->first, i->second));
+        }
+
+        std::sort(sorted.begin(), sorted.end(), pair_comp);
+
+        int o = 0;
+        std::vector<std::pair<int, double> >::iterator j = sorted.begin();
+        for (; j != sorted.end(); j++) {
+            if (o < subset_size) outputs[j->first] = 1;
+            else outputs[j->first] = 0;
+            o++;
         }
     } break;
     case VALUE:
-        break;
-    default:
-        break;
+    default: {
+        std::map<int, double>::iterator i = values.begin();
+        for (; i != values.end(); i++) {
+            outputs[i->first] = i->second;
+        }
+    } break;
     }
 }
 
@@ -80,6 +82,16 @@ void objective::set_status(const std::string& msg) {
     if (status_wme) si->remove_wme(status_wme);
     if (cmd_rt && si)
         status_wme = si->make_wme(cmd_rt, si->get_common_syms().status, status);
+}
+
+OutputType objective::str_to_output(std::string s) {
+    if (s == "value") return VALUE;
+    if (s == "rank") return RANK;
+    if (s == "select") return SELECT;
+    else {
+        std::cout << "[ERROR] Invalid objective output type " << s << std::endl;
+        return SELECT;
+    }
 }
 
 #endif
