@@ -1,5 +1,6 @@
 #include "motor_state.h"
 #include <math.h>
+#include <sstream>
 #include "motor/motor.h"
 #include "objective.h"
 #include "scene.h"
@@ -349,6 +350,27 @@ void motor_link::update_desc() {
                 std::cout << "Objective outputs: " << obj_out.size() << std::endl;
                 OutputType out_type = ms->get_objective(*i, *o)->output_type();
                 switch (out_type) {
+                case RANK: {
+                    std::stringstream ss;
+                    ss << *o << "-rank";
+                    std::string soar_desc = ss.str();
+
+                    std::map<int, double>::iterator s = obj_out.begin();
+                    for (; s != obj_out.end(); s++) {
+                        query_obj_map[*i][*o][s->first] =
+                            si->get_wme_val(si->make_wme<int>(query_traj_map[*i][s->first],
+                                                              soar_desc, (int)s->second));
+                    }
+                } break;
+                case VALUE: {
+                    std:
+                    std::map<int, double>::iterator s = obj_out.begin();
+                    for (; s != obj_out.end(); s++) {
+                        query_obj_map[*i][*o][s->first] =
+                            si->get_wme_val(si->make_wme(query_traj_map[*i][s->first],
+                                                         *o, s->second));
+                    }
+                } break;
                 case SELECT: {
                     std::map<int, double>::iterator s = obj_out.begin();
                     for (; s != obj_out.end(); s++) {
