@@ -9,10 +9,10 @@
 #include "motor_state.h"
 
 /*
- * select_trajectory_command class
+ * evaluate_trajectories_command class
  *
  * Defines the Soar interface for selecting <n> trajectories from a trajectory
- * set through a ^select-trajectory command.
+ * set through a ^evaluate-trajectories command.
  *
  * Usage:
  *    ^set-id <id> - integer ID of trajectory set to eval
@@ -25,10 +25,10 @@
  * ** If not included, assumes false
  */
 
-class select_trajectory_command : public command
+class evaluate_trajectories_command : public command
 {
 public:
-    select_trajectory_command(svs_state* state, Symbol* root) : command(state, root),
+    evaluate_trajectories_command(svs_state* state, Symbol* root) : command(state, root),
                                                                 root(root),
                                                                 parsed(false),
                                                                 update(false) {
@@ -36,7 +36,7 @@ public:
         ms = state->get_motor_state();
     }
 
-    std::string description() { return "select-trajectory"; }
+    std::string description() { return "evaluate-trajectories"; }
     int command_type() { return SVS_READ_COMMAND; }
 
     bool update_sub() {
@@ -64,8 +64,6 @@ public:
 
 private:
     bool parse() {
-        std::cout << "Parsing a select-trajectory command!!" << std::endl;
-
         double set = -1;
         if (!si->get_const_attr(root, "set-id", set)) {
             set_status("no set-id found");
@@ -130,22 +128,22 @@ private:
     int traj_set_id;
 };
 
-command* _make_select_trajectory_command_(svs_state* state, Symbol* root)
+command* _make_evaluate_trajectories_command_(svs_state* state, Symbol* root)
 {
-    return new select_trajectory_command(state, root);
+    return new evaluate_trajectories_command(state, root);
 }
 
-command_table_entry* select_trajectory_command_entry()
+command_table_entry* evaluate_trajectories_command_entry()
 {
     command_table_entry* e = new command_table_entry();
-    e->name = "select-trajectory";
+    e->name = "evaluate-trajectories";
     e->description = "Evaluates trajectories in a set";
     e->parameters["set-id"] = "ID of trajectory set to evaluate";
     e->parameters["type"] = "Type of output from <value, rank, select>";
     e->parameters["objective"] = "Name of objective function to base selection on";
     e->parameters["number"] = "[Optional] Number of trajectories to return; default 1";
     e->parameters["update"] = "[Optional] Update output each decision cycle <true/false>; default false";
-    e->create = &_make_select_trajectory_command_;
+    e->create = &_make_evaluate_trajectories_command_;
     return e;
 }
 
