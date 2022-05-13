@@ -395,12 +395,14 @@ void motor_link::update_desc() {
 
                     std::map<int, double>::iterator s = obj_out.begin();
                     for (; s != obj_out.end(); s++) {
-                        if (obj_is_new || query_obj_map[*i][*o].count(s->first) == 0) {
-                            query_obj_map[*i][*o][s->first] =
-                                si->make_wme<int>(
-                                    query_traj_map[*i][s->first],
-                                    soar_desc, (int)s->second);
+                        if (query_obj_map[*i][*o].count(s->first)) {
+                            si->remove_wme(query_obj_map[*i][*o][s->first]);
+                            query_obj_map[*i][*o].erase(s->first);
                         }
+
+                        query_obj_map[*i][*o][s->first] = si->make_wme<int>(
+                            query_traj_map[*i][s->first],
+                            soar_desc, (int)s->second);
                     }
                 } break;
                 case VALUE: {
@@ -417,22 +419,15 @@ void motor_link::update_desc() {
                 case SELECT: {
                     std::map<int, double>::iterator s = obj_out.begin();
                     for (; s != obj_out.end(); s++) {
-                        if (obj_is_new) { // Easier case, no removals
-                            if (s->second == 0) continue;
-                            query_obj_map[*i][*o][s->first] =
-                                si->make_wme(query_traj_map[*i][s->first],
-                                             "selected-by", *o);
-                        } else {
-                            // If the trajectory was previously selected and now is not
-                            if (s->second == 0 && query_obj_map[*i][*o].count(s->first)) {
-                                si->remove_wme(query_obj_map[*i][*o][s->first]);
-                                query_obj_map[*i][*o].erase(s->first); // Have to remove it
-                                continue;
-                            }
-                            query_obj_map[*i][*o][s->first] =
-                                si->make_wme(query_traj_map[*i][s->first],
-                                             "selected-by", *o);
+                        if (query_obj_map[*i][*o].count(s->first)) {
+                            si->remove_wme(query_obj_map[*i][*o][s->first]);
+                            query_obj_map[*i][*o].erase(s->first);
                         }
+
+                        if (s->second)
+                            query_obj_map[*i][*o][s->first] =
+                                si->make_wme(query_traj_map[*i][s->first],
+                                             "selected-by", *o);
                     }
                 } break;
                 default:

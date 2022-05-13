@@ -492,7 +492,7 @@ void planning_problem::run_planner() {
         //     }
         // }
 
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // dbg status updates
+        // std::this_thread::sleep_for(std::chrono::seconds(2)); // dbg status updates
     } while (restart_search);
 }
 
