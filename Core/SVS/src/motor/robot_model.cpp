@@ -655,6 +655,7 @@ void robot_model::solve_fk_internal(std::map<std::string, double> jnt_in, KDL::F
     int ind = 0;
     for (; i != joint_groups["arm"].end(); i++) {
         jnt.data[ind] = jnt_in[*i];
+        ind++;
     }
 
     std::lock_guard<std::mutex> guard(fk_mtx);
