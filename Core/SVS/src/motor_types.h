@@ -30,6 +30,7 @@ struct query {
     int target_samples;
 
     vec3 target_center;
+    std::string target_frame;
     TargetType target_type;
     vec3 target_box_size; // used for BOX_TARGET
     double target_sphere_radius; // used for SPHERE_TARGET
@@ -45,7 +46,8 @@ struct query {
         ss << "Min num: " << min_num << " Max num: " << max_num << std::endl
            << "Min time: " << min_time << " Max time: " << max_time << std::endl
            << "Target: " << target_center[0] << ", " << target_center[1] << ", "
-           << target_center[2] << std::endl << "Target type: " << target_type;
+           << target_center[2] << std::endl << "Target type: " << target_type << std::endl
+           << "Target frame: " << target_frame;
 
         return ss.str();
     }
