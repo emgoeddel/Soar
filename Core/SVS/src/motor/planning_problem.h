@@ -37,6 +37,8 @@ private:
     vec3 box_size; // used for BOX_TARGET
     double sphere_radius; // used for SPHERE_TARGET
 
+    double torso_jnt_val;
+
     bool match_orientation;
     vec3 orientation;
     bool orientation_flexible;

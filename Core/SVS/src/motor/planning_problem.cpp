@@ -21,7 +21,9 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
     if (goal->target_type == POINT_TARGET) {
         if (goal->match_orientation) {
             if (!goal->orientation_flexible) {
-                jnt_values = goal->model->solve_ik(goal->center, goal->orientation);
+                jnt_values = goal->model->solve_ik(goal->center,
+                                                   goal->orientation,
+                                                   goal->torso_jnt_val);
             } else {
                 double a = sample_double(0, goal->orientation_tolerance);
                 vec3 ax = random_axis();
@@ -32,10 +34,12 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
                 rot_xform = rot_xform*transform3(ax, a);
                 vec3 rpy_sample;
                 rot_xform.rotation(rpy_sample);
-                jnt_values = goal->model->solve_ik(goal->center, rpy_sample);
+                jnt_values = goal->model->solve_ik(goal->center,
+                                                   rpy_sample,
+                                                   goal->torso_jnt_val);
             }
         } else {
-            jnt_values = goal->model->solve_ik(goal->center);
+            jnt_values = goal->model->solve_ik(goal->center, goal->torso_jnt_val);
         }
     } else if (goal->target_type == BOX_TARGET) {
         vec3 xyz_sample;
@@ -47,7 +51,9 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
 
         if (goal->match_orientation) {
             if (!goal->orientation_flexible) {
-                jnt_values = goal->model->solve_ik(xyz_sample, goal->orientation);
+                jnt_values = goal->model->solve_ik(xyz_sample,
+                                                   goal->orientation,
+                                                   goal->torso_jnt_val);
             } else {
                 double a = sample_double(0, goal->orientation_tolerance);
                 vec3 ax = random_axis();
@@ -58,10 +64,12 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
                 rot_xform = rot_xform*transform3(ax, a);
                 vec3 rpy_sample;
                 rot_xform.rotation(rpy_sample);
-                jnt_values = goal->model->solve_ik(goal->center, rpy_sample);
+                jnt_values = goal->model->solve_ik(goal->center,
+                                                   rpy_sample,
+                                                   goal->torso_jnt_val);
             }
         } else {
-            jnt_values = goal->model->solve_ik(xyz_sample);
+            jnt_values = goal->model->solve_ik(xyz_sample, goal->torso_jnt_val);
         }
     } else { // SPHERE_TARGET
         double d = sample_double(0, goal->sphere_radius);
@@ -74,7 +82,9 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
 
         if (goal->match_orientation) {
             if (!goal->orientation_flexible) {
-                jnt_values = goal->model->solve_ik(xyz_sample, goal->orientation);
+                jnt_values = goal->model->solve_ik(xyz_sample,
+                                                   goal->orientation,
+                                                   goal->torso_jnt_val);
             } else {
                 double a = sample_double(0, goal->orientation_tolerance);
                 vec3 ax = random_axis();
@@ -85,10 +95,12 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
                 rot_xform = rot_xform*transform3(ax, a);
                 vec3 rpy_sample;
                 rot_xform.rotation(rpy_sample);
-                jnt_values = goal->model->solve_ik(goal->center, rpy_sample);
+                jnt_values = goal->model->solve_ik(goal->center,
+                                                   rpy_sample,
+                                                   goal->torso_jnt_val);
             }
         } else {
-            jnt_values = goal->model->solve_ik(xyz_sample);
+            jnt_values = goal->model->solve_ik(xyz_sample, goal->torso_jnt_val);
         }
     }
 
@@ -111,6 +123,7 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
     center(mq.soar_query.target_center),
     box_size(mq.soar_query.target_box_size),
     sphere_radius(mq.soar_query.target_sphere_radius),
+    torso_jnt_val(mq.start_state["torso_lift_joint"]),
     match_orientation(mq.soar_query.use_orientation),
     orientation(mq.soar_query.orientation),
     orientation_flexible(mq.soar_query.use_orientation_flex),

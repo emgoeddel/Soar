@@ -349,11 +349,14 @@ bool robot_model::init(std::string robot_desc) {
         ROS_ERROR("Failed to construct KDL tree");
         return false;
     }
-    kin_tree.getChain("torso_lift_link", end_effector, ik_chain);
+
+    kin_tree.getChain("torso_lift_link", end_effector, torso_chain);
+    kin_tree.getChain("base_link", end_effector, base_chain);
+
     const Eigen::Matrix<double, 6, 1> xyz_weights = (Eigen::Matrix<double, 6, 1>() << 1.0, 1.0, 1.0, 0.0, 0.0, 0.0).finished();
-    ik_solver_xyz = new KDL::ChainIkSolverPos_LMA(ik_chain, xyz_weights);
-    ik_solver_xyzrpy = new KDL::ChainIkSolverPos_LMA(ik_chain);
-    fk_solver = new KDL::ChainFkSolverPos_recursive(ik_chain);
+    ik_solver_xyz = new KDL::ChainIkSolverPos_LMA(torso_chain, xyz_weights);
+    ik_solver_xyzrpy = new KDL::ChainIkSolverPos_LMA(torso_chain);
+    fk_solver = new KDL::ChainFkSolverPos_recursive(base_chain);
 
     initialized = true;
     return true;
@@ -502,10 +505,11 @@ robot_model::link_transforms(std::map<std::string, double> p,
 }
 
 std::vector<double>
-robot_model::solve_ik(vec3 ee_pt) {
+robot_model::solve_ik(vec3 ee_pt, double torso_jnt) {
     std::vector<double> out;
     if (!initialized) return out;
 
+    transform3 t = torso_xform(torso_jnt);
     KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
     KDL::Frame ee_desired(v);
 
@@ -515,7 +519,7 @@ robot_model::solve_ik(vec3 ee_pt) {
 }
 
 std::vector<double>
-robot_model::solve_ik(vec3 ee_pt, vec3 ee_rot) {
+robot_model::solve_ik(vec3 ee_pt, vec3 ee_rot, double torso_jnt) {
     std::vector<double> out;
     if (!initialized) return out;
 
@@ -566,6 +570,18 @@ transform3 robot_model::end_effector_xform(std::map<std::string, double> joints)
     vec4 quat(w, x, y, z);
 
     return transform3(pos, quat);
+}
+
+// Specialized calculation for the torso only, since this xform is sometimes
+// used on its own
+transform3 robot_model::torso_xform(double pos) {
+    std::cout << "Torso lift parent: " << all_joints["torso_lift_joint"].parent_link
+              << std::endl;
+    std::cout << "Torso lift child: " << all_joints["torso_lift_joint"].child_link
+              << std::endl;
+    transform3 jnt = compose_joint_xform("torso_lift_joint", pos);
+
+    return jnt;
 }
 
 // Add the xform for the requested link at pose p, plus any others along its
@@ -650,10 +666,10 @@ std::vector<double> robot_model::random_valid_pose(std::string group) {
 }
 
 void robot_model::solve_fk_internal(std::map<std::string, double> jnt_in, KDL::Frame& f) {
-    KDL::JntArray jnt(ik_chain.getNrOfJoints());
-    std::vector<std::string>::iterator i = joint_groups["arm"].begin();
+    KDL::JntArray jnt(base_chain.getNrOfJoints());
+    std::vector<std::string>::iterator i = joint_groups["arm_w_torso"].begin();
     int ind = 0;
-    for (; i != joint_groups["arm"].end(); i++) {
+    for (; i != joint_groups["arm_w_torso"].end(); i++) {
         jnt.data[ind] = jnt_in[*i];
         ind++;
     }
@@ -669,19 +685,19 @@ void robot_model::solve_ik_internal(KDL::Frame f, bool rpy, std::vector<double>&
     std::lock_guard<std::mutex> guard(ik_mtx);
 
     // XXX Baking in the assumption we are planning for the arm here, bad!
-    if (ik_chain.getNrOfJoints() != joint_groups["arm"].size()) {
+    if (torso_chain.getNrOfJoints() != joint_groups["arm"].size()) {
         std::cout << "Error: Kinematic chain does not represent Fetch arm!" << std::endl;
         return;
     }
 
     for (int tries = 0; tries < 20; tries++) {
-        KDL::JntArray rnd_jnt(ik_chain.getNrOfJoints());
+        KDL::JntArray rnd_jnt(torso_chain.getNrOfJoints());
         std::vector<double> rnd = random_valid_pose("arm");
         for (int i = 0; i < rnd.size(); i++) {
             rnd_jnt.data[i] = rnd[i];
         }
 
-        KDL::JntArray ik_sol(ik_chain.getNrOfJoints());
+        KDL::JntArray ik_sol(torso_chain.getNrOfJoints());
         int result;
 
         if (rpy) {

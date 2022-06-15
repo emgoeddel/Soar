@@ -88,15 +88,17 @@ public:
     std::map<std::string, vec3> models_as_boxes();
 
     // Kinematics
+    // All input/output transforms are expected to be relative to the robot's BASE
     std::map<std::string, transform3> link_transforms(std::map<std::string, double> joints,
                                                       bool box_translation);
-    std::vector<double> solve_ik(vec3 ee_pt);
-    std::vector<double> solve_ik(vec3 ee_pt, vec3 ee_rot);
+    std::vector<double> solve_ik(vec3 ee_pt, double torso_jnt);
+    std::vector<double> solve_ik(vec3 ee_pt, vec3 ee_rot, double torso_jnt);
     vec3 end_effector_pos(std::map<std::string, double> joints);
     vec3 end_effector_rot(std::map<std::string, double> joints);
     transform3 end_effector_xform(std::map<std::string, double> joints);
 
 private:
+    transform3 torso_xform(double pos);
     void calculate_link_xform(std::string link_name,
                               std::map<std::string, double> pose,
                               std::map<std::string, transform3>& out);
@@ -126,7 +128,8 @@ private:
     std::map<std::string, std::set<std::string> > allowed;
 
     KDL::Tree kin_tree;
-    KDL::Chain ik_chain;
+    KDL::Chain base_chain;
+    KDL::Chain torso_chain;
     std::mutex ik_mtx;
     KDL::ChainIkSolverPos_LMA* ik_solver_xyz;
     KDL::ChainIkSolverPos_LMA* ik_solver_xyzrpy;
