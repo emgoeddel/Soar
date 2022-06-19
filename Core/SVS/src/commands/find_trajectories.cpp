@@ -209,6 +209,8 @@ private:
             search_query.use_orientation_flex = false;
         }
 
+        search_query.joint_group = "arm"; // XXX Possibly make option
+
         std::cout << "--- COMMAND WITH ID " << id << " ---" << std::endl
                   << search_query.to_str() << std::endl
                   << "--------------------------" << std::endl;

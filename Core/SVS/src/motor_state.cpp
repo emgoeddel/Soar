@@ -235,6 +235,12 @@ std::map<std::string, double> motor_state::get_joints() {
     return joints;
 }
 
+transform3 motor_state::ee_frame_for_joints() {
+    std::lock_guard<std::mutex> guard(joints_mtx);
+
+    return mtr->get_ee_frame_transform_at(joints);
+}
+
 bool motor_state::has_joints() {
     std::lock_guard<std::mutex> guard(joints_mtx);
 

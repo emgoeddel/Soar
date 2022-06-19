@@ -350,8 +350,24 @@ bool robot_model::init(std::string robot_desc) {
         return false;
     }
 
+    std::cout << "Base of tree? " << kin_tree.getRootSegment()->first << std::endl;
+
     kin_tree.getChain("torso_lift_link", end_effector, torso_chain);
     kin_tree.getChain("base_link", end_effector, base_chain);
+
+    for (int i = 0; i < base_chain.getNrOfSegments(); i++) {
+        std::cout << "Segment: " << base_chain.getSegment(i).getName() << ", joint: "
+                  << base_chain.getSegment(i).getJoint().getName() << std::endl;
+    }
+
+    std::string cur_link = end_effector;
+    std::string cur_joint = all_links[cur_link].parent_joint;
+
+    while (cur_joint != "") {
+        std::cout << cur_link << " parent is " << cur_joint << std::endl;
+        cur_link = all_joints[cur_joint].parent_link;
+        cur_joint = all_links[cur_link].parent_joint;
+    }
 
     const Eigen::Matrix<double, 6, 1> xyz_weights = (Eigen::Matrix<double, 6, 1>() << 1.0, 1.0, 1.0, 0.0, 0.0, 0.0).finished();
     ik_solver_xyz = new KDL::ChainIkSolverPos_LMA(torso_chain, xyz_weights);
@@ -509,8 +525,12 @@ robot_model::solve_ik(vec3 ee_pt, double torso_jnt) {
     std::vector<double> out;
     if (!initialized) return out;
 
-    transform3 t = torso_xform(torso_jnt);
-    KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
+    transform3 torso_inv = torso_xform(torso_jnt).inv();
+    vec3 ee_in_torso = torso_inv(ee_pt);
+    std::cout << "Torso frame x = " << ee_in_torso[0] << " y = " << ee_in_torso[1]
+              << " z = " << ee_in_torso[2] << std::endl;
+
+    KDL::Vector v(ee_in_torso[0], ee_in_torso[1], ee_in_torso[2]);
     KDL::Frame ee_desired(v);
 
     solve_ik_internal(ee_desired, false, out);
@@ -564,7 +584,7 @@ transform3 robot_model::end_effector_xform(std::map<std::string, double> joints)
     solve_fk_internal(joints, f_out);
 
     double w, x, y, z;
-    f_out.M.GetQuaternion(x, y, z, w); // XXX Order correct?
+    f_out.M.GetQuaternion(w, x, y, z);
 
     vec3 pos(f_out.p.x(), f_out.p.y(), f_out.p.z());
     vec4 quat(w, x, y, z);
@@ -575,13 +595,8 @@ transform3 robot_model::end_effector_xform(std::map<std::string, double> joints)
 // Specialized calculation for the torso only, since this xform is sometimes
 // used on its own
 transform3 robot_model::torso_xform(double pos) {
-    std::cout << "Torso lift parent: " << all_joints["torso_lift_joint"].parent_link
-              << std::endl;
-    std::cout << "Torso lift child: " << all_joints["torso_lift_joint"].child_link
-              << std::endl;
-    transform3 jnt = compose_joint_xform("torso_lift_joint", pos);
-
-    return jnt;
+    transform3 lift = compose_joint_xform("torso_lift_joint", pos);
+    return lift;
 }
 
 // Add the xform for the requested link at pose p, plus any others along its

@@ -36,6 +36,11 @@ motor::get_link_transforms_at(std::map<std::string, double> j) {
     return model->link_transforms(j, true);
 }
 
+transform3 motor::get_ee_frame_transform_at(std::map<std::string, double> j) {
+    // Asking for the tranform of the GRIPPER FRAME (NOT BOX) FROM KDL
+    return model->end_effector_xform(j);
+}
+
 bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {
     ongoing.push_back(new planning_problem(id, q, msp, model));
     ongoing.back()->start_solve();

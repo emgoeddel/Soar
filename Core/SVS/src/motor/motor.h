@@ -27,6 +27,7 @@ public:
     std::map<std::string, vec3> get_link_boxes();
     std::map<std::string, transform3>
     get_link_transforms_at(std::map<std::string, double> j);
+    transform3 get_ee_frame_transform_at(std::map<std::string, double> j);
 
     // Motion planning
     bool new_planner_query(int id, motor_query q, motor_state* msp);

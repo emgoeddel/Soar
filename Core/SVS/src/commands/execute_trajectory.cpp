@@ -38,6 +38,8 @@ public:
         bool finished = ri->execution_done();
         if (finished && last_status == "running") {
             std::cout << "Trajectory finished executing!" << std::endl;
+            transform3 ee = ms->ee_frame_for_joints();
+            std::cout << "Final ee pose: " << ee.to_str();
             last_status = "finished";
             set_status(last_status);
             si->make_wme(root, "result", ri->execution_result());
