@@ -33,7 +33,7 @@ private:
     int num_samples;
 
     TargetType target_type;
-    vec3 center;
+    vec3 center; // in terms of the robot's base frame
     vec3 box_size; // used for BOX_TARGET
     double sphere_radius; // used for SPHERE_TARGET
 

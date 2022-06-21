@@ -17,9 +17,6 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
 
     if (gls->getStateCount() >= goal->num_samples) return false;
 
-    std::cout << "Goal x = " << goal->center[0] << " y = " << goal->center[1]
-              << " z = " << goal->center[2] << std::endl;
-
     std::vector<double> jnt_values;
     if (goal->target_type == POINT_TARGET) {
         if (goal->match_orientation) {
@@ -111,19 +108,6 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
         return false;
     }
 
-    std::map<std::string, double> found_jnts;
-    found_jnts["torso_lift_joint"] = goal->torso_jnt_val;
-
-    int kdl_ind = 0;
-    for (std::vector<std::string>::const_iterator j = goal->joint_names.begin();
-         j != goal->joint_names.end(); j++) {
-        found_jnts[*j] = jnt_values[kdl_ind];
-        kdl_ind++;
-    }
-    vec3 result_xyz = goal->model->end_effector_pos(found_jnts);
-    std::cout << "Resulting x = " << result_xyz[0] << " y = " << result_xyz[1]
-              << " z = " << result_xyz[2] << std::endl;
-
     for (int i = 0; i < jnt_values.size(); i++) {
         st->as<ompl::base::RealVectorStateSpace::StateType>()->values[i] = jnt_values[i];
     }
@@ -136,7 +120,6 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
                    std::shared_ptr<robot_model> m)
     : ompl::base::GoalLazySamples(si, sample_svs_goal),
     target_type(mq.soar_query.target_type),
-    center(mq.soar_query.target_center),
     box_size(mq.soar_query.target_box_size),
     sphere_radius(mq.soar_query.target_sphere_radius),
     torso_jnt_val(mq.start_state["torso_lift_joint"]),
@@ -148,6 +131,20 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
 {
     if (mq.has_target_samples()) num_samples = mq.soar_query.target_samples;
     else num_samples = 1;
+
+    // Convert goal to robot's base frame if necessary
+    // All other calculations in this class assume this has been done
+    if (mq.soar_query.target_frame == "self") {
+        center = mq.soar_query.target_center;
+    } else if (mq.soar_query.target_frame == "world") {
+        transform3 world_to_self = mq.base_pose.inv();
+        center = world_to_self(mq.soar_query.target_center);
+    } else {
+        std::cout << "ERROR: Unsupported target frame given; defaulting to world frame."
+                  << std::endl;
+        transform3 world_to_self = mq.base_pose.inv();
+        center = world_to_self(mq.soar_query.target_center);
+    }
 
     joint_names = model->get_joint_group(mq.soar_query.joint_group);
 }

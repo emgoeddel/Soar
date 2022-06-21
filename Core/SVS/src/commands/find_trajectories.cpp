@@ -16,7 +16,7 @@
  * Usage:
  *    ^target <t> - gripper target area for the motion
  *        ^center <vec3> - center of the target area
- *        ^frame <world self other-node> - coord frame in which center is expressed
+ *        ^frame <world self> - coord frame in which center is expressed
  *        ^size <vec3> OR <double> - if vec3, half box dimensions; if double, radius
  *        ^orientation <vec3> - [Optional] gripper orientation rpy
  *        ^orientation-flex <double> - [Optional] accpetable variation from target orientation
@@ -174,6 +174,10 @@ private:
         // <t> ^frame
         if (!si->get_const_attr(target_root, "frame", search_query.target_frame)) {
             set_status("no target frame found");
+            return false;
+        }
+        if (search_query.target_frame != "self" && search_query.target_frame != "world") {
+            set_status("target frame unsupported");
             return false;
         }
 

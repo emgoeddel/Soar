@@ -527,8 +527,6 @@ robot_model::solve_ik(vec3 ee_pt, double torso_jnt) {
 
     transform3 torso_inv = torso_xform(torso_jnt).inv();
     vec3 ee_in_torso = torso_inv(ee_pt);
-    std::cout << "Torso frame x = " << ee_in_torso[0] << " y = " << ee_in_torso[1]
-              << " z = " << ee_in_torso[2] << std::endl;
 
     KDL::Vector v(ee_in_torso[0], ee_in_torso[1], ee_in_torso[2]);
     KDL::Frame ee_desired(v);
