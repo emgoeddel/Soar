@@ -75,9 +75,7 @@ struct obstacle {
     double ball_radius; // used for BALL_OBSTACLE
     std::vector<vec3> convex_pts; //used for CONVEX_OBSTACLE
 
-    vec3 translation;
-    vec3 rotation;
-    vec3 scale;
+    transform3 transform; // expected to be in world coordinates
 };
 
 class sgnode;

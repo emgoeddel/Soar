@@ -34,7 +34,7 @@ void from_sgnode(sgnode* node, obstacle& to) {
         to.geometry = NON_OBSTACLE;
     }
 
-    node->get_trans(to.translation, to.rotation, to.scale);
+    to.transform = node->get_world_trans();
 }
 
 std::string ft_to_str(FailureType f) {
