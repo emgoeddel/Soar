@@ -204,7 +204,7 @@ planning_problem::planning_problem(int qid,
     if (joint_group == "") joint_group = m->get_default_joint_group();
     joints = m->get_joint_group(joint_group);
     MAX_THREADS = std::thread::hardware_concurrency();
-    //MAX_THREADS = 1; //dbg
+    MAX_THREADS = 1; //dbg
     if (MAX_THREADS == 0) {
         std::cout << "Hardware concurrency not computable, defaulting to 4 threads."
                   << std::endl;
@@ -326,11 +326,16 @@ void planning_problem::run_planner() {
     }
 
     // create a collision checker for this thread
-    cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(
-                                        new collision_checker(cur_ss->getSpaceInformation(),
-                                                              model, query.base_pose,
-                                                              joint_group,
-                                                              query.obstacles)));
+    // cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(
+    //                                     new collision_checker(cur_ss->getSpaceInformation(),
+    //                                                           model, query.base_pose,
+    //                                                           joint_group,
+    //                                                           query.obstacles)));
+    collision_checker* cc = new collision_checker(cur_ss->getSpaceInformation(),
+                                                  model, query.base_pose,
+                                                  joint_group,
+                                                  query.obstacles);
+    cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
 
     // set up the planner
     ompl::geometric::RRTConnect* rrtc =
@@ -346,6 +351,7 @@ void planning_problem::run_planner() {
         c++;
     }
     cur_ss->setStartState(start);
+    cc->print_scene(start.get());
 
     ompl::base::GoalPtr g(new svs_goal(cur_ss->getSpaceInformation(), query, model));
     cur_ss->setGoal(g);
@@ -374,7 +380,7 @@ void planning_problem::run_planner() {
                 else ms->failure_callback(query_id, ompl_status_to_failure_type(status));
             }
         } else {
-            cur_ss->simplifySolution();
+            //cur_ss->simplifySolution();
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
             pg.interpolate();
 

@@ -56,6 +56,7 @@ public:
     ~collision_checker();
 
     bool isValid(const ompl::base::State* state) const override;
+    void print_scene(const ompl::base::State* state);
 
 private:
     void setup_obstacles(std::vector<obstacle>& obstacles);
@@ -67,7 +68,9 @@ private:
     fcl::BroadPhaseCollisionManager* world;
     std::vector<fcl::CollisionObject*> world_objects;
     std::vector<std::shared_ptr<fcl::CollisionGeometry> > world_obj_geoms;
+    std::vector<ObstacleType> geom_types;
     std::vector<object_data*> world_obj_datas;
+    bool world_ready;
 };
 
 #endif

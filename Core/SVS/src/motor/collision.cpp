@@ -49,11 +49,15 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
     robot_base(rb),
     model(m)
 {
+    world_ready = false;
+
     joint_names = model->get_joint_group(group);
 
     world = new fcl::DynamicAABBTreeCollisionManager();
 
     setup_obstacles(obstacles);
+
+    world_ready = true;
 }
 
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
@@ -65,11 +69,15 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
     robot_base(rb),
     model(m)
 {
+    world_ready = false;
+
     joint_names = model->get_joint_group(group);
 
     world = new fcl::DynamicAABBTreeCollisionManager();
 
     setup_obstacles(obstacles);
+
+    world_ready = true;
 }
 
 collision_checker::~collision_checker() {
@@ -91,22 +99,22 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
 
     std::vector<obstacle>::iterator i = obstacles.begin();
     for (; i != obstacles.end(); i++) {
-        transform3 t(i->translation, i->rotation, i->scale);
-
         vec4 quat;
-        t.rotation(quat);
+        i->transform.rotation(quat);
         fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
 
-        fcl::Vec3f fcl_vec(i->translation[0],
-                           i->translation[1],
-                           i->translation[2]);
+        vec3 xyz;
+        i->transform.position(xyz);
+        fcl::Vec3f fcl_vec(xyz[0], xyz[1], xyz[2]);
 
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
         if (i->geometry == BALL_OBSTACLE) {
             world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(i->ball_radius)));
+            geom_types.push_back(BALL_OBSTACLE);
         } else if (i->geometry == BOX_OBSTACLE) {
             world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Box(i->box_dim[0], i->box_dim[1], i->box_dim[2])));
+            geom_types.push_back(BOX_OBSTACLE);
         } else if (i->geometry == CONVEX_OBSTACLE) {
             std::cout << "Warning: Collision detection for convex obstacle "
                       << i->name << " not supported" << std::endl;
@@ -132,6 +140,7 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
         world_obj_datas.push_back(new object_data());
         world_obj_datas.back()->name = i->name;
         world_objects.back()->setUserData(world_obj_datas.back());
+        world_obj_geoms.back()->setUserData(world_obj_datas.back());
 
         world->registerObject(world_objects.back());
     }
@@ -207,6 +216,143 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
         return false;
 
     return true;
+}
+
+void collision_checker::print_scene(const ompl::base::State* state) {
+    if (!world_ready) {
+        std::cout << "World objects empty!" << std::endl;
+    } else {
+        std::cout << "World objects manager has " << world->size()
+                  << " objects:" << std::endl;
+        std::vector<fcl::CollisionObject*>::iterator o = world_objects.begin();
+        int index = 0;
+        for (; o != world_objects.end(); o++) {
+            object_data* od = static_cast<object_data*>((*o)->getUserData());
+            std::cout << "    " << od->name << ": ";
+            fcl::Vec3f p = (*o)->getTransform().getTranslation();
+            fcl::Quaternion3f q = (*o)->getTransform().getQuatRotation();
+            std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
+            std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
+                      << ", " << q[3] << "]; ";
+
+            if (geom_types[index] == BOX_OBSTACLE) {
+                std::shared_ptr<fcl::Box> b =
+                    std::dynamic_pointer_cast<fcl::Box>(world_obj_geoms[index]);
+                std::cout << "box [" << b->side[0] << ", " << b->side[1] << ", "
+                          << b->side[2] << "]" << std::endl;
+            } else if (geom_types[index] == BALL_OBSTACLE) {
+                std::shared_ptr<fcl::Sphere> s =
+                    std::dynamic_pointer_cast<fcl::Sphere>(world_obj_geoms[index]);
+                std::cout << "sphere " << s->radius << std::endl;
+            } else {
+                std::cout << "???" << std::endl;
+            }
+
+            index++;
+        }
+    }
+
+    // Create the robot collision manager as in a normal collision check
+    fcl::BroadPhaseCollisionManager* robot = new fcl::DynamicAABBTreeCollisionManager();
+
+    const ompl::base::RealVectorStateSpace::StateType* vecstate =
+        state->as<ompl::base::RealVectorStateSpace::StateType>();
+    std::map<std::string, double> joint_state;
+    for (int i = 0; i < joint_names.size(); i++) {
+        joint_state[joint_names[i]] = (*vecstate)[i];
+    }
+    // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
+
+    std::vector<fcl::CollisionObject*> obj_ptrs;
+    std::vector<object_data*> obj_datas;
+    for (std::map<std::string, transform3>::iterator t = xforms.begin();
+         t != xforms.end(); t++) {
+        transform3 wx = robot_base*t->second;
+
+        vec4 quat;
+        wx.rotation(quat);
+        fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
+        vec3 pos;
+        wx.position(pos);
+        fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
+        fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
+
+        obj_ptrs.push_back(new fcl::CollisionObject(model->get_collision_model(t->first),
+                                                    fcl_xf));
+        obj_datas.push_back(new object_data());
+        obj_datas.back()->name = t->first;
+        obj_datas.back()->allowed_collisions = model->get_allowed_collisions(t->first);
+        obj_ptrs.back()->setUserData(obj_datas.back());
+        model->get_collision_model(t->first)->setUserData(obj_datas.back());
+        robot->registerObject(obj_ptrs.back());
+    }
+
+    std::vector<fcl::CollisionObject*> robot_objects;
+    robot->getObjects(robot_objects);
+    std::cout << "Robot objects manager has " << robot->size()
+              << " objects:" << std::endl;
+
+    std::vector<fcl::CollisionObject*>::iterator r = robot_objects.begin();
+    for (; r != robot_objects.end(); r++) {
+        object_data* od = static_cast<object_data*>((*r)->getUserData());
+        std::cout << "    " << od->name << ": ";
+        fcl::Vec3f p = (*r)->getTransform().getTranslation();
+        fcl::Quaternion3f q = (*r)->getTransform().getQuatRotation();
+        std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
+        std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
+                  << ", " << q[3] << "]" << std::endl;
+    }
+
+    // Self-collision
+    collision_data cds;
+    cds.request = fcl::CollisionRequest();
+    cds.request.enable_contact = true;
+    cds.request.enable_cost = false;
+    cds.result = fcl::CollisionResult();
+    robot->collide(&cds, collision_function);
+
+    if (cds.result.isCollision()) {
+        std::cout << "Self collision(s) between:" << std::endl;
+        for (int i = 0; i < cds.result.numContacts(); i++) {
+            object_data* od1 =
+                static_cast<object_data*>(cds.result.getContact(i).o1->getUserData());
+            object_data* od2 =
+                static_cast<object_data*>(cds.result.getContact(i).o2->getUserData());
+            std::cout << "    " << od1->name << " and " << od2->name << std::endl;
+        }
+    }
+
+    // World collision
+    collision_data cdw;
+    cdw.request = fcl::CollisionRequest();
+    cdw.request.enable_contact = true;
+    cdw.request.enable_cost = false;
+    cdw.result = fcl::CollisionResult();
+    robot->collide(world, &cdw, collision_function);
+
+    if (cdw.result.isCollision()) {
+        std::cout << "World collision(s) between:" << std::endl;
+        for (int i = 0; i < cdw.result.numContacts(); i++) {
+            object_data* od1 =
+                static_cast<object_data*>(cdw.result.getContact(i).o1->getUserData());
+            object_data* od2 =
+                static_cast<object_data*>(cdw.result.getContact(i).o2->getUserData());
+            std::cout << "    " << od1->name << " and " << od2->name << std::endl;
+        }
+    }
+
+    std::vector<fcl::CollisionObject*>::iterator o = obj_ptrs.begin();
+    for (; o != obj_ptrs.end(); o++) {
+        delete *o;
+    }
+    std::vector<object_data*>::iterator d = obj_datas.begin();
+    for (; d != obj_datas.end(); d++) {
+        delete *d;
+    }
+    obj_datas.clear();
+
+    delete robot;
 }
 
 #endif
