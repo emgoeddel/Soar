@@ -350,24 +350,11 @@ bool robot_model::init(std::string robot_desc) {
         return false;
     }
 
-    std::cout << "Base of tree? " << kin_tree.getRootSegment()->first << std::endl;
-
     kin_tree.getChain("torso_lift_link", end_effector, torso_chain);
     kin_tree.getChain("base_link", end_effector, base_chain);
 
-    for (int i = 0; i < base_chain.getNrOfSegments(); i++) {
-        std::cout << "Segment: " << base_chain.getSegment(i).getName() << ", joint: "
-                  << base_chain.getSegment(i).getJoint().getName() << std::endl;
-    }
-
     std::string cur_link = end_effector;
     std::string cur_joint = all_links[cur_link].parent_joint;
-
-    while (cur_joint != "") {
-        std::cout << cur_link << " parent is " << cur_joint << std::endl;
-        cur_link = all_joints[cur_joint].parent_link;
-        cur_joint = all_links[cur_link].parent_joint;
-    }
 
     const Eigen::Matrix<double, 6, 1> xyz_weights = (Eigen::Matrix<double, 6, 1>() << 1.0, 1.0, 1.0, 0.0, 0.0, 0.0).finished();
     ik_solver_xyz = new KDL::ChainIkSolverPos_LMA(torso_chain, xyz_weights);
