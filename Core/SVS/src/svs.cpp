@@ -502,6 +502,27 @@ void svs_state::sync_scene_robot()
         }
         svs::mark_filter_dirty_bit();
     }
+
+    ///////////////////////////////////////////////////////////////
+    vec3 base_xyz = scn->get_self_root()->get_trans('p');
+    vec3 base_rpy = scn->get_self_root()->get_trans('r');
+    transform3 base_pose = transform3(base_xyz, base_rpy, vec3(1, 1, 1));
+
+
+    std::vector<sgnode*> scn_nodes;
+    std::vector<obstacle> obstacle_vec;
+    scn->get_nonself_nodes(scn_nodes);
+    for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
+         i != scn_nodes.end(); i++) {
+        if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
+        obstacle o;
+        from_sgnode(*i, o);
+        obstacle_vec.push_back(o);
+    }
+
+    svsp->get_motor()->check_collision_state(base_pose,
+                                             ms->get_joints(),
+                                             obstacle_vec);
 }
 
 void svs_state::proxy_get_children(map<string, cliproxy*>& c)

@@ -304,6 +304,8 @@ void collision_checker::print_scene(const ompl::base::State* state) {
                   << ", " << q[3] << "]" << std::endl;
     }
 
+    bool is_collision = false;
+
     // Self-collision
     collision_data cds;
     cds.request = fcl::CollisionRequest();
@@ -313,13 +315,23 @@ void collision_checker::print_scene(const ompl::base::State* state) {
     robot->collide(&cds, collision_function);
 
     if (cds.result.isCollision()) {
-        std::cout << "Self collision(s) between:" << std::endl;
+        is_collision = true;
+        std::cout << "|-----------------------------------------------|" << std::endl
+                  << "|                                               |" << std::endl
+                  << "|                SELF COLLISION                 |" << std::endl
+                  << "|                                               |" << std::endl
+                  << "|-----------------------------------------------|" << std::endl;
+
         for (int i = 0; i < cds.result.numContacts(); i++) {
             object_data* od1 =
                 static_cast<object_data*>(cds.result.getContact(i).o1->getUserData());
             object_data* od2 =
                 static_cast<object_data*>(cds.result.getContact(i).o2->getUserData());
-            std::cout << "    " << od1->name << " and " << od2->name << std::endl;
+            std::cout << "|                                               |" << std::endl
+                      << "| Colliding objects: " << od1->name
+                      << " and " << od2->name << std::endl
+                      << "|                                               |" << std::endl
+                      << "|-----------------------------------------------|" << std::endl;
         }
     }
 
@@ -332,14 +344,32 @@ void collision_checker::print_scene(const ompl::base::State* state) {
     robot->collide(world, &cdw, collision_function);
 
     if (cdw.result.isCollision()) {
-        std::cout << "World collision(s) between:" << std::endl;
+        is_collision = true;
+        std::cout << "|-----------------------------------------------|" << std::endl
+                  << "|                                               |" << std::endl
+                  << "|               WORLD COLLISION                 |" << std::endl
+                  << "|                                               |" << std::endl
+                  << "|-----------------------------------------------|" << std::endl;
+
         for (int i = 0; i < cdw.result.numContacts(); i++) {
             object_data* od1 =
                 static_cast<object_data*>(cdw.result.getContact(i).o1->getUserData());
             object_data* od2 =
                 static_cast<object_data*>(cdw.result.getContact(i).o2->getUserData());
-            std::cout << "    " << od1->name << " and " << od2->name << std::endl;
+            std::cout << "|                                               |" << std::endl
+                      << "| Colliding objects: " << od1->name
+                      << " and " << od2->name << std::endl
+                      << "|                                               |" << std::endl
+                      << "|-----------------------------------------------|" << std::endl;
         }
+    }
+
+    if (!is_collision) {
+        std::cout << "|-----------------------------------------------|" << std::endl
+                  << "|                                               |" << std::endl
+                  << "|                 no collision                  |" << std::endl
+                  << "|                                               |" << std::endl
+                  << "|-----------------------------------------------|" << std::endl;
     }
 
     std::vector<fcl::CollisionObject*>::iterator o = obj_ptrs.begin();

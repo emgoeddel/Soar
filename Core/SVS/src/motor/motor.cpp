@@ -1,6 +1,7 @@
 #ifdef ENABLE_ROS
 
 #include "motor.h"
+#include "collision.h"
 
 motor::motor(std::string urdf) {
     model = std::make_shared<robot_model>();
@@ -59,6 +60,51 @@ void motor::stop_planner_query(int id) {
     }
     if (!found) std::cout << "[WARNING] Attempting to stop a non-existent query!"
                           << std::endl;
+}
+
+void motor::check_collision_state(transform3 robot_base,
+                                  std::map<std::string, double> pose,
+                                  std::vector<obstacle>& obstacles) {
+    // construct vector state space for arm
+    std::vector<std::string> joints = model->get_joint_group("arm");
+    int dof = joints.size();
+    ompl::base::StateSpacePtr space(new ompl::base::RealVectorStateSpace(dof));
+
+    // set the bounds for state space based on joint limits
+    ompl::base::RealVectorBounds bounds(dof);
+    int b = 0;
+    for (std::vector<std::string>::iterator i = joints.begin();
+         i != joints.end(); i++)
+    {
+        std::string j = *i;
+        if (model->get_joint_type(j) != CONTINUOUS) {
+            bounds.setLow(b, model->get_joint_min(j));
+            bounds.setHigh(b, model->get_joint_max(j));
+        } else {
+            // XXX Continuous joints don't actually have bounds, what to do?
+            bounds.setLow(b, -10*M_PI);
+            bounds.setHigh(b, 10*M_PI);
+        }
+        b++;
+    }
+
+    bounds.check();
+    space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
+    space->setLongestValidSegmentFraction(0.005);
+
+    ompl::base::SpaceInformation si(space);
+
+    collision_checker cc(&si, model, robot_base, "arm", obstacles);
+
+    ompl::base::ScopedState<> ompl_state(space);
+    int c = 0;
+    for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++)
+    {
+        ompl_state[c] = pose[*j];
+        c++;
+    }
+
+    cc.print_scene(ompl_state.get());
 }
 
 #endif

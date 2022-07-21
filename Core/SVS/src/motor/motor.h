@@ -33,6 +33,10 @@ public:
     bool new_planner_query(int id, motor_query q, motor_state* msp);
     void stop_planner_query(int id);
 
+    void check_collision_state(transform3 robot_base,
+                               std::map<std::string, double> pose,
+                               std::vector<obstacle>& obstacles);
+
 private:
     std::shared_ptr<robot_model> model;
     std::vector<planning_problem*> ongoing;
