@@ -219,6 +219,16 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
 }
 
 void collision_checker::print_scene(const ompl::base::State* state) {
+    const ompl::base::RealVectorStateSpace::StateType* vecstate =
+        state->as<ompl::base::RealVectorStateSpace::StateType>();
+    std::map<std::string, double> joint_state;
+    for (int i = 0; i < joint_names.size(); i++) {
+        joint_state[joint_names[i]] = (*vecstate)[i];
+    }
+
+    // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
+
     if (!world_ready) {
         std::cout << "World objects empty!" << std::endl;
     } else {
@@ -248,21 +258,22 @@ void collision_checker::print_scene(const ompl::base::State* state) {
                 std::cout << "???" << std::endl;
             }
 
+            fcl::Matrix3f mat = (*o)->getTransform().getRotation();
+            for (int r = 0; r < 3; r++) {
+                std::cout << "        [";
+                for (int c = 0; c < 3; c++) {
+                    std::cout << mat(r, c);
+                    if (c < 2) std::cout << ", ";
+                }
+                std::cout << "]" << std::endl;
+            }
+
             index++;
         }
     }
 
     // Create the robot collision manager as in a normal collision check
     fcl::BroadPhaseCollisionManager* robot = new fcl::DynamicAABBTreeCollisionManager();
-
-    const ompl::base::RealVectorStateSpace::StateType* vecstate =
-        state->as<ompl::base::RealVectorStateSpace::StateType>();
-    std::map<std::string, double> joint_state;
-    for (int i = 0; i < joint_names.size(); i++) {
-        joint_state[joint_names[i]] = (*vecstate)[i];
-    }
-    // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
-    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
 
     std::vector<fcl::CollisionObject*> obj_ptrs;
     std::vector<object_data*> obj_datas;
@@ -302,6 +313,15 @@ void collision_checker::print_scene(const ompl::base::State* state) {
         std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
         std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
                   << ", " << q[3] << "]" << std::endl;
+        fcl::Matrix3f mat = (*r)->getTransform().getRotation();
+            for (int w = 0; w < 3; w++) {
+                std::cout << "        [";
+                for (int c = 0; c < 3; c++) {
+                    std::cout << mat(w, c);
+                    if (c < 2) std::cout << ", ";
+                }
+                std::cout << "]" << std::endl;
+            }
     }
 
     bool is_collision = false;
