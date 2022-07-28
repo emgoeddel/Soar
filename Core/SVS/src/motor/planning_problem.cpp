@@ -326,16 +326,21 @@ void planning_problem::run_planner() {
     }
 
     // create a collision checker for this thread
-    // cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(
-    //                                     new collision_checker(cur_ss->getSpaceInformation(),
-    //                                                           model, query.base_pose,
-    //                                                           joint_group,
-    //                                                           query.obstacles)));
-    collision_checker* cc = new collision_checker(cur_ss->getSpaceInformation(),
-                                                  model, query.base_pose,
-                                                  joint_group,
-                                                  query.obstacles);
-    cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
+    if (query.start_state.count("torso_lift_joint") && query.soar_query.joint_group == "arm")
+        cur_ss->setStateValidityChecker
+            (ompl::base::StateValidityCheckerPtr(
+                new collision_checker(cur_ss->getSpaceInformation(),
+                                      model, query.base_pose,
+                                      joint_group,
+                                      query.obstacles,
+                                      query.start_state["torso_lift_joint"])));
+    else
+        cur_ss->setStateValidityChecker
+            (ompl::base::StateValidityCheckerPtr(
+                new collision_checker(cur_ss->getSpaceInformation(),
+                                      model, query.base_pose,
+                                      joint_group,
+                                      query.obstacles)));
 
     // set up the planner
     ompl::geometric::RRTConnect* rrtc =
@@ -351,7 +356,6 @@ void planning_problem::run_planner() {
         c++;
     }
     cur_ss->setStartState(start);
-    cc->print_scene(start.get());
 
     ompl::base::GoalPtr g(new svs_goal(cur_ss->getSpaceInformation(), query, model));
     cur_ss->setGoal(g);

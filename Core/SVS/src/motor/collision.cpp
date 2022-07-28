@@ -44,14 +44,19 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
                                      std::shared_ptr<robot_model> m,
                                      transform3 rb,
                                      std::string group,
-                                     std::vector<obstacle>& obstacles)
+                                     std::vector<obstacle>& obstacles,
+                                     double torso_pose)
     : ompl::base::StateValidityChecker(si),
     robot_base(rb),
-    model(m)
+    model(m),
+    fixed_torso(torso_pose)
 {
     world_ready = false;
 
     joint_names = model->get_joint_group(group);
+    if (group == "arm" && fixed_torso == 0.0)
+        std::cout << "[Warning] Torso lift value set to 0.0 in collision checker"
+                  << std::endl;
 
     world = new fcl::DynamicAABBTreeCollisionManager();
 
@@ -64,14 +69,19 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
                                      std::shared_ptr<robot_model> m,
                                      transform3 rb,
                                      std::string group,
-                                     std::vector<obstacle>& obstacles)
+                                     std::vector<obstacle>& obstacles,
+                                     double torso_pose)
     : ompl::base::StateValidityChecker(si),
     robot_base(rb),
-    model(m)
+    model(m),
+    fixed_torso(torso_pose)
 {
     world_ready = false;
 
     joint_names = model->get_joint_group(group);
+    if (group == "arm" && fixed_torso == 0.0)
+        std::cout << "[Warning] Torso lift value set to 0.0 in collision checker"
+                  << std::endl;
 
     world = new fcl::DynamicAABBTreeCollisionManager();
 
@@ -158,6 +168,9 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     for (int i = 0; i < joint_names.size(); i++) {
         joint_state[joint_names[i]] = (*vecstate)[i];
     }
+    if (!joint_state.count("torso_lift_joint"))
+        joint_state["torso_lift_joint"] = fixed_torso;
+
     // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
     std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
 
@@ -225,6 +238,8 @@ void collision_checker::print_scene(const ompl::base::State* state) {
     for (int i = 0; i < joint_names.size(); i++) {
         joint_state[joint_names[i]] = (*vecstate)[i];
     }
+    if (!joint_state.count("torso_lift_joint"))
+        joint_state["torso_lift_joint"] = fixed_torso;
 
     // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
     std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);

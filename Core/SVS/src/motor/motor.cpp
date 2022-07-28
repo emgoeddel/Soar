@@ -94,7 +94,13 @@ void motor::check_collision_state(transform3 robot_base,
 
     ompl::base::SpaceInformation si(space);
 
-    collision_checker cc(&si, model, robot_base, "arm", obstacles);
+    double torso = 0.0;
+    if (pose.count("torso_lift_joint") == 0) {
+        std::cout << "[Warning] No torso value included, assuming 0.0" << std::endl;
+    } else {
+        torso = pose["torso_lift_joint"];
+    }
+    collision_checker cc(&si, model, robot_base, "arm", obstacles, torso);
 
     ompl::base::ScopedState<> ompl_state(space);
     int c = 0;
