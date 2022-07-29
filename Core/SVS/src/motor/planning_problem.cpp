@@ -384,7 +384,7 @@ void planning_problem::run_planner() {
                 else ms->failure_callback(query_id, ompl_status_to_failure_type(status));
             }
         } else {
-            //cur_ss->simplifySolution();
+            cur_ss->simplifySolution();
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
             pg.interpolate();
 
