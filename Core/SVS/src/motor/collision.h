@@ -47,14 +47,14 @@ public:
                       std::shared_ptr<robot_model> m,
                       transform3 rb,
                       std::string group,
-                      std::vector<obstacle>& obstacles,
-                      double torso_pose = 0.0); // necessary for planning group "arm"
+                      std::map<std::string, double> fixed,
+                      std::vector<obstacle>& obstacles);
     collision_checker(const ompl::base::SpaceInformationPtr& si,
                       std::shared_ptr<robot_model> m,
                       transform3 rb,
                       std::string group,
-                      std::vector<obstacle>& obstacles,
-                      double torso_pose = 0.0); // necessary for planning group "arm"
+                      std::map<std::string, double> fixed,
+                      std::vector<obstacle>& obstacles);
     ~collision_checker();
 
     bool isValid(const ompl::base::State* state) const override;
@@ -64,9 +64,9 @@ private:
     void setup_obstacles(std::vector<obstacle>& obstacles);
 
     std::vector<std::string> joint_names;
+    std::map<std::string, double> fixed_joints;
     std::shared_ptr<robot_model> model;
     transform3 robot_base;
-    double fixed_torso; // to use if not planning for torso joint
 
     fcl::BroadPhaseCollisionManager* world;
     std::vector<fcl::CollisionObject*> world_objects;

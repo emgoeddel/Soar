@@ -300,76 +300,80 @@ void svs_state::update_cmd_results(int command_type)
     }
 
     ///////////////////////////////////////////////////////////////
-    if (!parent && command_type == SVS_READ_COMMAND) {
-        vec3 base_xyz = scn->get_self_root()->get_trans('p');
-        vec3 base_rpy = scn->get_self_root()->get_trans('r');
-        transform3 base_pose = transform3(base_xyz, base_rpy, vec3(1, 1, 1));
+    // FOR DEBUGGING COLLISIONS IN CURRENT WORLD STATE
+    ///////////////////////////////////////////////////////////////
+    // if (!parent && command_type == SVS_READ_COMMAND) {
+    //     vec3 base_xyz = scn->get_self_root()->get_trans('p');
+    //     vec3 base_rpy = scn->get_self_root()->get_trans('r');
+    //     transform3 base_pose = transform3(base_xyz, base_rpy, vec3(1, 1, 1));
 
 
-        std::vector<sgnode*> scn_nodes;
-        std::vector<obstacle> obstacle_vec;
-        scn->get_nonself_nodes(scn_nodes);
-        std::cout << "Nodes from scene graph:" << std::endl;
-        for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
-             i != scn_nodes.end(); i++) {
-            if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
-            obstacle o;
-            from_sgnode(*i, o);
-            obstacle_vec.push_back(o);
-            std::cout << "    " << o.name << ": ";
-            vec3 p;
-            vec4 q;
-            o.transform.position(p);
-            o.transform.rotation(q);
-            std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
-            std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
-                      << ", " << q[3] << "] " << std::endl;
+    //     std::vector<sgnode*> scn_nodes;
+    //     std::vector<obstacle> obstacle_vec;
+    //     scn->get_nonself_nodes(scn_nodes);
+    //     std::cout << "Nodes from scene graph:" << std::endl;
+    //     for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
+    //          i != scn_nodes.end(); i++) {
+    //         if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
+    //         obstacle o;
+    //         from_sgnode(*i, o);
+    //         obstacle_vec.push_back(o);
+    //         std::cout << "    " << o.name << ": ";
+    //         vec3 p;
+    //         vec4 q;
+    //         o.transform.position(p);
+    //         o.transform.rotation(q);
+    //         std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
+    //         std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
+    //                   << ", " << q[3] << "] " << std::endl;
 
-            mat m;
-            o.transform.get_matrix(m);
-            for (int r = 0; r < 3; r++) {
-                std::cout << "        [";
-                for (int c = 0; c < 3; c++) {
-                    std::cout << m(r, c);
-                    if (c < 2) std::cout << ", ";
-                }
-                std::cout << "]" << std::endl;
-            }
-        }
+    //         // Rotation matrix
+    //         // mat m;
+    //         // o.transform.get_matrix(m);
+    //         // for (int r = 0; r < 3; r++) {
+    //         //     std::cout << "        [";
+    //         //     for (int c = 0; c < 3; c++) {
+    //         //         std::cout << m(r, c);
+    //         //         if (c < 2) std::cout << ", ";
+    //         //     }
+    //         //     std::cout << "]" << std::endl;
+    //         // }
+    //     }
 
-        std::cout << "Robot model links from scene graph:" << std::endl;
-        std::vector<sgnode*> link_nodes;
-        scn->get_self_nodes(link_nodes);
-        for (std::vector<sgnode*>::iterator i = link_nodes.begin();
-             i != link_nodes.end(); i++) {
-            if ((*i)->is_group()) continue; // Robot base node
-            obstacle o;
-            from_sgnode(*i, o);
-            std::cout << "    " << o.name << ": ";
-            vec3 p;
-            vec4 q;
-            o.transform.position(p);
-            o.transform.rotation(q);
-            std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
-            std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
-                      << ", " << q[3] << "] " << std::endl;
+    //     std::cout << "Robot model links from scene graph:" << std::endl;
+    //     std::vector<sgnode*> link_nodes;
+    //     scn->get_self_nodes(link_nodes);
+    //     for (std::vector<sgnode*>::iterator i = link_nodes.begin();
+    //          i != link_nodes.end(); i++) {
+    //         if ((*i)->is_group()) continue; // Robot base node
+    //         obstacle o;
+    //         from_sgnode(*i, o);
+    //         std::cout << "    " << o.name << ": " << std::endl;
+    //         vec3 p;
+    //         vec4 q;
+    //         o.transform.position(p);
+    //         o.transform.rotation(q);
+    //         std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
+    //         std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
+    //                   << ", " << q[3] << "] " << std::endl;
 
-            mat m;
-            o.transform.get_matrix(m);
-            for (int r = 0; r < 3; r++) {
-                std::cout << "        [";
-                for (int c = 0; c < 3; c++) {
-                    std::cout << m(r, c);
-                    if (c < 2) std::cout << ", ";
-                }
-                std::cout << "]" << std::endl;
-            }
-        }
+    //         // Rotation matrix
+    //         // mat m;
+    //         // o.transform.get_matrix(m);
+    //         // for (int r = 0; r < 3; r++) {
+    //         //     std::cout << "        [";
+    //         //     for (int c = 0; c < 3; c++) {
+    //         //         std::cout << m(r, c);
+    //         //         if (c < 2) std::cout << ", ";
+    //         //     }
+    //         //     std::cout << "]" << std::endl;
+    //         // }
+    //     }
 
-        svsp->get_motor()->check_collision_state(base_pose,
-                                                 ms->get_joints(),
-                                                 obstacle_vec);
-    }
+    //     svsp->get_motor()->check_collision_state(base_pose,
+    //                                              ms->get_joints(),
+    //                                              obstacle_vec);
+    // }
 }
 
 void svs_state::process_cmds()

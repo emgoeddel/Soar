@@ -44,19 +44,16 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
                                      std::shared_ptr<robot_model> m,
                                      transform3 rb,
                                      std::string group,
-                                     std::vector<obstacle>& obstacles,
-                                     double torso_pose)
+                                     std::map<std::string, double> fixed,
+                                     std::vector<obstacle>& obstacles)
     : ompl::base::StateValidityChecker(si),
     robot_base(rb),
-    model(m),
-    fixed_torso(torso_pose)
+    fixed_joints(fixed),
+    model(m)
 {
     world_ready = false;
 
     joint_names = model->get_joint_group(group);
-    if (group == "arm" && fixed_torso == 0.0)
-        std::cout << "[Warning] Torso lift value set to 0.0 in collision checker"
-                  << std::endl;
 
     world = new fcl::DynamicAABBTreeCollisionManager();
 
@@ -69,19 +66,16 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
                                      std::shared_ptr<robot_model> m,
                                      transform3 rb,
                                      std::string group,
-                                     std::vector<obstacle>& obstacles,
-                                     double torso_pose)
+                                     std::map<std::string, double> fixed,
+                                     std::vector<obstacle>& obstacles)
     : ompl::base::StateValidityChecker(si),
     robot_base(rb),
-    model(m),
-    fixed_torso(torso_pose)
+    fixed_joints(fixed),
+    model(m)
 {
     world_ready = false;
 
     joint_names = model->get_joint_group(group);
-    if (group == "arm" && fixed_torso == 0.0)
-        std::cout << "[Warning] Torso lift value set to 0.0 in collision checker"
-                  << std::endl;
 
     world = new fcl::DynamicAABBTreeCollisionManager();
 
@@ -119,11 +113,16 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
 
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
+        double PADDING = 0.01;
         if (i->geometry == BALL_OBSTACLE) {
-            world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(i->ball_radius)));
+            world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(i->ball_radius + PADDING)));
             geom_types.push_back(BALL_OBSTACLE);
         } else if (i->geometry == BOX_OBSTACLE) {
-            world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Box(i->box_dim[0], i->box_dim[1], i->box_dim[2])));
+            world_obj_geoms.push_back(
+                std::shared_ptr<fcl::CollisionGeometry>(
+                    new fcl::Box(i->box_dim[0] + PADDING,
+                                 i->box_dim[1] + PADDING,
+                                 i->box_dim[2] + PADDING)));
             geom_types.push_back(BOX_OBSTACLE);
         } else if (i->geometry == CONVEX_OBSTACLE) {
             std::cout << "Warning: Collision detection for convex obstacle "
@@ -168,11 +167,13 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     for (int i = 0; i < joint_names.size(); i++) {
         joint_state[joint_names[i]] = (*vecstate)[i];
     }
-    if (!joint_state.count("torso_lift_joint"))
-        joint_state["torso_lift_joint"] = fixed_torso;
+    std::map<std::string, double>::const_iterator j = fixed_joints.begin();
+    for (; j != fixed_joints.end(); j++) {
+        joint_state[j->first] = j->second;
+    }
 
     // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
-    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, true);
 
     std::vector<fcl::CollisionObject*> obj_ptrs;
     std::vector<object_data*> obj_datas;
@@ -238,11 +239,19 @@ void collision_checker::print_scene(const ompl::base::State* state) {
     for (int i = 0; i < joint_names.size(); i++) {
         joint_state[joint_names[i]] = (*vecstate)[i];
     }
-    if (!joint_state.count("torso_lift_joint"))
-        joint_state["torso_lift_joint"] = fixed_torso;
+    std::map<std::string, double>::iterator j = fixed_joints.begin();
+    for (; j != fixed_joints.end(); j++) {
+        joint_state[j->first] = j->second;
+    }
 
-    // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
-    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
+    // Asking for the transforms FOR THE BOX MODELS
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, true);
+
+    // std::cout << "Joint state: " << std::endl;
+    // for (std::map<std::string, double>::iterator js = joint_state.begin();
+    //      js != joint_state.end(); js++) {
+    //     std::cout << "   " << js->first << ": " << js->second << std::endl;
+    // }
 
     if (!world_ready) {
         std::cout << "World objects empty!" << std::endl;
@@ -273,15 +282,16 @@ void collision_checker::print_scene(const ompl::base::State* state) {
                 std::cout << "???" << std::endl;
             }
 
-            fcl::Matrix3f mat = (*o)->getTransform().getRotation();
-            for (int r = 0; r < 3; r++) {
-                std::cout << "        [";
-                for (int c = 0; c < 3; c++) {
-                    std::cout << mat(r, c);
-                    if (c < 2) std::cout << ", ";
-                }
-                std::cout << "]" << std::endl;
-            }
+            // Rotation matrix
+            // fcl::Matrix3f mat = (*o)->getTransform().getRotation();
+            // for (int r = 0; r < 3; r++) {
+            //     std::cout << "        [";
+            //     for (int c = 0; c < 3; c++) {
+            //         std::cout << mat(r, c);
+            //         if (c < 2) std::cout << ", ";
+            //     }
+            //     std::cout << "]" << std::endl;
+            // }
 
             index++;
         }
@@ -328,15 +338,17 @@ void collision_checker::print_scene(const ompl::base::State* state) {
         std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
         std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
                   << ", " << q[3] << "]" << std::endl;
-        fcl::Matrix3f mat = (*r)->getTransform().getRotation();
-            for (int w = 0; w < 3; w++) {
-                std::cout << "        [";
-                for (int c = 0; c < 3; c++) {
-                    std::cout << mat(w, c);
-                    if (c < 2) std::cout << ", ";
-                }
-                std::cout << "]" << std::endl;
-            }
+
+        // Rotation matrix
+        // fcl::Matrix3f mat = (*r)->getTransform().getRotation();
+        //     for (int w = 0; w < 3; w++) {
+        //         std::cout << "        [";
+        //         for (int c = 0; c < 3; c++) {
+        //             std::cout << mat(w, c);
+        //             if (c < 2) std::cout << ", ";
+        //         }
+        //         std::cout << "]" << std::endl;
+        //     }
     }
 
     bool is_collision = false;

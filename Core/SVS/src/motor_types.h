@@ -121,6 +121,7 @@ FailureType int_to_ft(int i);
 struct trajectory {
     int length; // number of waypoints
     std::string frame; // base transform name
+    std::map<std::string, double> fixed_joints; // joints that aren't included in the below
     std::vector<std::string> joints; // in-order names of joints
     std::vector<std::vector<double> > waypoints; // position at each waypoint
     std::vector<std::vector<double> > velocities; // velocity of each joint at waypoints

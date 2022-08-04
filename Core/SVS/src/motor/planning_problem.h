@@ -87,6 +87,7 @@ private:
     motor_state* ms;
     std::string joint_group;
     std::vector<std::string> joints;
+    std::map<std::string, double> fixed_joints;
 
     std::vector<trajectory> solutions;
     std::mutex soln_mtx;

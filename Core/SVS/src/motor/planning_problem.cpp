@@ -108,6 +108,22 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
         return false;
     }
 
+    std::vector<std::string> jnt_names = goal->model->get_joint_group("arm");
+    // Unwrap continuous joints to fit into vector space limits
+    for (int i = 0; i < jnt_values.size(); i++) {
+
+        if (goal->model->get_joint_type(jnt_names[i]) != CONTINUOUS) {
+            continue;
+        }
+
+        while (jnt_values[i] > 2*M_PI) {
+            jnt_values[i] -= 2*M_PI;
+        }
+        while (jnt_values[i] < -2*M_PI) {
+            jnt_values[i] += 2*M_PI;
+        }
+    }
+
     for (int i = 0; i < jnt_values.size(); i++) {
         st->as<ompl::base::RealVectorStateSpace::StateType>()->values[i] = jnt_values[i];
     }
@@ -122,7 +138,6 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
     target_type(mq.soar_query.target_type),
     box_size(mq.soar_query.target_box_size),
     sphere_radius(mq.soar_query.target_sphere_radius),
-    torso_jnt_val(mq.start_state["torso_lift_joint"]),
     match_orientation(mq.soar_query.use_orientation),
     orientation(mq.soar_query.orientation),
     orientation_flexible(mq.soar_query.use_orientation_flex),
@@ -131,6 +146,9 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
 {
     if (mq.has_target_samples()) num_samples = mq.soar_query.target_samples;
     else num_samples = 1;
+
+    joint_names = model->get_joint_group(mq.soar_query.joint_group);
+    torso_jnt_val = mq.start_state["torso_lift_link"]; // Only fixed joint needed for IK
 
     // Convert goal to robot's base frame if necessary
     // All other calculations in this class assume this has been done
@@ -145,8 +163,6 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
         transform3 world_to_self = mq.base_pose.inv();
         center = world_to_self(mq.soar_query.target_center);
     }
-
-    joint_names = model->get_joint_group(mq.soar_query.joint_group);
 }
 
 bool svs_goal::isSatisfied(const ompl::base::State* st) const {
@@ -203,8 +219,22 @@ planning_problem::planning_problem(int qid,
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->get_default_joint_group();
     joints = m->get_joint_group(joint_group);
+
+    std::map<std::string, double>::iterator i = query.start_state.begin();
+    for (; i != query.start_state.end(); i++) {
+        bool is_fixed = true;
+        std::vector<std::string>::iterator j = joints.begin();
+        for (; j != joints.end(); j++) {
+            if (*j == i->first) {
+                is_fixed = false;
+                break;
+            }
+        }
+        if (is_fixed) fixed_joints[i->first] = i->second;
+    }
+
     MAX_THREADS = std::thread::hardware_concurrency();
-    MAX_THREADS = 1; //dbg
+    //MAX_THREADS = 1; //dbg
     if (MAX_THREADS == 0) {
         std::cout << "Hardware concurrency not computable, defaulting to 4 threads."
                   << std::endl;
@@ -281,8 +311,8 @@ void planning_problem::run_planner() {
             bounds.setHigh(b, model->get_joint_max(j));
         } else {
             // XXX Continuous joints don't actually have bounds, what to do?
-            bounds.setLow(b, -10*M_PI);
-            bounds.setHigh(b, 10*M_PI);
+            bounds.setLow(b, -4*M_PI);
+            bounds.setHigh(b, 4*M_PI);
         }
         b++;
     }
@@ -290,7 +320,7 @@ void planning_problem::run_planner() {
     bounds.check();
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
     // XXX Parameter
-    space->setLongestValidSegmentFraction(0.005);
+    space->setLongestValidSegmentFraction(0.0005);
 
     // add a SimpleSetup object for this planning thread
     ompl::geometric::SimpleSetup* cur_ss;
@@ -326,21 +356,19 @@ void planning_problem::run_planner() {
     }
 
     // create a collision checker for this thread
-    if (query.start_state.count("torso_lift_joint") && query.soar_query.joint_group == "arm")
-        cur_ss->setStateValidityChecker
-            (ompl::base::StateValidityCheckerPtr(
-                new collision_checker(cur_ss->getSpaceInformation(),
-                                      model, query.base_pose,
-                                      joint_group,
-                                      query.obstacles,
-                                      query.start_state["torso_lift_joint"])));
-    else
-        cur_ss->setStateValidityChecker
-            (ompl::base::StateValidityCheckerPtr(
-                new collision_checker(cur_ss->getSpaceInformation(),
-                                      model, query.base_pose,
-                                      joint_group,
-                                      query.obstacles)));
+    // cur_ss->setStateValidityChecker
+    //     (ompl::base::StateValidityCheckerPtr(
+    //         new collision_checker(cur_ss->getSpaceInformation(),
+    //                               model, query.base_pose,
+    //                               joint_group,
+    //                               query.obstacles,
+    //                               query.start_state["torso_lift_joint"])));
+    collision_checker* cc;
+    cc = new collision_checker(cur_ss->getSpaceInformation(),
+                               model, query.base_pose,
+                               joint_group, fixed_joints,
+                               query.obstacles);
+    cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
 
     // set up the planner
     ompl::geometric::RRTConnect* rrtc =
@@ -387,6 +415,22 @@ void planning_problem::run_planner() {
             cur_ss->simplifySolution();
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
             pg.interpolate();
+
+            // bool found_problem = false;
+            // for (int s = 0; s < pg.getStateCount(); s++) {
+            //     if (!cc->isValid(pg.getState(s))) {
+            //         found_problem = true;
+            //         std::cout << "|-------------------------------------|" << std::endl
+            //                   << "|                                     |" << std::endl
+            //                   << "|     COLLISION IN TRAJECTORY         |" << std::endl
+            //                   << "|                                     |" << std::endl
+            //                   << "|-------------------------------------|" << std::endl;
+            //     }
+            // }
+            // if (!found_problem) {
+            //     std::cout << "Checked " << pg.getStateCount() << " waypoints for collision"
+            //               << std::endl;
+            // }
 
             output_traj = path_to_trajectory(pg, cur_ss);
             has_trajectory = true;
@@ -551,6 +595,10 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
 
     for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++) {
         t.joints.push_back(*j);
+    }
+
+    if (joint_group == "arm" && query.start_state.count("torso_lift_link")) {
+        t.fixed_joints["torso_lift_link"] = query.start_state["torso_lift_link"];
     }
 
     std::vector<ompl::base::State*>::iterator i = sv.begin();

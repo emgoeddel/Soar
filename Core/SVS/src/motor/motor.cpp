@@ -34,6 +34,11 @@ std::map<std::string, vec3> motor::get_link_boxes() {
 std::map<std::string, transform3>
 motor::get_link_transforms_at(std::map<std::string, double> j) {
     // Asking for the transforms FOR THE BOX MODELS FOR SVS
+    // //std::cout << "SVS joint state: " << std::endl;
+    // for (std::map<std::string, double>::iterator js = j.begin();
+    //      js != j.end(); js++) {
+    //     std::cout << "   " << js->first << ": " << js->second << std::endl;
+    // }
     return model->link_transforms(j, true);
 }
 
@@ -94,13 +99,20 @@ void motor::check_collision_state(transform3 robot_base,
 
     ompl::base::SpaceInformation si(space);
 
-    double torso = 0.0;
-    if (pose.count("torso_lift_joint") == 0) {
-        std::cout << "[Warning] No torso value included, assuming 0.0" << std::endl;
-    } else {
-        torso = pose["torso_lift_joint"];
+    std::map<std::string, double> fixed;
+    std::map<std::string, double>::iterator i = pose.begin();
+    for (; i != pose.end(); i++) {
+        bool is_fixed = true;
+        std::vector<std::string>::iterator j = joints.begin();
+        for (; j != joints.end(); j++) {
+            if (*j == i->first) {
+                is_fixed = false;
+                break;
+            }
+        }
+        if (is_fixed) fixed[i->first] = i->second;
     }
-    collision_checker cc(&si, model, robot_base, "arm", obstacles, torso);
+    collision_checker cc(&si, model, robot_base, "arm", fixed, obstacles);
 
     ompl::base::ScopedState<> ompl_state(space);
     int c = 0;
