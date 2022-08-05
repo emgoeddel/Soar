@@ -348,7 +348,7 @@ void svs_state::update_cmd_results(int command_type)
     //         if ((*i)->is_group()) continue; // Robot base node
     //         obstacle o;
     //         from_sgnode(*i, o);
-    //         std::cout << "    " << o.name << ": " << std::endl;
+    //         std::cout << "    " << o.name << ": ";
     //         vec3 p;
     //         vec4 q;
     //         o.transform.position(p);

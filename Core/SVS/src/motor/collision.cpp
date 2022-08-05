@@ -173,7 +173,7 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     }
 
     // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
-    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, true);
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
 
     std::vector<fcl::CollisionObject*> obj_ptrs;
     std::vector<object_data*> obj_datas;
@@ -244,8 +244,8 @@ void collision_checker::print_scene(const ompl::base::State* state) {
         joint_state[j->first] = j->second;
     }
 
-    // Asking for the transforms FOR THE BOX MODELS
-    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, true);
+    // Asking for the transforms FOR THE MESH MODELS
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
 
     // std::cout << "Joint state: " << std::endl;
     // for (std::map<std::string, double>::iterator js = joint_state.begin();
