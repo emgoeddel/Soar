@@ -88,11 +88,11 @@ public:
                 set_status(stat);
             }
             std::vector<int> fails = ms->get_query_failures(id);
-            //if (fails.size() == 0) std::cout << "No failures so far!" << std::endl;
-            // else std::cout << "START_INVALID " << fails[0]
-            //                << " GOAL_INVALID " << fails[1]
-            //                << " PLANNING_FAILURE " << fails[2]
-            //                << " OTHER_ERROR " << fails[3] << std::endl;
+            // if (fails.size() > 0)
+            //     std::cout << "START_INVALID " << fails[0]
+            //               << " GOAL_INVALID " << fails[1]
+            //               << " PLANNING_FAILURE " << fails[2]
+            //               << " OTHER_ERROR " << fails[3] << std::endl;
             if (fails.size() > 0 && fails != prev_failures) {
                 update_failures(fails);
             }

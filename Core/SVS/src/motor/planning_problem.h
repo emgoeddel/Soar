@@ -77,7 +77,9 @@ private:
     void unwind_trajectory(trajectory& t);
     void apply_vel_constraints(trajectory& t,
                                std::vector<double>& time_diff,
-                               double max_vel_factor = 0.8);
+                               double max_vel_factor,
+                               int slowdown_length,
+                               double slowdown_factor);
     void update_trajectory(trajectory& t, std::vector<double>& time_diff);
 
     int query_id;

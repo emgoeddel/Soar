@@ -16,6 +16,7 @@ bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* 
     const svs_goal* goal = static_cast<const svs_goal*>(gls);
 
     if (gls->getStateCount() >= goal->num_samples) return false;
+    if (gls->samplingAttemptsCount() > 20 && gls->getStateCount() == 0) return false;
 
     std::vector<double> jnt_values;
     if (goal->target_type == POINT_TARGET) {
@@ -320,7 +321,7 @@ void planning_problem::run_planner() {
     bounds.check();
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
     // XXX Parameter
-    space->setLongestValidSegmentFraction(0.0005);
+    space->setLongestValidSegmentFraction(0.001);
 
     // add a SimpleSetup object for this planning thread
     ompl::geometric::SimpleSetup* cur_ss;
@@ -407,7 +408,7 @@ void planning_problem::run_planner() {
 
         if (!cur_ss->haveExactSolutionPath()) {
             if (!agent_stopped && !notified_comp) {
-                if (g->as<ompl::base::GoalLazySamples>()->getStateCount() == 0)
+                if (!g->as<ompl::base::GoalLazySamples>()->hasStates())
                     ms->failure_callback(query_id, GOAL_INVALID);
                 else ms->failure_callback(query_id, ompl_status_to_failure_type(status));
             }
@@ -615,7 +616,7 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
 
     std::vector<double> time_diff(t.length-1, 0.0);
 
-    apply_vel_constraints(t, time_diff, 0.3);
+    apply_vel_constraints(t, time_diff, 0.2, 20, 8.0);
     update_trajectory(t, time_diff);
 
     return t;
@@ -649,7 +650,15 @@ void planning_problem::unwind_trajectory(trajectory& t) {
 
 void planning_problem::apply_vel_constraints(trajectory& t,
                                              std::vector<double>& time_diff,
-                                             double max_vel_factor) {
+                                             double max_vel_factor,
+                                             int slowdown_length,
+                                             double slowdown_factor)
+{
+    // Which diffs are included in the end slowdown
+    double slowdown_start = (t.length - 2) - slowdown_length;
+    if (slowdown_start < 0) slowdown_start = 0;
+    double m = (slowdown_factor - 1.0) / double(slowdown_length);
+
     for (int i = 0; i < t.length - 1; i++)
     {
         std::vector<double> curr_waypoint = t.waypoints[i];
@@ -663,6 +672,13 @@ void planning_problem::apply_vel_constraints(trajectory& t,
             const double t_min = std::abs(dq2 - dq1) / v_max;
             if (t_min > time_diff[i])
                 time_diff[i] = t_min;
+        }
+
+        // Implements linear slowdown to last diff
+        if (i >= slowdown_start) {
+            double x = (double)i - slowdown_start;
+            double scaling = m*x + 1.0;
+            time_diff[i] = time_diff[i]*scaling;
         }
     }
 }
