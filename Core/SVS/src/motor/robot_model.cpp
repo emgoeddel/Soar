@@ -528,7 +528,10 @@ robot_model::solve_ik(vec3 ee_pt, vec3 ee_rot, double torso_jnt) {
     std::vector<double> out;
     if (!initialized) return out;
 
-    KDL::Vector v(ee_pt[0], ee_pt[1], ee_pt[2]);
+    transform3 torso_inv = torso_xform(torso_jnt).inv();
+    vec3 ee_in_torso = torso_inv(ee_pt);
+
+    KDL::Vector v(ee_in_torso[0], ee_in_torso[1], ee_in_torso[2]);
     KDL::Rotation r;
     r.DoRotX(ee_rot[0]);
     r.DoRotY(ee_rot[1]);
