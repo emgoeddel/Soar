@@ -50,12 +50,13 @@ private:
     bool parse() {
         std::cout << "Parsing an execute-trajectory command!!" << std::endl;
 
+        // XXX Add this check in future when agent can manipulate robot hypothetically
         // Don't let the agent exec if this state's joints aren't the robot's
         // actual current joints
-        if (ms->get_joints_type() != "current") {
-            set_status("cannot execute from hypothetical joint state");
-            return false;
-        }
+        // if (ms->get_joints_type() != "current") {
+        //     set_status("cannot execute from hypothetical joint state");
+        //     return false;
+        // }
 
         // Get the set-id from the command and error out if it's not present
         wme* set_wme;
