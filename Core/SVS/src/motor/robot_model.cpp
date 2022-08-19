@@ -497,6 +497,9 @@ robot_model::link_transforms(std::map<std::string, double> p,
     }
 
     // Pass back through to introduce local xforms
+    // XXX MEANS THAT THE GRIPPER TRANSFORM IN SG DOES NOT PERFECTLY ALIGN WITH REQUESTED
+    // TARGET POSES BUT PLACES *BOXES* CORRECTLY IN SCENE GRAPH; REQUESTED TARGET POSE IS
+    // IN TERMS OF MESH MODELS
     for (std::map<std::string, transform3>::iterator x = xforms.begin();
          x != xforms.end(); x++) {
         if (box_translation)

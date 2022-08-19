@@ -149,7 +149,11 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
     else num_samples = 1;
 
     joint_names = model->get_joint_group(mq.soar_query.joint_group);
-    torso_jnt_val = mq.start_state["torso_lift_link"]; // Only fixed joint needed for IK
+    torso_jnt_val = mq.start_state["torso_lift_joint"]; // Only fixed joint needed for IK
+    if (torso_jnt_val == 0.0) {
+        std::cout << "WARNING: Torso joint value set to zero in planning system!"
+                  <<std::endl;
+    }
 
     // Convert goal to robot's base frame if necessary
     // All other calculations in this class assume this has been done
