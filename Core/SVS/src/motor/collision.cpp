@@ -4,8 +4,7 @@
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 
 bool collision_function(fcl::CollisionObject* o1,
-                        fcl::CollisionObject* o2, void* cdata)
-{
+                        fcl::CollisionObject* o2, void* cdata) {
     collision_data* cd = static_cast<collision_data*>(cdata);
     const fcl::CollisionRequest& request = cd->request;
     fcl::CollisionResult& result = cd->result;
@@ -28,6 +27,39 @@ bool collision_function(fcl::CollisionObject* o1,
         cd->done = true;
 
     return cd->done;
+}
+
+// bool distance_function(fcl::CollisionObject* o1,
+//                        fcl::CollisionObject* o2, void* ddata) {
+//     distance_data* dd = static_cast<distance_data*>(ddata);
+//     const fcl::DistanceRequest& request = dd->request;
+//     fcl::DistanceResult& result = dd->result;
+
+//     if(dd->done) return true;
+
+//     fcl::distance(o1, o2, request, result);
+
+//     if (result.min_distance <= 0) return true;
+//     return dd->done;
+// }
+
+bool distance_function(fcl::CollisionObject* o1,
+                       fcl::CollisionObject* o2,
+                       void* ddata, fcl::FCL_REAL& dist) {
+    distance_data* dd = static_cast<distance_data*>(ddata);
+    const fcl::DistanceRequest& request = dd->request;
+    fcl::DistanceResult& result = dd->result;
+
+    if(dd->done) {
+        dist = result.min_distance;
+        return true;
+    }
+
+    fcl::distance(o1, o2, request, result);
+    dist = result.min_distance;
+
+    if (dist <= 0) return true;
+    return dd->done;
 }
 
 collision_checker::collision_checker(ompl::base::SpaceInformation* si)
@@ -430,6 +462,65 @@ void collision_checker::print_scene(const ompl::base::State* state) {
     obj_datas.clear();
 
     delete robot;
+}
+
+double collision_checker::minimum_distance(std::map<std::string, double> state) {
+    fcl::BroadPhaseCollisionManager* robot = new fcl::DynamicAABBTreeCollisionManager();
+
+    // Make sure the fixed joints are part of the state if not already
+    std::map<std::string, double>::const_iterator j = fixed_joints.begin();
+    for (; j != fixed_joints.end(); j++) {
+        if (state.count(j->first) > 0) continue;
+        state[j->first] = j->second;
+    }
+
+    // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
+    std::map<std::string, transform3> xforms = model->link_transforms(state, false);
+
+    std::vector<fcl::CollisionObject*> obj_ptrs;
+    std::vector<object_data*> obj_datas;
+    for (std::map<std::string, transform3>::iterator t = xforms.begin();
+         t != xforms.end(); t++) {
+        transform3 wx = robot_base*t->second;
+
+        vec4 quat;
+        wx.rotation(quat);
+        fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
+        vec3 pos;
+        wx.position(pos);
+        fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
+        fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
+
+        obj_ptrs.push_back(new fcl::CollisionObject(model->get_collision_model(t->first),
+                                                    fcl_xf));
+        obj_datas.push_back(new object_data());
+        obj_datas.back()->name = t->first;
+        obj_datas.back()->allowed_collisions = model->get_allowed_collisions(t->first);
+        obj_ptrs.back()->setUserData(obj_datas.back());
+        robot->registerObject(obj_ptrs.back());
+    }
+
+    // No self-distance needed
+    // World distance
+    distance_data dd;
+    dd.request = fcl::DistanceRequest();
+    dd.request.enable_nearest_points = false;
+    dd.result = fcl::DistanceResult();
+    robot->distance(world, &dd, distance_function);
+
+    std::vector<fcl::CollisionObject*>::iterator o = obj_ptrs.begin();
+    for (; o != obj_ptrs.end(); o++) {
+        delete *o;
+    }
+    std::vector<object_data*>::iterator d = obj_datas.begin();
+    for (; d != obj_datas.end(); d++) {
+        delete *d;
+    }
+    obj_datas.clear();
+
+    delete robot;
+
+    return dd.result.min_distance;
 }
 
 #endif

@@ -1,6 +1,7 @@
 #include "objective_table.h"
 
 #include "objectives/length.h"
+#include "objectives/clearance.h"
 
 objective_table_entry::objective_table_entry() : //create(NULL),
                                                  description("") {
@@ -24,6 +25,9 @@ void objective_table_entry::proxy_use_sub(const std::vector<std::string>& args,
 
 // LENGTH
 objective_table_entry* waypoints_objective_entry();
+
+// CLEARANCE
+objective_table_entry* min_clearance_objective_entry();
 
 //////////////////////////////////////////////
 
@@ -49,6 +53,7 @@ objective_table::objective_table() {
     set_help("Prints out a list of all objectives.");
 
     add(waypoints_objective_entry());
+    add(min_clearance_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {

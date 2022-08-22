@@ -6,13 +6,13 @@
 #include <ompl/base/StateValidityChecker.h>
 #include <fcl/broadphase/broadphase_dynamic_AABB_tree.h>
 #include <fcl/collision.h>
+#include <fcl/distance.h>
 #include "robot_model.h"
 #include "motor_types.h"
 
 /*
  * collision_data struct
  *
- * Why doesn't FCL provide this?
  */
 
 struct collision_data {
@@ -25,9 +25,24 @@ struct collision_data {
     bool done;
 };
 
-// Same question as above!
 bool collision_function(fcl::CollisionObject* o1,
                         fcl::CollisionObject* o2, void* cdata);
+
+struct distance_data {
+    distance_data() {
+        done = false;
+    }
+
+    fcl::DistanceRequest request;
+    fcl::DistanceResult result;
+    bool done;
+};
+
+// bool distance_function(fcl::CollisionObject* o1,
+//                        fcl::CollisionObject* o2, void* ddata);
+bool distance_function(fcl::CollisionObject* o1,
+                       fcl::CollisionObject* o2,
+                       void* ddata, fcl::FCL_REAL& dist);
 
 /*
  * object_data struct
@@ -59,6 +74,7 @@ public:
 
     bool isValid(const ompl::base::State* state) const override;
     void print_scene(const ompl::base::State* state);
+    double minimum_distance(std::map<std::string, double> state);
 
 private:
     void setup_obstacles(std::vector<obstacle>& obstacles);
