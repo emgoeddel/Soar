@@ -49,6 +49,7 @@ public:
     int num_trajectories(int query_id);
 
     bool is_start_state_for(trajectory& t);
+    void get_latest_trajectories(int set_id, std::map<int, trajectory>& out);
     std::map<int, double> trajectory_lengths(int id);
 
     //// Objective reporting ////

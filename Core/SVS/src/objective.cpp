@@ -30,6 +30,10 @@ bool pair_comp(std::pair<int, double> a, std::pair<int, double> b) {
     return a.second < b.second;
 }
 
+void objective::get_latest_trajectories() {
+    ms->get_latest_trajectories(set_id, trajectories);
+}
+
 // Assumes values have already been computed
 bool objective::update_outputs() {
     int prev_size = outputs.size();

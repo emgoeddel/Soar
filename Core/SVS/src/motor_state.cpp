@@ -141,6 +141,22 @@ bool motor_state::is_start_state_for(trajectory& t) {
     return true;
 }
 
+void motor_state::get_latest_trajectories(int set_id, std::map<int, trajectory>& out) {
+    std::lock_guard<std::mutex> guard(traj_mtx);
+
+    std::vector<trajectory>::iterator i = trajectories[set_id].begin();
+    int traj_id = 0;
+    for(; i != trajectories[set_id].end(); i++) {
+        if (out.count(traj_id) > 0) {
+            traj_id++;
+            continue;
+        }
+
+        out[traj_id] = *i;
+        traj_id++;
+    }
+}
+
 std::map<int, double> motor_state::trajectory_lengths(int id) {
     std::lock_guard<std::mutex> guard(traj_mtx);
 

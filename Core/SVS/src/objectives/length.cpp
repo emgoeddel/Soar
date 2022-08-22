@@ -10,14 +10,13 @@ waypoints_objective::waypoints_objective(Symbol* cmd_rt,
                                          objective_input* oi) : objective(cmd_rt,
                                                                           si,
                                                                           ms,
-                                                                          oi) {
-    std::cout << "Instantiating the waypoints objective!" << std::endl;
-}
+                                                                          oi) {}
 
 bool waypoints_objective::evaluate() {
-    values = ms->trajectory_lengths(set_id);
-    //std::cout << "Computed the length values for " << values.size()
-    //          << " trajectories" << std::endl;
+    std::map<int, trajectory>::iterator i = trajectories.begin();
+    for(; i != trajectories.end(); i++) {
+        values[i->first] = i->second.length;
+     }
     return true;
 }
 

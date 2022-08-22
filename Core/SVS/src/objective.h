@@ -7,6 +7,7 @@
 #include <map>
 
 #include "soar_interface.h"
+#include "motor_types.h"
 #include "filter_val.h"
 
 typedef std::map<std::string, filter_val*> objective_input;
@@ -28,6 +29,7 @@ public:
 
     // Evaluate the objective with results -> values
     virtual bool evaluate() = 0;
+    void get_latest_trajectories();
     bool update_outputs();
     OutputType output_type() { return ot; }
 
@@ -49,6 +51,7 @@ protected:
     objective_input* input;
     motor_state* ms;
     int set_id;
+    std::map<int, trajectory> trajectories;
     int subset_size;
 
     std::map<int, double> values;

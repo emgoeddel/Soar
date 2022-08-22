@@ -50,6 +50,8 @@ public:
         }
 
         if (update) {
+            obj->get_latest_trajectories();
+
             if (!obj->evaluate()) {
                 set_status("could not evaluate");
                 return false;
@@ -105,6 +107,7 @@ private:
                                                    ms,
                                                    input);
 
+        obj->get_latest_trajectories();
         if (!obj->evaluate()) {
             set_status("could not evaluate");
             return false;

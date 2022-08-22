@@ -239,7 +239,7 @@ planning_problem::planning_problem(int qid,
     }
 
     MAX_THREADS = std::thread::hardware_concurrency();
-    //MAX_THREADS = 1; //dbg
+    // MAX_THREADS = 1; //dbg
     if (MAX_THREADS == 0) {
         std::cout << "Hardware concurrency not computable, defaulting to 4 threads."
                   << std::endl;
