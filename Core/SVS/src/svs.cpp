@@ -303,13 +303,20 @@ void svs_state::update_cmd_results(int command_type)
     // FOR DEBUGGING COLLISIONS IN CURRENT WORLD STATE
     ///////////////////////////////////////////////////////////////
     // if (!parent && command_type == SVS_READ_COMMAND) {
-    //     vec3 base_xyz = scn->get_self_root()->get_trans('p');
-    //     vec3 base_rpy = scn->get_self_root()->get_trans('r');
-    //     transform3 base_pose = transform3(base_xyz, base_rpy, vec3(1, 1, 1));
+    //     transform3 base_pose = ms->get_base_xform();
+    //     std::cout << "ROBOT BASE POSE: ";
+    //     vec3 p;
+    //     vec4 q;
+    //     base_pose.position(p);
+    //     base_pose.rotation(q);
+    //     std::cout << "[" << p[0] << ", " << p[1] << ", " << p[2] << "]; ";
+    //     std::cout << "[" << q[0] << ", " << q[1] << ", " << q[2]
+    //               << ", " << q[3] << "] " << std::endl;
 
+    //     std::vector<obstacle> obstacle_vec;
+    //     ms->get_scene_obstacles(obstacle_vec);
 
     //     std::vector<sgnode*> scn_nodes;
-    //     std::vector<obstacle> obstacle_vec;
     //     scn->get_nonself_nodes(scn_nodes);
     //     std::cout << "Nodes from scene graph:" << std::endl;
     //     for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
@@ -317,7 +324,6 @@ void svs_state::update_cmd_results(int command_type)
     //         if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
     //         obstacle o;
     //         from_sgnode(*i, o);
-    //         obstacle_vec.push_back(o);
     //         std::cout << "    " << o.name << ": ";
     //         vec3 p;
     //         vec4 q;
