@@ -4,6 +4,7 @@
 #ifdef ENABLE_ROS
 
 #include <ompl/base/StateValidityChecker.h>
+#include <ompl/base/SpaceInformation.h>
 #include <fcl/broadphase/broadphase_dynamic_AABB_tree.h>
 #include <fcl/collision.h>
 #include <fcl/distance.h>
@@ -75,6 +76,8 @@ public:
     bool isValid(const ompl::base::State* state) const override;
     void print_scene(const ompl::base::State* state);
     double minimum_distance(std::map<std::string, double> state);
+
+    ompl::base::StateSpacePtr get_space() { return si_->getStateSpace(); }
 
 private:
     void setup_obstacles(std::vector<obstacle>& obstacles);

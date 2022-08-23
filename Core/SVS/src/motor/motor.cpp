@@ -67,9 +67,9 @@ void motor::stop_planner_query(int id) {
                           << std::endl;
 }
 
-void motor::check_collision_state(transform3 robot_base,
-                                  std::map<std::string, double> pose,
-                                  std::vector<obstacle>& obstacles) {
+collision_checker* motor::build_collision_checker(transform3 robot_base,
+                                                  std::map<std::string, double> pose,
+                                                  std::vector<obstacle>& obstacles) {
     // construct vector state space for arm
     std::vector<std::string> joints = model->get_joint_group("arm");
     int dof = joints.size();
@@ -87,8 +87,8 @@ void motor::check_collision_state(transform3 robot_base,
             bounds.setHigh(b, model->get_joint_max(j));
         } else {
             // XXX Continuous joints don't actually have bounds, what to do?
-            bounds.setLow(b, -10*M_PI);
-            bounds.setHigh(b, 10*M_PI);
+            bounds.setLow(b, -4*M_PI);
+            bounds.setHigh(b, 4*M_PI);
         }
         b++;
     }
@@ -96,8 +96,6 @@ void motor::check_collision_state(transform3 robot_base,
     bounds.check();
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
     space->setLongestValidSegmentFraction(0.005);
-
-    ompl::base::SpaceInformation si(space);
 
     std::map<std::string, double> fixed;
     std::map<std::string, double>::iterator i = pose.begin();
@@ -112,9 +110,18 @@ void motor::check_collision_state(transform3 robot_base,
         }
         if (is_fixed) fixed[i->first] = i->second;
     }
-    collision_checker cc(&si, model, robot_base, "arm", fixed, obstacles);
 
-    ompl::base::ScopedState<> ompl_state(space);
+    return new collision_checker(new ompl::base::SpaceInformation(space), model,
+                                 robot_base, "arm", fixed, obstacles);
+}
+
+void motor::check_collision_state(transform3 robot_base,
+                                  std::map<std::string, double> pose,
+                                  std::vector<obstacle>& obstacles) {
+    collision_checker* cc = build_collision_checker(robot_base, pose, obstacles);
+
+    ompl::base::ScopedState<> ompl_state(cc->get_space());
+    std::vector<std::string> joints = model->get_joint_group("arm");
     int c = 0;
     for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++)
     {
@@ -122,7 +129,8 @@ void motor::check_collision_state(transform3 robot_base,
         c++;
     }
 
-    cc.print_scene(ompl_state.get());
+    cc->print_scene(ompl_state.get());
+    delete cc;
 }
 
 #endif

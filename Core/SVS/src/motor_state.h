@@ -32,6 +32,9 @@ public:
     motor_state(std::shared_ptr<motor> m, scene* s, std::string n);
     void copy_from(motor_state* other);
 
+    std::shared_ptr<motor> get_motor();
+    void get_scene_obstacles(std::vector<obstacle>& out);
+
     //// Trajectory planning ////
     void new_query(int id, query q);
     std::string get_query_status(int id);

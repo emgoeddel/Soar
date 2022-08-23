@@ -2,6 +2,7 @@
 
 #include "clearance.h"
 #include "objective_table.h"
+#include "motor/motor.h"
 #include "motor_state.h"
 
 min_clearance_objective::min_clearance_objective(Symbol* cmd_rt,
@@ -11,7 +12,16 @@ min_clearance_objective::min_clearance_objective(Symbol* cmd_rt,
                                                                                   si,
                                                                                   ms,
                                                                                   oi) {
-    //cc = new collision_checker();
+    std::shared_ptr<motor> mtr = ms->get_motor();
+
+    std::vector<obstacle> obstacles;
+    ms->get_scene_obstacles(obstacles);
+
+    cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                      ms->get_joints(),
+                                      obstacles);
+
+    std::cout << "Initialized clearance objective!" << std::endl;
 }
 
 min_clearance_objective::~min_clearance_objective() {

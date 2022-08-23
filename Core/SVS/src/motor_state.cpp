@@ -31,6 +31,24 @@ void motor_state::copy_from(motor_state* other) {
     base_xform = other->get_base_xform();
 }
 
+std::shared_ptr<motor> motor_state::get_motor() {
+    return mtr;
+}
+
+void motor_state::get_scene_obstacles(std::vector<obstacle>& out) {
+    out.clear();
+
+    std::vector<sgnode*> scn_nodes;
+    scn->get_nonself_nodes(scn_nodes);
+    for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
+         i != scn_nodes.end(); i++) {
+        if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
+        obstacle o;
+        from_sgnode(*i, o);
+        out.push_back(o);
+    }
+}
+
 void motor_state::new_query(int id, query q) {
     motor_query mq;
     mq.soar_query = q;
@@ -40,15 +58,7 @@ void motor_state::new_query(int id, query q) {
     vec3 base_rpy = scn->get_self_root()->get_trans('r');
     mq.base_pose = transform3(base_xyz, base_rpy, vec3(1, 1, 1));
 
-    std::vector<sgnode*> scn_nodes;
-    scn->get_nonself_nodes(scn_nodes);
-    for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
-         i != scn_nodes.end(); i++) {
-        if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
-        obstacle o;
-        from_sgnode(*i, o);
-        mq.obstacles.push_back(o);
-    }
+    get_scene_obstacles(mq.obstacles);
 
     queries[id] = mq;
     if (!mtr->new_planner_query(id, mq, this)) {

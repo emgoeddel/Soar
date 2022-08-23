@@ -16,6 +16,8 @@
  *
  */
 
+class collision_checker;
+
 class motor {
 public:
     motor(std::string urdf);
@@ -33,6 +35,9 @@ public:
     bool new_planner_query(int id, motor_query q, motor_state* msp);
     void stop_planner_query(int id);
 
+    collision_checker* build_collision_checker(transform3 robot_base,
+                                               std::map<std::string, double> pose,
+                                               std::vector<obstacle>& obstacles);
     void check_collision_state(transform3 robot_base,
                                std::map<std::string, double> pose,
                                std::vector<obstacle>& obstacles);
