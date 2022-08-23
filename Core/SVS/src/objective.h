@@ -53,6 +53,7 @@ protected:
     int set_id;
     std::map<int, trajectory> trajectories;
     int subset_size;
+    bool maximize;
 
     std::map<int, double> values;
     OutputType ot;

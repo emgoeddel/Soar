@@ -19,10 +19,12 @@
  *    ^type <t> - <select, value, rank>; type of output from objective
  *    ^objective <ob> - objective to base selection on
  *    ^number <n> - [Optional] number of trajectories to select *
- *    ^update <true/false> - [Optional] whether to update output at each decision cyle **
+ *    ^direction <d> - [Optional] <max, min>; whether to maximize or minimize **
+ *    ^update <true/false> - [Optional] whether to update output at each decision cyle ***
  *
  * * If not included and using type select, assumes select 1; ignored if using other types
- * ** If not included, assumes false
+ * ** If not included, assumes minimize; ignored if using value
+ * *** If not included, assumes false
  */
 
 class evaluate_trajectories_command : public command
@@ -96,10 +98,21 @@ private:
         si->get_const_attr(root, "update", up);
         if (up == "true") update = true;
 
+        std::string dir;
+        bool max = false;
+        si->get_const_attr(root, "direction", dir);
+        if (dir == "max") {
+             max = true;
+        } else if (dir != "min" && dir != "") {
+            set_status("invalid direction given");
+            return false;
+        }
+
         input = new objective_input();
         (*input)["output-type"] = new filter_val_c<std::string>(out_type);
         (*input)["name"] = new filter_val_c<std::string>(obj_name);
         (*input)["number"] = new filter_val_c<int>(num_traj);
+        (*input)["maximize"] = new filter_val_c<bool>(max);
         (*input)["set-id"] = new filter_val_c<int>(traj_set_id);
         obj = get_objective_table().make_objective(obj_name,
                                                    root,

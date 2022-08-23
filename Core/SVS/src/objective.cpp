@@ -16,6 +16,8 @@ objective::objective(Symbol* cmd_rt,
     set_id = sid_fv->get_value();
     filter_val_c<int>* n_fv = dynamic_cast<filter_val_c<int>*>((*input)["number"]);
     subset_size = n_fv->get_value();
+    filter_val_c<bool>* mx_fv = dynamic_cast<filter_val_c<bool>*>((*input)["maximize"]);
+    maximize = mx_fv->get_value();
     filter_val_c<std::string>* nm_fv = dynamic_cast<filter_val_c<std::string>*>((*input)["name"]);
     name = nm_fv->get_value();
     filter_val_c<std::string>* type_fv = dynamic_cast<filter_val_c<std::string>*>((*input)["output-type"]);
@@ -26,8 +28,12 @@ objective::~objective() {
     delete input;
 }
 
-bool pair_comp(std::pair<int, double> a, std::pair<int, double> b) {
+bool pair_comp_min(std::pair<int, double> a, std::pair<int, double> b) {
     return a.second < b.second;
+}
+
+bool pair_comp_max(std::pair<int, double> a, std::pair<int, double> b) {
+    return a.second > b.second;
 }
 
 void objective::get_latest_trajectories() {
@@ -46,7 +52,11 @@ bool objective::update_outputs() {
             sorted.push_back(std::pair<int, double>(i->first, i->second));
         }
 
-        std::sort(sorted.begin(), sorted.end(), pair_comp);
+        if (maximize) {
+            std::sort(sorted.begin(), sorted.end(), pair_comp_max);
+        } else {
+            std::sort(sorted.begin(), sorted.end(), pair_comp_min);
+        }
 
         int rank = 1;
         std::vector<std::pair<int, double> >::iterator j = sorted.begin();
@@ -62,7 +72,11 @@ bool objective::update_outputs() {
             sorted.push_back(std::pair<int, double>(i->first, i->second));
         }
 
-        std::sort(sorted.begin(), sorted.end(), pair_comp);
+        if (maximize) {
+            std::sort(sorted.begin(), sorted.end(), pair_comp_max);
+        } else {
+            std::sort(sorted.begin(), sorted.end(), pair_comp_min);
+        }
 
         int o = 0;
         std::vector<std::pair<int, double> >::iterator j = sorted.begin();
