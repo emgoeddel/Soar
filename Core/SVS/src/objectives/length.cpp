@@ -16,6 +16,7 @@ bool waypoints_objective::evaluate() {
     std::map<int, trajectory>::iterator i = trajectories.begin();
     for(; i != trajectories.end(); i++) {
         values[i->first] = i->second.length;
+        //std::cout << "Trajectory " << i->first << ": " << values[i->first] << std::endl;
      }
     return true;
 }

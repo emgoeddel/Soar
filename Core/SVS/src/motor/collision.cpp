@@ -464,18 +464,20 @@ void collision_checker::print_scene(const ompl::base::State* state) {
     delete robot;
 }
 
-double collision_checker::minimum_distance(std::map<std::string, double> state) {
+double collision_checker::minimum_distance(std::vector<double> state) {
     fcl::BroadPhaseCollisionManager* robot = new fcl::DynamicAABBTreeCollisionManager();
 
-    // Make sure the fixed joints are part of the state if not already
+    std::map<std::string, double> joint_state;
+    for (int i = 0; i < joint_names.size(); i++) {
+        joint_state[joint_names[i]] = state[i];
+    }
     std::map<std::string, double>::const_iterator j = fixed_joints.begin();
     for (; j != fixed_joints.end(); j++) {
-        if (state.count(j->first) > 0) continue;
-        state[j->first] = j->second;
+        joint_state[j->first] = j->second;
     }
 
     // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
-    std::map<std::string, transform3> xforms = model->link_transforms(state, false);
+    std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
 
     std::vector<fcl::CollisionObject*> obj_ptrs;
     std::vector<object_data*> obj_datas;

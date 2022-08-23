@@ -75,7 +75,7 @@ public:
 
     bool isValid(const ompl::base::State* state) const override;
     void print_scene(const ompl::base::State* state);
-    double minimum_distance(std::map<std::string, double> state);
+    double minimum_distance(std::vector<double> state);
 
     ompl::base::StateSpacePtr get_space() { return si_->getStateSpace(); }
 

@@ -29,6 +29,19 @@ min_clearance_objective::~min_clearance_objective() {
 }
 
 bool min_clearance_objective::evaluate() {
+    std::map<int, trajectory>::iterator i = trajectories.begin();
+    for (; i != trajectories.end(); i++) {
+        double min_clear = 1000;
+        std::vector<std::vector<double> >::iterator w = i->second.waypoints.begin();
+        for (; w != i->second.waypoints.end(); w++) {
+            double clr = cc->minimum_distance(*w);
+            if (clr < min_clear) min_clear = clr;
+        }
+
+        values[i->first] = min_clear;
+        //std::cout << "Trajectory " << i->first << ": " << values[i->first] << std::endl;
+     }
+
     return true;
 }
 
@@ -41,7 +54,7 @@ objective* make_min_clearance_objective(Symbol* cmd_rt,
 
 objective_table_entry* min_clearance_objective_entry() {
     objective_table_entry* e = new objective_table_entry();
-    e->name = "min_clearance";
+    e->name = "min-clearance";
     e->description = "Minimum distance to obstacle across trajectory";
     e->parameters["set-id"] = "Trajectory set";
     e->create = &make_min_clearance_objective;
