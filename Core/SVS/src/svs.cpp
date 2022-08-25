@@ -567,7 +567,7 @@ void svs_state::sync_scene_robot()
             std::string n = i->first;
 
             transform3 cur_link = i->second;
-            transform3 last_link = scn->get_node(n)->get_world_trans();
+            transform3 last_link = scn->get_node(n)->get_local_trans();
 
             if (transform3::t_diff(cur_link, last_link)) {
                 robot_changed = true;

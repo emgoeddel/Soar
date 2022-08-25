@@ -75,6 +75,7 @@ class sgnode : public cliproxy
         void set_trans(const vec3& p, const vec3& r, const vec3& s);
         vec3 get_trans(char type) const;
         void get_trans(vec3& p, vec3& r, vec3& s) const;
+        const transform3& get_local_trans() const;
         const transform3& get_world_trans() const;
         
         void set_shape_dirty();

@@ -189,6 +189,15 @@ void sgnode::set_bounds(const bbox& b)
     shape_dirty = false;
 }
 
+const transform3& sgnode::get_local_trans() const
+{
+    if (trans_dirty)
+    {
+        const_cast<sgnode*>(this)->update_transform();
+    }
+    return ltransform;
+}
+
 const transform3& sgnode::get_world_trans() const
 {
     if (trans_dirty)
