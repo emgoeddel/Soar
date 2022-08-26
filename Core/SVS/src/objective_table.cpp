@@ -28,6 +28,7 @@ objective_table_entry* waypoints_objective_entry();
 
 // CLEARANCE
 objective_table_entry* min_clearance_objective_entry();
+objective_table_entry* weighted_avg_clearance_objective_entry();
 
 //////////////////////////////////////////////
 
@@ -54,6 +55,7 @@ objective_table::objective_table() {
 
     add(waypoints_objective_entry());
     add(min_clearance_objective_entry());
+    add(weighted_avg_clearance_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {

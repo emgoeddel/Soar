@@ -15,6 +15,7 @@
  *
  */
 
+// MCA - Minimum Clearance, All obstacles [maximize]
 // Finds the minimum clearance between the arm and object across the trajectory
 class min_clearance_objective : public objective {
 public:
@@ -28,6 +29,23 @@ public:
 
 private:
     collision_checker* cc;
+};
+
+// WAC - Weighted Average Clearance [minimize]
+// Averages a cost that increases with lower clearace
+class weighted_avg_clearance_objective : public objective {
+public:
+    weighted_avg_clearance_objective(Symbol* cmd_rt,
+                                     soar_interface* si,
+                                     motor_state* ms,
+                                     objective_input* oi);
+    ~weighted_avg_clearance_objective();
+
+    bool evaluate();
+
+private:
+    collision_checker* cc;
+    double MAX_CLR_FOR_AVG;
 };
 
 #endif
