@@ -37,5 +37,16 @@ public:
     bool evaluate();
 };
 
+// TJM - Total Joint Movement [minimize]
+// Total amount that joints move across the trajectory in radians
+class total_joint_objective : public objective {
+public:
+    total_joint_objective(Symbol* cmd_rt,
+                          soar_interface* si,
+                          motor_state* ms,
+                          objective_input* oi);
+    bool evaluate();
+};
+
 #endif
 #endif
