@@ -27,6 +27,7 @@ void objective_table_entry::proxy_use_sub(const std::vector<std::string>& args,
 objective_table_entry* waypoints_objective_entry();
 objective_table_entry* execution_time_objective_entry();
 objective_table_entry* total_joint_objective_entry();
+objective_table_entry* ee_length_objective_entry();
 
 // CLEARANCE
 objective_table_entry* min_clearance_objective_entry();
@@ -58,6 +59,7 @@ objective_table::objective_table() {
     add(waypoints_objective_entry());
     add(execution_time_objective_entry());
     add(total_joint_objective_entry());
+    add(ee_length_objective_entry());
     add(min_clearance_objective_entry());
     add(weighted_avg_clearance_objective_entry());
 }

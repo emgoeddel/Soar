@@ -48,5 +48,21 @@ public:
     bool evaluate();
 };
 
+class motor;
+
+// LES - Length in End-effector Space [minimize]
+// Total amount that the hand moves across the trajectory in m
+class ee_length_objective : public objective {
+public:
+    ee_length_objective(Symbol* cmd_rt,
+                        soar_interface* si,
+                        motor_state* ms,
+                        objective_input* oi);
+    bool evaluate();
+
+private:
+    std::shared_ptr<motor> mtr;
+};
+
 #endif
 #endif
