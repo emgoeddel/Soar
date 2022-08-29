@@ -71,6 +71,7 @@ filter_table_entry* graspable_select_filter_entry();
 
 // filters/grasp_positions.cpp
 filter_table_entry* grasp_first_filter_entry();
+filter_table_entry* grasp_second_filter_entry();
 
 // filters/occlusion.cpp
 filter_table_entry* occlusion_filter_entry();
@@ -116,9 +117,9 @@ filter_table::filter_table()
     add(axis_distance_filter_entry());
     add(axis_distance_select_filter_entry());
 
-		add(axis_relation_select_filter_entry());
+    add(axis_relation_select_filter_entry());
 
-		add(calculate_placement_filter_entry());
+    add(calculate_placement_filter_entry());
     
     add(intersect_filter_entry());
     add(intersect_select_filter_entry());
@@ -129,14 +130,15 @@ filter_table::filter_table()
     add(graspable_filter_entry());
     add(graspable_select_filter_entry());
     add(grasp_first_filter_entry());
+    add(grasp_second_filter_entry());
 
-		add(occlusion_filter_entry());
-
-		add(overlap_filter_entry());
-		add(overlap_select_filter_entry());
+    add(occlusion_filter_entry());
     
-		add(monitor_volume_filter_entry());
-		add(monitor_position_filter_entry());
+    add(overlap_filter_entry());
+    add(overlap_select_filter_entry());
+    
+    add(monitor_volume_filter_entry());
+    add(monitor_position_filter_entry());
 
     add(tag_select_filter_entry());
 }
