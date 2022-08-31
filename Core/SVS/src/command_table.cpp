@@ -34,6 +34,7 @@ command_table_entry* delete_tag_command_entry();
 command_table_entry* find_trajectories_command_entry();
 command_table_entry* evaluate_trajectories_command_entry();
 command_table_entry* execute_trajectory_command_entry();
+command_table_entry* straight_line_trajectory_command_entry();
 
 command_table::command_table()
 {
@@ -54,6 +55,7 @@ command_table::command_table()
     add(find_trajectories_command_entry());
     add(evaluate_trajectories_command_entry());
     add(execute_trajectory_command_entry());
+    add(straight_line_trajectory_command_entry());
 }
 
 void command_table::del_entries() {

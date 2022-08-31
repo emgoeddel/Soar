@@ -67,6 +67,11 @@ void motor::stop_planner_query(int id) {
                           << std::endl;
 }
 
+bool motor::plan_straight_line(std::map<std::string, double> start, trajectory& out) {
+    std::cout << "Planning straight line!" << std::endl;
+    return true;
+}
+
 collision_checker* motor::build_collision_checker(transform3 robot_base,
                                                   std::map<std::string, double> pose,
                                                   std::vector<obstacle>& obstacles) {
