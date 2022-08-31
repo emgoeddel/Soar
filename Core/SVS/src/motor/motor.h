@@ -35,7 +35,8 @@ public:
     // Motion planning
     bool new_planner_query(int id, motor_query q, motor_state* msp);
     void stop_planner_query(int id);
-    bool plan_straight_line(std::map<std::string, double> start, trajectory& out);
+    bool plan_straight_line(std::map<std::string, double> start,
+                            vec3 goal, trajectory& out);
 
     collision_checker* build_collision_checker(transform3 robot_base,
                                                std::map<std::string, double> pose,

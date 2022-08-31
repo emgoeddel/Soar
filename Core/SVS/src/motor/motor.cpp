@@ -67,8 +67,85 @@ void motor::stop_planner_query(int id) {
                           << std::endl;
 }
 
-bool motor::plan_straight_line(std::map<std::string, double> start, trajectory& out) {
+bool motor::plan_straight_line(std::map<std::string, double> start,
+                               vec3 goal_xyz, trajectory& out) {
     std::cout << "Planning straight line!" << std::endl;
+    vec3 start_xyz = model->end_effector_pos(start);
+    vec3 rpy = model->end_effector_rot(start);
+
+    // Calculate amount of desired hand movement per IK step
+    double move_len = sqrt(pow(goal_xyz.x() - start_xyz.x(), 2) +
+                           pow(goal_xyz.y() - start_xyz.y(), 2) +
+                           pow(goal_xyz.z() - start_xyz.z(), 2));
+    vec3 move_unit((goal_xyz.x() - start_xyz.x()) / move_len,
+                   (goal_xyz.y() - start_xyz.y()) / move_len,
+                   (goal_xyz.z() - start_xyz.z()) / move_len);
+    double STEP_LENGTH = 0.005; // 0.5 cm
+    vec3 step_vector(move_unit.x() * STEP_LENGTH,
+                     move_unit.y() * STEP_LENGTH,
+                     move_unit.z() * STEP_LENGTH);
+
+    // start setting up trajectory
+    out.joints = model->get_joint_group("arm");
+    out.fixed_joints["torso_lift_joint"] = start["torso_lift_joint"];
+    out.fixed_joints["l_gripper_finger_joint"] = start["l_gripper_finger_joint"];
+    out.fixed_joints["r_gripper_finger_joint"] = start["r_gripper_finger_joint"];
+    std::cout << "Fixed values are " << out.fixed_joints["torso_lift_joint"]
+              << ", " << out.fixed_joints["l_gripper_finger_joint"]
+              << ", " << out.fixed_joints["r_gripper_finger_joint"] << std::endl;
+    out.waypoints.clear();
+    out.waypoints.push_back(std::vector<double>());
+    std::vector<std::string>::iterator j = out.joints.begin();
+    for (; j != out.joints.end(); j++) {
+        out.waypoints[0].push_back(start[*j]);
+    }
+
+    // Use IK to take repeated steps
+    double dist = move_len;
+    vec3 cur_xyz = start_xyz;
+    std::map<std::string, double> prev_joints = start;
+    int step_num = 0;
+    while (dist > STEP_LENGTH) {
+        cur_xyz += step_vector;
+        std::vector<double> new_joints = model->solve_ik_from(cur_xyz, rpy, prev_joints);
+
+        if (new_joints.size() == 0) {
+            std::cout << "IK FAIL at step " << step_num << std::endl;
+            out.waypoints.clear();
+            return false;
+        }
+
+        out.waypoints.push_back(new_joints);
+
+        int ji = 0;
+        for (j = out.joints.begin(); j != out.joints.end(); j++) {
+            prev_joints[*j] = new_joints[ji];
+            ji++;
+        }
+
+        dist -= STEP_LENGTH;
+        step_num++;
+        std::cout << "Dist remaining? " << dist << std::endl;
+    }
+
+    // Final IK step
+    std::vector<double> last_joints = model->solve_ik_from(goal_xyz, rpy, prev_joints);
+
+    if (last_joints.size() == 0) {
+        std::cout << "IK FAIL at final step!" << std::endl;
+        out.waypoints.clear();
+        return false;
+    }
+
+    out.waypoints.push_back(last_joints);
+    out.length = out.waypoints.size();
+
+    double cur_time = 0.0;
+    for (int w = 0; w < out.waypoints.size(); w++) {
+        out.times.push_back(cur_time);
+        cur_time += 0.2; // XXX This is a hack
+    }
+
     return true;
 }
 

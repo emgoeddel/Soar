@@ -602,8 +602,16 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
         t.joints.push_back(*j);
     }
 
-    if (joint_group == "arm" && query.start_state.count("torso_lift_link")) {
-        t.fixed_joints["torso_lift_link"] = query.start_state["torso_lift_link"];
+    if (joint_group == "arm" && query.start_state.count("torso_lift_joint")) {
+        t.fixed_joints["torso_lift_joint"] = query.start_state["torso_lift_joint"];
+    }
+    if (joint_group == "arm" && query.start_state.count("l_gripper_finger_joint")) {
+        t.fixed_joints["l_gripper_finger_joint"] =
+            query.start_state["l_gripper_finger_joint"];
+    }
+    if (joint_group == "arm" && query.start_state.count("r_gripper_finger_joint")) {
+        t.fixed_joints["r_gripper_finger_joint"] =
+            query.start_state["r_gripper_finger_joint"];
     }
 
     std::vector<ompl::base::State*>::iterator i = sv.begin();

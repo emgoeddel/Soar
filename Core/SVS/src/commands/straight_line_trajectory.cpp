@@ -40,6 +40,7 @@ public:
             // If parsed successfully, set the status to "running"
             if (parse()) {
                 set_status("success");
+                result = si->get_wme_val(si->make_id_wme(root, "trajectory"));
             } else {
                 // Error message already set in parse() method
                 return false;
@@ -59,7 +60,7 @@ private:
             return false;
         }
 
-        if (!mtr->plan_straight_line(ms->get_joints(), t)) {
+        if (!mtr->plan_straight_line(ms->get_joints(), gripper_target, t)) {
             set_status("planning_failure");
             return false;
         }
@@ -72,6 +73,7 @@ private:
     motor_state* ms;
     std::shared_ptr<motor> mtr;
     Symbol* root;
+    Symbol* result;
 
     bool parsed;
     vec3 gripper_target;

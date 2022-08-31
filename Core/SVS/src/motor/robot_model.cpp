@@ -540,9 +540,61 @@ robot_model::solve_ik(vec3 ee_pt, vec3 ee_rot, double torso_jnt) {
     r.DoRotY(ee_rot[1]);
     r.DoRotZ(ee_rot[2]);
 
-    KDL::Frame ee_desired(r, v); // XXX Does KDL do rot vs. trans in right order?
+    KDL::Frame ee_desired(r, v);
 
     solve_ik_internal(ee_desired, true, out);
+
+    return out;
+}
+
+std::vector<double>
+robot_model::solve_ik_from(vec3 ee_pt, vec3 ee_rot, std::map<std::string, double> joints) {
+    std::vector<double> out;
+    if (!initialized) return out;
+
+    if (!joints.count("torso_lift_joint")) {
+        ROS_WARN("No torso joint included in IK input joints!");
+    }
+    transform3 torso_inv = torso_xform(joints["torso_lift_joint"]).inv();
+    vec3 ee_in_torso = torso_inv(ee_pt);
+
+    KDL::Vector v(ee_in_torso[0], ee_in_torso[1], ee_in_torso[2]);
+    KDL::Rotation r;
+    r.DoRotX(ee_rot[0]);
+    r.DoRotY(ee_rot[1]);
+    r.DoRotZ(ee_rot[2]);
+
+    KDL::Frame ee_desired(r, v);
+
+    // Prevent multiple threads from querying the IK solver at once
+    std::lock_guard<std::mutex> guard(ik_mtx);
+
+    KDL::JntArray jnt_arr(torso_chain.getNrOfJoints());
+    for (int i = 0; i < torso_chain.getNrOfJoints(); i++) {
+        jnt_arr.data[i] = joints[joint_groups["arm"][i]];
+    }
+
+    KDL::JntArray ik_sol(torso_chain.getNrOfJoints());
+    int result = ik_solver_xyzrpy->CartToJnt(jnt_arr, ee_desired, ik_sol);
+
+    if (result == KDL::SolverI::E_NOERROR) {
+        // Before considering this a success, check bounds
+        bool in_bounds = true;
+        for (int i = 0; i < ik_sol.rows(); i++) {
+            std::string j_name = joint_groups["arm"][i];
+            if (all_joints[j_name].type == CONTINUOUS) continue;
+            double j_min = all_joints[j_name].min_pos;
+            double j_max = all_joints[j_name].max_pos;
+
+            if (ik_sol(i) < j_min || ik_sol(i) > j_max) {
+                return out;
+            }
+
+            for (int i = 0; i < ik_sol.rows(); i++) {
+                out.push_back(ik_sol(i));
+            }
+        }
+    }
 
     return out;
 }
