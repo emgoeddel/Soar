@@ -14,6 +14,7 @@
  * Allows Soar to request a (short) straight-line movement rather than using
  * the full motion planning pipeline, specifically for grasp positioning. Assumes
  * that the gripper orientation should be maintained across the motion.
+ * XXX Currently also handles execution of this trajectory!
  *
  * Usage:
  *    ^target <vec3> - gripper target pose for the motion
@@ -30,7 +31,7 @@ public:
         mtr = ms->get_motor();
     }
 
-    std::string description() { return "straight-line-trajectory"; }
+    std::string description() { return "straight-line-motion"; }
     int command_type() { return SVS_WRITE_COMMAND; }
 
     bool update_sub() {
@@ -39,13 +40,21 @@ public:
             parsed = true;
             // If parsed successfully, set the status to "running"
             if (parse()) {
-                set_status("success");
-                result = si->get_wme_val(si->make_id_wme(root, "trajectory"));
+                last_status = "running";
+                set_status(last_status);
             } else {
                 // Error message already set in parse() method
                 return false;
             }
             return true;
+        }
+
+        bool finished = ri->execution_done();
+        if (finished && last_status == "running") {
+            std::cout << "Trajectory finished executing!" << std::endl;
+            last_status = "finished";
+            set_status(last_status);
+            si->make_wme(root, "result", ri->execution_result());
         }
 
         return true;
@@ -65,6 +74,9 @@ private:
             return false;
         }
 
+        std::cout << "Executing straight-line trajectory with length "
+                  << t.length << std::endl;
+        ri->send_trajectory(t);
         return true;
     }
 
@@ -73,11 +85,12 @@ private:
     motor_state* ms;
     std::shared_ptr<motor> mtr;
     Symbol* root;
-    Symbol* result;
+    // Symbol* result; XXX Report back to Soar
 
     bool parsed;
     vec3 gripper_target;
     trajectory t;
+    std::string last_status;
 };
 
 command* _make_straight_line_trajectory_command_(svs_state* state, Symbol* root)
@@ -88,8 +101,8 @@ command* _make_straight_line_trajectory_command_(svs_state* state, Symbol* root)
 command_table_entry* straight_line_trajectory_command_entry()
 {
     command_table_entry* e = new command_table_entry();
-    e->name = "straight-line-trajectory";
-    e->description = "Finds a straight-line trajectory to desired position";
+    e->name = "straight-line-motion";
+    e->description = "Finds and executes a straight-line trajectory to desired position";
     e->parameters["target"] = "Spatial target of the trajectories { ^x ^y ^z } ";
     e->create = &_make_straight_line_trajectory_command_;
     return e;
