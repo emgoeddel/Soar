@@ -19,6 +19,7 @@ ros_interface::ros_interface(svs* sp, std::shared_ptr<model_database> md)
     : image_source("none"),
       spinner(NULL),
       axn_client(n, "/arm_controller/follow_joint_trajectory", true),
+      gripper_client(n, "/gripper_controller/gripper_action", true),
       model_db(md)
 {
     svs_ptr = sp;
@@ -56,6 +57,9 @@ ros_interface::ros_interface(svs* sp, std::shared_ptr<model_database> md)
     // Make sure the action client can connect to the server
     axn_client.waitForServer();
     ROS_INFO("Connected to joint trajectory action server.");
+
+    gripper_client.waitForServer();
+    ROS_INFO("Connected to gripper action server.");
 }
 
 ros_interface::~ros_interface() {
@@ -89,8 +93,6 @@ void ros_interface::stop_ros() {
 void ros_interface::send_trajectory(trajectory& t) {
     control_msgs::FollowJointTrajectoryGoal goal_msg;
     to_ros_msg(t, goal_msg.trajectory);
-    std::cout << "Message has length " << goal_msg.trajectory.points.size()
-              << std::endl;
     axn_client.sendGoal(goal_msg);
 }
 
@@ -100,6 +102,22 @@ bool ros_interface::execution_done() {
 
 std::string ros_interface::execution_result() {
     return axn_client.getState().toString();
+}
+
+void ros_interface::send_gripper_pos(double p) {
+    control_msgs::GripperCommandGoal goal_msg;
+    goal_msg.command.max_effort = 0.0;
+    goal_msg.command.position = p;
+
+    gripper_client.sendGoal(goal_msg);
+}
+
+bool ros_interface::gripper_done() {
+    return gripper_client.getState().isDone();
+}
+
+std::string ros_interface::gripper_result() {
+    return gripper_client.getState().toString();
 }
 
 // SGEL helper functions

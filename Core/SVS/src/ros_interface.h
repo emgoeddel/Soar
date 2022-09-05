@@ -9,10 +9,12 @@
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
-#include "gazebo_msgs/ModelStates.h"
-#include "sensor_msgs/JointState.h"
+#include <gazebo_msgs/ModelStates.h>
+#include <sensor_msgs/JointState.h>
 #include <actionlib/client/simple_action_client.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
+#include <control_msgs/GripperCommandAction.h>
+#include <control_msgs/GripperCommandGoal.h>
 
 #include "mat.h"
 #include "cliproxy.h"
@@ -51,6 +53,9 @@ public:
     void send_trajectory(trajectory& t);
     bool execution_done();
     std::string execution_result();
+    void send_gripper_pos(double p);
+    bool gripper_done();
+    std::string gripper_result();
 
     std::string get_image_source() { return image_source; }
     std::string get_robot_desc() { return robot_desc; }
@@ -96,6 +101,7 @@ private:
     ros::AsyncSpinner* spinner;
 
     actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> axn_client;
+    actionlib::SimpleActionClient<control_msgs::GripperCommandAction> gripper_client;
 
     std::string robot_desc;
     std::string robot_name;

@@ -16,6 +16,7 @@ motor_state::motor_state(std::shared_ptr<motor> m,
 }
 
 void motor_state::copy_from(motor_state* other) {
+    // XXX Give agent a choice of what it wants here
     joints_type = "copy";
 
     // XXX This isn't quite right
