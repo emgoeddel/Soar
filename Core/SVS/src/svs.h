@@ -215,7 +215,6 @@ class svs : public svs_interface, public cliproxy
         }
 #ifdef ENABLE_ROS
        ros_interface* get_ros_interface() { return ri; }
-#endif
 
         std::shared_ptr<motor> get_motor()
         {
@@ -226,6 +225,9 @@ class svs : public svs_interface, public cliproxy
         {
             return models;
         }
+
+        
+#endif
 
         drawer* get_drawer() const
         {

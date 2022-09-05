@@ -731,11 +731,16 @@ void svs::input_callback()
     {
         return;
     }
-    svs_state* topstate = state_stack.front();
-    proc_input(topstate);
-    
+    // svs_state* topstate = state_stack.front();
+    // proc_input(topstate);
+
     vector<svs_state*>::iterator i;
-	
+
+    for (i = state_stack.begin(); i != state_stack.end(); ++i)
+    {
+        proc_input(*i);
+    }
+
     for (i = state_stack.begin(); i != state_stack.end(); ++i)
     {
         (**i).update_cmd_results(SVS_WRITE_COMMAND);

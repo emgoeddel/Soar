@@ -96,7 +96,7 @@ public:
     std::vector<double> solve_ik_from(vec3 ee_pt, vec3 ee_rot,
                                       std::map<std::string, double> joints);
     vec3 end_effector_pos(std::map<std::string, double> joints);
-    vec3 end_effector_rot(std::map<std::string, double> joints);
+    vec4 end_effector_rot(std::map<std::string, double> joints);
     transform3 end_effector_xform(std::map<std::string, double> joints);
 
 private:

@@ -608,16 +608,16 @@ vec3 robot_model::end_effector_pos(std::map<std::string, double> joints) {
     return vec3(f_out.p.x(), f_out.p.y(), f_out.p.z());
 }
 
-vec3 robot_model::end_effector_rot(std::map<std::string, double> joints) {
-    if (!initialized) return vec3();
+vec4 robot_model::end_effector_rot(std::map<std::string, double> joints) {
+    if (!initialized) return vec4();
 
     KDL::Frame f_out;
     solve_fk_internal(joints, f_out);
 
-    double roll, pitch, yaw;
-    f_out.M.GetRPY(roll, pitch, yaw); // XXX Angle order??
+    double w, x, y, z;
+    f_out.M.GetQuaternion(w, x, y, z);
 
-    return vec3(roll, pitch, yaw);
+    return vec4(w, x, y, z);
 }
 
 transform3 robot_model::end_effector_xform(std::map<std::string, double> joints) {

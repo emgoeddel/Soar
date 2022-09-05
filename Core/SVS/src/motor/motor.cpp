@@ -69,21 +69,42 @@ void motor::stop_planner_query(int id) {
 
 bool motor::plan_straight_line(std::map<std::string, double> start,
                                vec3 goal_xyz, trajectory& out) {
-    std::cout << "Planning straight line!" << std::endl;
-    vec3 start_xyz = model->end_effector_pos(start);
-    vec3 rpy = model->end_effector_rot(start);
+    transform3 xform_start = model->end_effector_xform(start);
+    vec3 start_xyz;
+    xform_start.position(start_xyz);
+    vec3 start_rpy;
+    xform_start.rotation(start_rpy);
+    std::cout << "Constant RPY from is = ["
+              << start_rpy.x() << ", "
+              << start_rpy.y() << ", "
+              << start_rpy.z() << "]" << std::endl;
+
+    std::cout << "Planning straight line from start = ["
+              << start_xyz.x() << ", "
+              << start_xyz.y() << ", "
+              << start_xyz.z() << "] to end = ["
+              << goal_xyz.x() << ", "
+              << goal_xyz.y() << ", "
+              << goal_xyz.z() << "]" << std::endl;
 
     // Calculate amount of desired hand movement per IK step
     double move_len = sqrt(pow(goal_xyz.x() - start_xyz.x(), 2) +
                            pow(goal_xyz.y() - start_xyz.y(), 2) +
                            pow(goal_xyz.z() - start_xyz.z(), 2));
+    std::cout << "Trying to move the hand " << move_len << " m " << std::endl;
     vec3 move_unit((goal_xyz.x() - start_xyz.x()) / move_len,
                    (goal_xyz.y() - start_xyz.y()) / move_len,
                    (goal_xyz.z() - start_xyz.z()) / move_len);
+    std::cout << "Unit vector is " << move_unit.x() << " "
+              << move_unit.y() << " "
+              << move_unit.z() << std::endl;
     double STEP_LENGTH = 0.005; // 0.5 cm
     vec3 step_vector(move_unit.x() * STEP_LENGTH,
                      move_unit.y() * STEP_LENGTH,
                      move_unit.z() * STEP_LENGTH);
+    std::cout << "Step vector is " << step_vector.x() << " "
+              << step_vector.y() << " "
+              << step_vector.z() << std::endl;
 
     // start setting up trajectory
     out.joints = model->get_joint_group("arm");
@@ -93,12 +114,20 @@ bool motor::plan_straight_line(std::map<std::string, double> start,
     std::cout << "Fixed values are " << out.fixed_joints["torso_lift_joint"]
               << ", " << out.fixed_joints["l_gripper_finger_joint"]
               << ", " << out.fixed_joints["r_gripper_finger_joint"] << std::endl;
+
+
+    std::cout << "Starting waypoint: ";
     out.waypoints.clear();
     out.waypoints.push_back(std::vector<double>());
     std::vector<std::string>::iterator j = out.joints.begin();
     for (; j != out.joints.end(); j++) {
         out.waypoints[0].push_back(start[*j]);
+        std::cout << start[*j] << " ";
     }
+    std::cout << std::endl;
+    std::cout << "Starting xyz: " << start_xyz.x() << " "
+              << start_xyz.y() << " "
+              << start_xyz.z() << std::endl << std::endl;
 
     // Use IK to take repeated steps
     double dist = move_len;
@@ -107,7 +136,7 @@ bool motor::plan_straight_line(std::map<std::string, double> start,
     int step_num = 0;
     while (dist > STEP_LENGTH) {
         cur_xyz += step_vector;
-        std::vector<double> new_joints = model->solve_ik_from(cur_xyz, rpy, prev_joints);
+        std::vector<double> new_joints = model->solve_ik_from(cur_xyz, start_rpy, prev_joints);
 
         if (new_joints.size() == 0) {
             std::cout << "IK FAIL at step " << step_num << std::endl;
@@ -117,19 +146,24 @@ bool motor::plan_straight_line(std::map<std::string, double> start,
 
         out.waypoints.push_back(new_joints);
 
+        std::cout << "Waypoint " << step_num << " : ";
         int ji = 0;
         for (j = out.joints.begin(); j != out.joints.end(); j++) {
             prev_joints[*j] = new_joints[ji];
+            std::cout << prev_joints[*j] << " ";
             ji++;
         }
+        std::cout << std::endl;
+        std::cout << "WP xyz: " << cur_xyz.x() << " "
+                  << cur_xyz.y() << " "
+                  << cur_xyz.z() << std::endl << std::endl;
 
         dist -= STEP_LENGTH;
         step_num++;
-        std::cout << "Dist remaining? " << dist << std::endl;
     }
 
     // Final IK step
-    std::vector<double> last_joints = model->solve_ik_from(goal_xyz, rpy, prev_joints);
+    std::vector<double> last_joints = model->solve_ik_from(goal_xyz, start_rpy, prev_joints);
 
     if (last_joints.size() == 0) {
         std::cout << "IK FAIL at final step!" << std::endl;
@@ -143,7 +177,7 @@ bool motor::plan_straight_line(std::map<std::string, double> start,
     double cur_time = 0.0;
     for (int w = 0; w < out.waypoints.size(); w++) {
         out.times.push_back(cur_time);
-        cur_time += 0.2; // XXX This is a hack
+        cur_time += 0.5; // XXX This is a hack
     }
 
     return true;
