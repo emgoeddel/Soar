@@ -23,7 +23,7 @@ public:
                         soar_interface* si,
                         motor_state* ms,
                         objective_input* oi);
-    bool evaluate();
+    double evaluate_on(trajectory& t);
 };
 
 // AET - Action Execution Time [minimize]
@@ -34,7 +34,7 @@ public:
                              soar_interface* si,
                              motor_state* ms,
                              objective_input* oi);
-    bool evaluate();
+    double evaluate_on(trajectory& t);
 };
 
 // TJM - Total Joint Movement [minimize]
@@ -45,7 +45,7 @@ public:
                           soar_interface* si,
                           motor_state* ms,
                           objective_input* oi);
-    bool evaluate();
+    double evaluate_on(trajectory& t);
 };
 
 class motor;
@@ -58,7 +58,7 @@ public:
                         soar_interface* si,
                         motor_state* ms,
                         objective_input* oi);
-    bool evaluate();
+    double evaluate_on(trajectory& t);
 
 private:
     std::shared_ptr<motor> mtr;

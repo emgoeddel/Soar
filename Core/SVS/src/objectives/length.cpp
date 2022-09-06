@@ -15,13 +15,8 @@ waypoints_objective::waypoints_objective(Symbol* cmd_rt,
                                                                           ms,
                                                                           oi) {}
 
-bool waypoints_objective::evaluate() {
-    std::map<int, trajectory>::iterator i = trajectories.begin();
-    for(; i != trajectories.end(); i++) {
-        values[i->first] = i->second.length;
-        //std::cout << "Trajectory " << i->first << ": " << values[i->first] << std::endl;
-     }
-    return true;
+double waypoints_objective::evaluate_on(trajectory& t) {
+    return t.length;
 }
 
 objective* make_waypoints_objective(Symbol* cmd_rt,
@@ -50,13 +45,8 @@ execution_time_objective::execution_time_objective(Symbol* cmd_rt,
                                                                                     ms,
                                                                                     oi) {}
 
-bool execution_time_objective::evaluate() {
-    std::map<int, trajectory>::iterator i = trajectories.begin();
-    for(; i != trajectories.end(); i++) {
-        values[i->first] = i->second.times[i->second.length - 1]; // time at last wp
-        std::cout << "Trajectory " << i->first << ": " << values[i->first] << std::endl;
-     }
-    return true;
+double execution_time_objective::evaluate_on(trajectory& t) {
+    return t.times[t.length - 1]; // time at last wp
 }
 
 objective* make_execution_time_objective(Symbol* cmd_rt,
@@ -85,20 +75,14 @@ total_joint_objective::total_joint_objective(Symbol* cmd_rt,
                                                                                     ms,
                                                                                     oi) {}
 
-bool total_joint_objective::evaluate() {
-    std::map<int, trajectory>::iterator i = trajectories.begin();
-    for(; i != trajectories.end(); i++) {
-        double j_sum = 0;
-        for (int w = 1; w < i->second.length; w++) {
-            for (int j = 0; j < i->second.waypoints[w].size(); j++) {
-                j_sum += fabs(i->second.waypoints[w][j] - i->second.waypoints[w-1][j]);
-            }
+double total_joint_objective::evaluate_on(trajectory& t) {
+    double j_sum = 0;
+    for (int w = 1; w < t.length; w++) {
+        for (int j = 0; j < t.waypoints[w].size(); j++) {
+            j_sum += fabs(t.waypoints[w][j] - t.waypoints[w-1][j]);
         }
-
-        values[i->first] = j_sum;
-        std::cout << "Trajectory " << i->first << ": " << values[i->first] << std::endl;
-     }
-    return true;
+    }
+    return j_sum;
 }
 
 objective* make_total_joint_objective(Symbol* cmd_rt,
@@ -128,55 +112,50 @@ ee_length_objective::ee_length_objective(Symbol* cmd_rt,
                                                                           oi),
                                                                 mtr(ms->get_motor()) {}
 
-bool ee_length_objective::evaluate() {
-    std::map<int, trajectory>::iterator i = trajectories.begin();
-    for(; i != trajectories.end(); i++) {
-        double ee_sum = 0;
+double ee_length_objective::evaluate_on(trajectory& t) {
+    double ee_sum = 0;
 
-        // Get first waypoint ee xyz
-        std::map<std::string, double> init_state;
-        std::vector<std::string>::iterator n = i->second.joints.begin();
-        int m = 0;
-        for (; n != i->second.joints.end(); n++) {
-            init_state[*n] = i->second.waypoints[0][m];
+    // Get first waypoint ee xyz
+    std::map<std::string, double> init_state;
+    std::vector<std::string>::iterator n = t.joints.begin();
+    int m = 0;
+    for (; n != t.joints.end(); n++) {
+        init_state[*n] = t.waypoints[0][m];
+        m++;
+    }
+    std::map<std::string, double>::iterator f = t.fixed_joints.begin();
+    for (; f != t.fixed_joints.end(); f++) {
+        init_state[f->first] = f->second;
+    }
+    transform3 ee = mtr->get_ee_frame_transform_at(init_state);
+    vec3 prev_xyz;
+    ee.position(prev_xyz);
+
+    // Go through rest of waypoints
+    for (int w = 1; w < t.length; w++) {
+        std::map<std::string, double> jnt_state;
+        n = t.joints.begin();
+        m = 0;
+        for (; n != t.joints.end(); n++) {
+            jnt_state[*n] = t.waypoints[w][m];
             m++;
         }
-        std::map<std::string, double>::iterator f = i->second.fixed_joints.begin();
-        for (; f != i->second.fixed_joints.end(); f++) {
-            init_state[f->first] = f->second;
+        f = t.fixed_joints.begin();
+        for (; f != t.fixed_joints.end(); f++) {
+            jnt_state[f->first] = f->second;
         }
-        transform3 ee = mtr->get_ee_frame_transform_at(init_state);
-        vec3 prev_xyz;
-        ee.position(prev_xyz);
+        transform3 ee = mtr->get_ee_frame_transform_at(jnt_state);
+        vec3 cur_xyz;
+        ee.position(cur_xyz);
 
-        // Go through rest of waypoints
-        for (int w = 1; w < i->second.length; w++) {
-            std::map<std::string, double> jnt_state;
-            n = i->second.joints.begin();
-            m = 0;
-            for (; n != i->second.joints.end(); n++) {
-                jnt_state[*n] = i->second.waypoints[w][m];
-                m++;
-            }
-            f = i->second.fixed_joints.begin();
-            for (; f != i->second.fixed_joints.end(); f++) {
-                jnt_state[f->first] = f->second;
-            }
-            transform3 ee = mtr->get_ee_frame_transform_at(jnt_state);
-            vec3 cur_xyz;
-            ee.position(cur_xyz);
+        // Add straight line dist from prev xyz to total
+        ee_sum += sqrt(pow(cur_xyz.x() - prev_xyz.x(), 2) +
+                       pow(cur_xyz.y() - prev_xyz.y(), 2) +
+                       pow(cur_xyz.z() - prev_xyz.z(), 2));
+        prev_xyz = cur_xyz;
+    }
 
-            // Add straight line dist from prev xyz to total
-            ee_sum += sqrt(pow(cur_xyz.x() - prev_xyz.x(), 2) +
-                           pow(cur_xyz.y() - prev_xyz.y(), 2) +
-                           pow(cur_xyz.z() - prev_xyz.z(), 2));
-            prev_xyz = cur_xyz;
-        }
-
-        values[i->first] = ee_sum;
-        std::cout << "Trajectory " << i->first << ": " << values[i->first] << std::endl;
-     }
-    return true;
+    return ee_sum;
 }
 
 objective* make_ee_length_objective(Symbol* cmd_rt,

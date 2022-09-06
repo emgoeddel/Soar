@@ -28,7 +28,8 @@ public:
     virtual ~objective();
 
     // Evaluate the objective with results -> values
-    virtual bool evaluate() = 0;
+    virtual double evaluate_on(trajectory& t) = 0;
+    bool evaluate();
     void get_latest_trajectories();
     bool update_outputs();
     OutputType output_type() { return ot; }

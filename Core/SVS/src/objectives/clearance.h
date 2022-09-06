@@ -25,7 +25,7 @@ public:
                             objective_input* oi);
     ~min_clearance_objective();
 
-    bool evaluate();
+    double evaluate_on(trajectory& t);
 
 private:
     collision_checker* cc;
@@ -41,7 +41,7 @@ public:
                                      objective_input* oi);
     ~weighted_avg_clearance_objective();
 
-    bool evaluate();
+    double evaluate_on(trajectory& t);
 
 private:
     collision_checker* cc;

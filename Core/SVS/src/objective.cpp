@@ -36,6 +36,16 @@ bool pair_comp_max(std::pair<int, double> a, std::pair<int, double> b) {
     return a.second > b.second;
 }
 
+bool objective::evaluate() {
+    std::map<int, trajectory>::iterator i = trajectories.begin();
+    for (; i != trajectories.end(); i++) {
+        values[i->first] = evaluate_on(i->second);
+        std::cout << name << " " << i->first << ": " << values[i->first] << std::endl;
+     }
+
+    return true;
+}
+
 void objective::get_latest_trajectories() {
     ms->get_latest_trajectories(set_id, trajectories);
 }
