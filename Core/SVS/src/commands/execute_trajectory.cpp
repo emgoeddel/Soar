@@ -6,7 +6,7 @@
 #include "command_table.h"
 #include "scene.h"
 #include "motor_state.h"
-// #include "objective_table.h" // for dbg only
+#include "objective_table.h" // for dbg only
 
 class execute_trajectory_command : public command {
 public:
@@ -102,77 +102,77 @@ private:
         ri->send_trajectory(t);
 
         ////////////////// FOR EVAL + DEBUGGING //////////////////////
-        // objective_input mca;
-        // mca["output-type"] = new filter_val_c<std::string>("value");
-        // mca["name"] = new filter_val_c<std::string>("min-clearance");
-        // mca["number"] = new filter_val_c<int>(1);
-        // mca["maximize"] = new filter_val_c<bool>(true);
-        // mca["set-id"] = new filter_val_c<int>(set_id);
-        // objective* mca_obj = get_objective_table().make_objective("min-clearance",
-        //                                                           root,
-        //                                                           si,
-        //                                                           ms,
-        //                                                           &mca);
-        // double mca_val = mca_obj->evaluate_on(t);
+        objective_input mca;
+        mca["output-type"] = new filter_val_c<std::string>("value");
+        mca["name"] = new filter_val_c<std::string>("min-clearance");
+        mca["number"] = new filter_val_c<int>(1);
+        mca["maximize"] = new filter_val_c<bool>(true);
+        mca["set-id"] = new filter_val_c<int>(set_id);
+        objective* mca_obj = get_objective_table().make_objective("min-clearance",
+                                                                  root,
+                                                                  si,
+                                                                  ms,
+                                                                  &mca);
+        double mca_val = mca_obj->evaluate_on(t);
 
-        // objective_input wac;
-        // wac["output-type"] = new filter_val_c<std::string>("value");
-        // wac["name"] = new filter_val_c<std::string>("weighted-avg-clearance");
-        // wac["number"] = new filter_val_c<int>(1);
-        // wac["maximize"] = new filter_val_c<bool>(true);
-        // wac["set-id"] = new filter_val_c<int>(set_id);
-        // objective* wac_obj = get_objective_table().make_objective("weighted-avg-clearance",
-        //                                                           root,
-        //                                                           si,
-        //                                                           ms,
-        //                                                           &wac);
-        // double wac_val = wac_obj->evaluate_on(t);
+        objective_input wac;
+        wac["output-type"] = new filter_val_c<std::string>("value");
+        wac["name"] = new filter_val_c<std::string>("weighted-avg-clearance");
+        wac["number"] = new filter_val_c<int>(1);
+        wac["maximize"] = new filter_val_c<bool>(true);
+        wac["set-id"] = new filter_val_c<int>(set_id);
+        objective* wac_obj = get_objective_table().make_objective("weighted-avg-clearance",
+                                                                  root,
+                                                                  si,
+                                                                  ms,
+                                                                  &wac);
+        double wac_val = wac_obj->evaluate_on(t);
 
-        // objective_input aet;
-        // aet["output-type"] = new filter_val_c<std::string>("value");
-        // aet["name"] = new filter_val_c<std::string>("execution-time");
-        // aet["number"] = new filter_val_c<int>(1);
-        // aet["maximize"] = new filter_val_c<bool>(true);
-        // aet["set-id"] = new filter_val_c<int>(set_id);
-        // objective* aet_obj = get_objective_table().make_objective("execution-time",
-        //                                                           root,
-        //                                                           si,
-        //                                                           ms,
-        //                                                           &aet);
-        // double aet_val = aet_obj->evaluate_on(t);
+        objective_input aet;
+        aet["output-type"] = new filter_val_c<std::string>("value");
+        aet["name"] = new filter_val_c<std::string>("execution-time");
+        aet["number"] = new filter_val_c<int>(1);
+        aet["maximize"] = new filter_val_c<bool>(true);
+        aet["set-id"] = new filter_val_c<int>(set_id);
+        objective* aet_obj = get_objective_table().make_objective("execution-time",
+                                                                  root,
+                                                                  si,
+                                                                  ms,
+                                                                  &aet);
+        double aet_val = aet_obj->evaluate_on(t);
 
-        // objective_input tjm;
-        // tjm["output-type"] = new filter_val_c<std::string>("value");
-        // tjm["name"] = new filter_val_c<std::string>("total-joint-movement");
-        // tjm["number"] = new filter_val_c<int>(1);
-        // tjm["maximize"] = new filter_val_c<bool>(true);
-        // tjm["set-id"] = new filter_val_c<int>(set_id);
-        // objective* tjm_obj = get_objective_table().make_objective("total-joint-movement",
-        //                                                           root,
-        //                                                           si,
-        //                                                           ms,
-        //                                                           &tjm);
-        // double tjm_val = tjm_obj->evaluate_on(t);
+        objective_input tjm;
+        tjm["output-type"] = new filter_val_c<std::string>("value");
+        tjm["name"] = new filter_val_c<std::string>("total-joint-movement");
+        tjm["number"] = new filter_val_c<int>(1);
+        tjm["maximize"] = new filter_val_c<bool>(true);
+        tjm["set-id"] = new filter_val_c<int>(set_id);
+        objective* tjm_obj = get_objective_table().make_objective("total-joint-movement",
+                                                                  root,
+                                                                  si,
+                                                                  ms,
+                                                                  &tjm);
+        double tjm_val = tjm_obj->evaluate_on(t);
 
-        // objective_input les;
-        // les["output-type"] = new filter_val_c<std::string>("value");
-        // les["name"] = new filter_val_c<std::string>("end-effector-length");
-        // les["number"] = new filter_val_c<int>(1);
-        // les["maximize"] = new filter_val_c<bool>(true);
-        // les["set-id"] = new filter_val_c<int>(set_id);
-        // objective* les_obj = get_objective_table().make_objective("end-effector-length",
-        //                                                           root,
-        //                                                           si,
-        //                                                           ms,
-        //                                                           &les);
-        // double les_val = les_obj->evaluate_on(t);
+        objective_input les;
+        les["output-type"] = new filter_val_c<std::string>("value");
+        les["name"] = new filter_val_c<std::string>("end-effector-length");
+        les["number"] = new filter_val_c<int>(1);
+        les["maximize"] = new filter_val_c<bool>(true);
+        les["set-id"] = new filter_val_c<int>(set_id);
+        objective* les_obj = get_objective_table().make_objective("end-effector-length",
+                                                                  root,
+                                                                  si,
+                                                                  ms,
+                                                                  &les);
+        double les_val = les_obj->evaluate_on(t);
 
-        // std::cout << "EXECUTED TRAJECTORY OBJECTIVE VALUES" << std::endl;
-        // std::cout << "    MCA: " << mca_val << std::endl;
-        // std::cout << "    WAC: " << wac_val << std::endl;
-        // std::cout << "    AET: " << aet_val << std::endl;
-        // std::cout << "    TJM: " << tjm_val << std::endl;
-        // std::cout << "    LES: " << les_val << std::endl;
+        std::cout << "EXECUTED TRAJECTORY OBJECTIVE VALUES" << std::endl;
+        std::cout << "    MCA: " << mca_val << std::endl;
+        std::cout << "    WAC: " << wac_val << std::endl;
+        std::cout << "    AET: " << aet_val << std::endl;
+        std::cout << "    TJM: " << tjm_val << std::endl;
+        std::cout << "    LES: " << les_val << std::endl;
         ///////////////////////////////////////////////////////////////
 
         return true;
