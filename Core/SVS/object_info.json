@@ -170,7 +170,85 @@
                     "shape" : "box",
                     "dimensions" : [0.34, 0.34, 0.16],
                     "transform" : {
-                        "translation" : [0, 0, 0.18],
+                        "translation" : [0, 0, 0.19],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_generic",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_lamp",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_dropoff_box",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_vase",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_cat",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_cardboard_box",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
                         "rotation" : [0, 0, 0, 1]
                     }
                 }
