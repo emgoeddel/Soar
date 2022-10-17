@@ -45,6 +45,7 @@ public:
 
 private:
     collision_checker* cc;
+    bool subset_empty;
 };
 
 // WAC - Weighted Average Clearance [minimize]

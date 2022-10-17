@@ -109,22 +109,25 @@ private:
         }
 
         std::string obstacles;
-        std::stringstream ss;
-        wme* obst_wme;
-        if (si->find_child_wme(root, "obstacles", obst_wme)) {
-            wme_vector obst_vec;
-            if (si->get_child_wmes(si->get_wme_val(obst_wme), obst_vec)) {
-                for (wme_vector::iterator i = obst_vec.begin(); i != obst_vec.end(); i++) {
-                    std::string name;
-                    if (!get_symbol_value(si->get_wme_val(*i), name)) {
-                        set_status("invalid obstacles structure");
-                        return false;
+        if (!si->get_const_attr(root, "obstacle", obstacles)) {
+            std::stringstream ss;
+            wme* obst_wme;
+            if (si->find_child_wme(root, "obstacles", obst_wme)) {
+                wme_vector obst_vec;
+                if (si->get_child_wmes(si->get_wme_val(obst_wme), obst_vec)) {
+                    wme_vector::iterator i = obst_vec.begin();
+                    for (; i != obst_vec.end(); i++) {
+                        std::string name;
+                        if (!get_symbol_value(si->get_wme_val(*i), name)) {
+                            set_status("invalid obstacles structure");
+                            return false;
+                        }
+                        else ss << name << " ";  // XXX Major hack!
                     }
-                    else ss << name << " ";
                 }
             }
+            obstacles = ss.str();
         }
-        obstacles = ss.str();
 
         input = new objective_input();
         (*input)["output-type"] = new filter_val_c<std::string>(out_type);
@@ -132,7 +135,9 @@ private:
         (*input)["number"] = new filter_val_c<int>(num_traj);
         (*input)["maximize"] = new filter_val_c<bool>(max);
         (*input)["set-id"] = new filter_val_c<int>(traj_set_id);
-        (*input)["obstacles"] = new filter_val_c<std::string>(obstacles); // XXX Major hack
+
+        if (obstacles != "")
+            (*input)["obstacles"] = new filter_val_c<std::string>(obstacles);
 
         obj = get_objective_table().make_objective(obj_name,
                                                    root,

@@ -62,55 +62,70 @@ min_clear_subset_objective::min_clear_subset_objective(Symbol* cmd_rt,
     objective(cmd_rt, si, ms, oi) {
     std::shared_ptr<motor> mtr = ms->get_motor();
 
-    filter_val_c<std::string>* names_str =
-        dynamic_cast<filter_val_c<std::string>*>((*input)["obstacles"]);
-    std::string all_obs = names_str->get_value();
+    if (input->count("obstacles")) {
+        filter_val_c<std::string>* names_str =
+            dynamic_cast<filter_val_c<std::string>*>((*input)["obstacles"]);
+        std::string all_obs = names_str->get_value();
 
-    // XXX Hack because the obstacle names are all passed in one string
-    std::vector<std::string> subset_names;
-    int p = 0;
-    while (all_obs.find(" ", p) != std::string::npos) {
-        int nxt_sp = all_obs.find(" ", p);
-        subset_names.push_back(all_obs.substr(p, (nxt_sp-p)));
-        p = nxt_sp + 1;
-    }
+        // XXX Hack because the obstacle names are all passed in one string if multiple
+        std::vector<std::string> subset_names;
 
-    std::vector<obstacle> obstacles;
-    ms->get_scene_obstacles(obstacles);
-
-    std::vector<obstacle> subset;
-    std::vector<std::string>::iterator s = subset_names.begin();
-    for (; s != subset_names.end(); s++) {
-        bool match = false;
-        std::vector<obstacle>::iterator o = obstacles.begin();
-        for (; o != obstacles.end(); o++) {
-            if (*s == o->name) {
-                subset.push_back(*o);
-                match = true;
-                break;
+        if (!all_obs.empty() && all_obs.find(" ") == std::string::npos) {
+            subset_names.push_back(all_obs);
+        } else {
+            int p = 0;
+            while (all_obs.find(" ", p) != std::string::npos) {
+                int nxt_sp = all_obs.find(" ", p);
+                subset_names.push_back(all_obs.substr(p, (nxt_sp-p)));
+                p = nxt_sp + 1;
             }
         }
-        if (match) continue;
-        std::cout << "[Warning] Requesting distance from non-existing obstacle "
-                  << *s << "!" << std::endl;
+
+        std::vector<obstacle> obstacles;
+        ms->get_scene_obstacles(obstacles);
+
+        std::vector<obstacle> subset;
+        std::vector<std::string>::iterator s = subset_names.begin();
+        for (; s != subset_names.end(); s++) {
+            bool match = false;
+            std::vector<obstacle>::iterator o = obstacles.begin();
+            for (; o != obstacles.end(); o++) {
+                if (*s == o->name) {
+                    subset.push_back(*o);
+                    match = true;
+                    break;
+                }
+            }
+            if (match) continue;
+            std::cout << "[Warning] Requesting distance from non-existing obstacle "
+                      << *s << "!" << std::endl;
+        }
+
+        if (subset.size() == 0)
+            std::cout << "[Warning] No valid obstacle names provided to min-clear-subset!"
+                      << std::endl;
+
+        subset_empty = false;
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          subset);
+
+        //////// DBG ///////
+        // ompl::base::ScopedState<> ompl_state(cc->get_space());
+        // std::map<std::string, double> joints = ms->get_joints();
+        // ompl_state[0] = joints["shoulder_pan_joint"];
+        // ompl_state[1] = joints["shoulder_lift_joint"];
+        // ompl_state[2] = joints["upperarm_roll_joint"];
+        // ompl_state[3] = joints["elbow_flex_joint"];
+        // ompl_state[4] = joints["forearm_roll_joint"];
+        // ompl_state[5] = joints["wrist_flex_joint"];
+        // ompl_state[6] = joints["wrist_roll_joint"];
+        // cc->print_scene(ompl_state.get());
+        ///////////////////
+    } else {
+        std::cout << "[Warning] No obstacles provided to min-clear-subset!" << std::endl;
+        subset_empty = true;
     }
-
-    cc = mtr->build_collision_checker(ms->get_base_xform(),
-                                      ms->get_joints(),
-                                      subset);
-
-    //////// DBG ///////
-    // ompl::base::ScopedState<> ompl_state(cc->get_space());
-    // std::map<std::string, double> joints = ms->get_joints();
-    // ompl_state[0] = joints["shoulder_pan_joint"];
-    // ompl_state[1] = joints["shoulder_lift_joint"];
-    // ompl_state[2] = joints["upperarm_roll_joint"];
-    // ompl_state[3] = joints["elbow_flex_joint"];
-    // ompl_state[4] = joints["forearm_roll_joint"];
-    // ompl_state[5] = joints["wrist_flex_joint"];
-    // ompl_state[6] = joints["wrist_roll_joint"];
-    // cc->print_scene(ompl_state.get());
-    ///////////////////
 }
 
 min_clear_subset_objective::~min_clear_subset_objective() {
@@ -119,6 +134,8 @@ min_clear_subset_objective::~min_clear_subset_objective() {
 
 double min_clear_subset_objective::evaluate_on(trajectory& t) {
     double min_clear = 1000;
+    if (subset_empty) return min_clear;
+
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
     for (; w != t.waypoints.end(); w++) {
         double clr = cc->minimum_distance(*w);
@@ -129,9 +146,9 @@ double min_clear_subset_objective::evaluate_on(trajectory& t) {
 }
 
 objective* make_min_clear_subset_objective(Symbol* cmd_rt,
-                                        soar_interface* si,
-                                        motor_state* ms,
-                                        objective_input* oi) {
+                                           soar_interface* si,
+                                           motor_state* ms,
+                                           objective_input* oi) {
     return new min_clear_subset_objective(cmd_rt, si, ms, oi);
 }
 
