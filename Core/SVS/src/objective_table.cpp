@@ -31,6 +31,7 @@ objective_table_entry* ee_length_objective_entry();
 
 // CLEARANCE
 objective_table_entry* min_clearance_objective_entry();
+objective_table_entry* min_clear_subset_objective_entry();
 objective_table_entry* weighted_avg_clearance_objective_entry();
 
 //////////////////////////////////////////////
@@ -61,6 +62,7 @@ objective_table::objective_table() {
     add(total_joint_objective_entry());
     add(ee_length_objective_entry());
     add(min_clearance_objective_entry());
+    add(min_clear_subset_objective_entry());
     add(weighted_avg_clearance_objective_entry());
 }
 

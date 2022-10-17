@@ -31,6 +31,22 @@ private:
     collision_checker* cc;
 };
 
+// MCS - Minimum Clearance, Subset [maximize]
+// Finds the minimum clearance between the arm and specific objects
+class min_clear_subset_objective : public objective {
+public:
+    min_clear_subset_objective(Symbol* cmd_rt,
+                               soar_interface* si,
+                               motor_state* ms,
+                               objective_input* oi);
+    ~min_clear_subset_objective();
+
+    double evaluate_on(trajectory& t);
+
+private:
+    collision_checker* cc;
+};
+
 // WAC - Weighted Average Clearance [minimize]
 // Averages a cost that increases with lower clearace
 class weighted_avg_clearance_objective : public objective {

@@ -108,12 +108,32 @@ private:
             return false;
         }
 
+        std::string obstacles;
+        std::stringstream ss;
+        wme* obst_wme;
+        if (si->find_child_wme(root, "obstacles", obst_wme)) {
+            wme_vector obst_vec;
+            if (si->get_child_wmes(si->get_wme_val(obst_wme), obst_vec)) {
+                for (wme_vector::iterator i = obst_vec.begin(); i != obst_vec.end(); i++) {
+                    std::string name;
+                    if (!get_symbol_value(si->get_wme_val(*i), name)) {
+                        set_status("invalid obstacles structure");
+                        return false;
+                    }
+                    else ss << name << " ";
+                }
+            }
+        }
+        obstacles = ss.str();
+
         input = new objective_input();
         (*input)["output-type"] = new filter_val_c<std::string>(out_type);
         (*input)["name"] = new filter_val_c<std::string>(obj_name);
         (*input)["number"] = new filter_val_c<int>(num_traj);
         (*input)["maximize"] = new filter_val_c<bool>(max);
         (*input)["set-id"] = new filter_val_c<int>(traj_set_id);
+        (*input)["obstacles"] = new filter_val_c<std::string>(obstacles); // XXX Major hack
+
         obj = get_objective_table().make_objective(obj_name,
                                                    root,
                                                    si,
