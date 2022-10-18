@@ -111,16 +111,8 @@ min_clear_subset_objective::min_clear_subset_objective(Symbol* cmd_rt,
                                           subset);
 
         //////// DBG ///////
-        // ompl::base::ScopedState<> ompl_state(cc->get_space());
         // std::map<std::string, double> joints = ms->get_joints();
-        // ompl_state[0] = joints["shoulder_pan_joint"];
-        // ompl_state[1] = joints["shoulder_lift_joint"];
-        // ompl_state[2] = joints["upperarm_roll_joint"];
-        // ompl_state[3] = joints["elbow_flex_joint"];
-        // ompl_state[4] = joints["forearm_roll_joint"];
-        // ompl_state[5] = joints["wrist_flex_joint"];
-        // ompl_state[6] = joints["wrist_roll_joint"];
-        // cc->print_scene(ompl_state.get());
+        // cc->print_scene(joints);
         ///////////////////
     } else {
         std::cout << "[Warning] No obstacles provided to min-clear-subset!" << std::endl;
