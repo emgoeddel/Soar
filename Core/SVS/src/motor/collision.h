@@ -74,13 +74,17 @@ public:
     ~collision_checker();
 
     bool isValid(const ompl::base::State* state) const override;
+    bool is_valid(std::vector<double> state);
     void print_scene(const ompl::base::State* state);
+    void print_scene(std::vector<double> state);
+    void print_scene(std::map<std::string, double> joint_state);
     double minimum_distance(std::vector<double> state);
 
     ompl::base::StateSpacePtr get_space() { return si_->getStateSpace(); }
 
 private:
     void setup_obstacles(std::vector<obstacle>& obstacles);
+    bool collide_internal(std::map<std::string, double> joint_state) const;
 
     std::vector<std::string> joint_names;
     std::map<std::string, double> fixed_joints;

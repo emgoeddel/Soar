@@ -187,22 +187,8 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
     }
 }
 
-bool collision_checker::isValid(const ompl::base::State* state) const {
+bool collision_checker::collide_internal(std::map<std::string, double> joint_state) const {
     fcl::BroadPhaseCollisionManager* robot = new fcl::DynamicAABBTreeCollisionManager();
-
-    // cast the abstract state type to the type we expect
-    const ompl::base::RealVectorStateSpace::StateType* vecstate =
-        state->as<ompl::base::RealVectorStateSpace::StateType>();
-
-    // Robot parts are updated for every state
-    std::map<std::string, double> joint_state;
-    for (int i = 0; i < joint_names.size(); i++) {
-        joint_state[joint_names[i]] = (*vecstate)[i];
-    }
-    std::map<std::string, double>::const_iterator j = fixed_joints.begin();
-    for (; j != fixed_joints.end(); j++) {
-        joint_state[j->first] = j->second;
-    }
 
     // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
     std::map<std::string, transform3> xforms = model->link_transforms(joint_state, false);
@@ -264,6 +250,37 @@ bool collision_checker::isValid(const ompl::base::State* state) const {
     return true;
 }
 
+bool collision_checker::isValid(const ompl::base::State* state) const {
+    // cast the abstract state type to the type we expect
+    const ompl::base::RealVectorStateSpace::StateType* vecstate =
+        state->as<ompl::base::RealVectorStateSpace::StateType>();
+
+    // Robot parts are updated for every state
+    std::map<std::string, double> joint_state;
+    for (int i = 0; i < joint_names.size(); i++) {
+        joint_state[joint_names[i]] = (*vecstate)[i];
+    }
+    std::map<std::string, double>::const_iterator j = fixed_joints.begin();
+    for (; j != fixed_joints.end(); j++) {
+        joint_state[j->first] = j->second;
+    }
+
+    return collide_internal(joint_state);
+}
+
+bool collision_checker::is_valid(std::vector<double> state) {
+    std::map<std::string, double> joint_state;
+    for (int i = 0; i < joint_names.size(); i++) {
+        joint_state[joint_names[i]] = state[i];
+    }
+    std::map<std::string, double>::const_iterator j = fixed_joints.begin();
+    for (; j != fixed_joints.end(); j++) {
+        joint_state[j->first] = j->second;
+    }
+
+    return collide_internal(joint_state);
+}
+
 void collision_checker::print_scene(const ompl::base::State* state) {
     const ompl::base::RealVectorStateSpace::StateType* vecstate =
         state->as<ompl::base::RealVectorStateSpace::StateType>();
@@ -271,7 +288,22 @@ void collision_checker::print_scene(const ompl::base::State* state) {
     for (int i = 0; i < joint_names.size(); i++) {
         joint_state[joint_names[i]] = (*vecstate)[i];
     }
-    std::map<std::string, double>::iterator j = fixed_joints.begin();
+
+    print_scene(joint_state);
+}
+
+void collision_checker::print_scene(std::vector<double> state) {
+    std::map<std::string, double> joint_state;
+    for (int i = 0; i < joint_names.size(); i++) {
+        joint_state[joint_names[i]] = state[i];
+    }
+
+
+    print_scene(joint_state);
+}
+
+void collision_checker::print_scene(std::map<std::string, double> joint_state) {
+    std::map<std::string, double>::const_iterator j = fixed_joints.begin();
     for (; j != fixed_joints.end(); j++) {
         joint_state[j->first] = j->second;
     }
