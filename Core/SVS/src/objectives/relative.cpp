@@ -5,11 +5,11 @@
 #include "motor/motor.h"
 #include "motor_state.h"
 
-/////////////////////////////// PTO //////////////////////////////////////
-proportion_over_objective::proportion_over_objective(Symbol* cmd_rt,
-                                                     soar_interface* si,
-                                                     motor_state* ms,
-                                                     objective_input* oi) :
+/////////////////////////////// Base //////////////////////////////////////
+base_over_objective::base_over_objective(Symbol* cmd_rt,
+                                         soar_interface* si,
+                                         motor_state* ms,
+                                         objective_input* oi) :
     objective(cmd_rt, si, ms, oi),
     has_valid_obj(false) {
     std::shared_ptr<motor> mtr = ms->get_motor();
@@ -20,7 +20,7 @@ proportion_over_objective::proportion_over_objective(Symbol* cmd_rt,
 
         if (!all_obs.empty() && all_obs.find(" ") != std::string::npos) {
             obj_name = all_obs.substr(0, all_obs.find(" "));
-            std::cout << "[Warning] Too many obstacles provided to proportion-over objective!"
+            std::cout << "[Warning] Too many obstacles provided to over objective!"
                       << " Ignoring extra obstacles."
                       << std::endl;
         } else {
@@ -28,7 +28,7 @@ proportion_over_objective::proportion_over_objective(Symbol* cmd_rt,
         }
         has_valid_obj = true;
     } else {
-        std::cout << "[Warning] No object provided to proportion-over objective!"
+        std::cout << "[Warning] No object provided to over objective!"
                   << std::endl;
     }
 
@@ -45,7 +45,7 @@ proportion_over_objective::proportion_over_objective(Symbol* cmd_rt,
         if (o->name == obj_name) {
             found = true;
             if (o->geometry != BOX_OBSTACLE) {
-                std::cout << "[Warning] Non-box obstacle requested in proportion-over objective!"
+                std::cout << "[Warning] Non-box obstacle requested in over objective!"
                           << std::endl;
                 has_valid_obj = false;
                 return;
@@ -58,7 +58,7 @@ proportion_over_objective::proportion_over_objective(Symbol* cmd_rt,
 
     if (!found) {
         has_valid_obj = false;
-        std::cout << "[Warning] Requesting proportion-over objective for nonexistent object "
+        std::cout << "[Warning] Requesting over objective for nonexistent object "
                   << obj_name << std::endl;
         return;
     }
@@ -93,9 +93,16 @@ proportion_over_objective::proportion_over_objective(Symbol* cmd_rt,
 
 }
 
-proportion_over_objective::~proportion_over_objective() {
+base_over_objective::~base_over_objective() {
     delete cc;
 }
+
+/////////////////////////////// PTO //////////////////////////////////////
+proportion_over_objective::proportion_over_objective(Symbol* cmd_rt,
+                                                     soar_interface* si,
+                                                     motor_state* ms,
+                                                     objective_input* oi) :
+    base_over_objective(cmd_rt, si, ms, oi) {}
 
 double proportion_over_objective::evaluate_on(trajectory& t) {
     if (!has_valid_obj) return 0;
@@ -123,6 +130,45 @@ objective_table_entry* proportion_over_objective_entry() {
     e->parameters["set-id"] = "Trajectory set";
     e->parameters["obstacle"] = "Object of interest";
     e->create = &make_proportion_over_objective;
+    return e;
+}
+
+/////////////////////////////// TTO //////////////////////////////////////
+time_over_objective::time_over_objective(Symbol* cmd_rt,
+                                         soar_interface* si,
+                                         motor_state* ms,
+                                         objective_input* oi) :
+    base_over_objective(cmd_rt, si, ms, oi) {}
+
+double time_over_objective::evaluate_on(trajectory& t) {
+    if (!has_valid_obj) return 0;
+
+    double time_over = 0;
+    bool prev_valid = cc->is_valid(t.waypoints[0]);
+    for (int w = 1; w < t.length; w++) {
+        bool cur_valid = cc->is_valid(t.waypoints[w]);
+        if (!prev_valid && !cur_valid)
+            time_over += (t.times[w] - t.times[w-1]);
+        prev_valid = cur_valid;
+    }
+
+    return time_over;
+}
+
+objective* make_time_over_objective(Symbol* cmd_rt,
+                                           soar_interface* si,
+                                           motor_state* ms,
+                                           objective_input* oi) {
+    return new time_over_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* time_over_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "time-over";
+    e->description = "Time during trajectory spent with arm over obstacle";
+    e->parameters["set-id"] = "Trajectory set";
+    e->parameters["obstacle"] = "Object of interest";
+    e->create = &make_time_over_objective;
     return e;
 }
 

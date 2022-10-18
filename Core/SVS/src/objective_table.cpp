@@ -37,6 +37,7 @@ objective_table_entry* weighted_avg_clearance_objective_entry();
 
 // RELATIVE
 objective_table_entry* proportion_over_objective_entry();
+objective_table_entry* time_over_objective_entry();
 
 //////////////////////////////////////////////
 
@@ -69,6 +70,7 @@ objective_table::objective_table() {
     add(min_clear_subset_objective_entry());
     add(weighted_avg_clearance_objective_entry());
     add(proportion_over_objective_entry());
+    add(time_over_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {

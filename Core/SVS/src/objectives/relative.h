@@ -19,56 +19,56 @@
  *
  */
 
-// PTO - Proportion of Trajectory spent Over a selected object
-// Calculates how much of a trajectory is spent with part of the arm "over" object
-class proportion_over_objective : public objective {
+// Base class for "over" relationships
+class base_over_objective : public objective {
 public:
-    proportion_over_objective(Symbol* cmd_rt,
-                              soar_interface* si,
-                              motor_state* ms,
-                              objective_input* oi);
-    ~proportion_over_objective();
+    base_over_objective(Symbol* cmd_rt,
+                        soar_interface* si,
+                        motor_state* ms,
+                        objective_input* oi);
+    ~base_over_objective();
 
-    double evaluate_on(trajectory& t);
-
-private:
+protected:
     bool has_valid_obj;
     std::string obj_name;
     collision_checker* cc;
 };
 
+// PTO - Proportion of Trajectory spent Over a selected object
+// Calculates how much of a trajectory is spent with part of the arm "over" object
+class proportion_over_objective : public base_over_objective {
+public:
+    proportion_over_objective(Symbol* cmd_rt,
+                              soar_interface* si,
+                              motor_state* ms,
+                              objective_input* oi);
+    double evaluate_on(trajectory& t);
+};
+
 // WPO - Weighted Proportion of trajectory spent Over a selected object
 // Calculates how much of a trajectory is spent with part of the arm "over" object,
 // with more weight given when more parts of the arm are "over"
-// class weighted_prop_over_objective : public objective {
+// XXX This is not trivial to calculate given current collision capabilities
+
+// class weighted_prop_over_objective : public base_over_objective {
 // public:
 //     weighted_prop_over_objective(Symbol* cmd_rt,
 //                                  soar_interface* si,
 //                                  motor_state* ms,
 //                                  objective_input* oi);
-//     ~weighted_prop_over_objective();
-
 //     double evaluate_on(trajectory& t);
-
-// private:
-//     collision_checker* cc;
 // };
 
 // TTO - Time during Trajectory spent Over a selected object
 // Calculates how much time is spent with part of the arm "over" object
-// class time_over_objective : public objective {
-// public:
-//     time_over_objective(Symbol* cmd_rt,
-//                         soar_interface* si,
-//                         motor_state* ms,
-//                         objective_input* oi);
-//     ~time_over_objective();
-
-//     double evaluate_on(trajectory& t);
-
-// private:
-//     collision_checker* cc;
-// };
+class time_over_objective : public base_over_objective {
+public:
+    time_over_objective(Symbol* cmd_rt,
+                        soar_interface* si,
+                        motor_state* ms,
+                        objective_input* oi);
+    double evaluate_on(trajectory& t);
+};
 
 #endif
 #endif
