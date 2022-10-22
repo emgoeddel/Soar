@@ -52,3 +52,5 @@
 #include "src/motor/motor.cpp"
 #include "src/motor/robot_model.cpp"
 #include "src/motor/collision.cpp"
+
+#include "src/motor/timespec/timespec.cpp"

@@ -3,6 +3,11 @@
 #include "planning_problem.h"
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 
+// For eval
+#include <pthread.h>
+#include <time.h>
+#include "timespec/timespec.h"
+
 double sample_double(double min, double max) {
     std::random_device rd;
     std::default_random_engine dre(rd());
@@ -400,9 +405,30 @@ void planning_problem::run_planner() {
         g->as<ompl::base::GoalLazySamples>()->clear();
         cur_ss->clear();
 
+        // time eval
+        pthread_t t_id = pthread_self();
+        clockid_t c_id;
+        int err = pthread_getcpuclockid(t_id, &c_id);
+
+        if (err) std::cout << "Unable to get clock id for thread "
+                           << t_id << "!" << std::endl;
+
+        timespec start_plan;
+        err = clock_gettime(c_id, &start_plan);
+        if (err) std::cout << "Unable to get planning start time for thread "
+                           << t_id << "!" << std::endl;
+
         // run the planner
         g->as<ompl::base::GoalLazySamples>()->startSampling();
+
         ompl::base::PlannerStatus status = cur_ss->solve(*cur_ptc);
+
+        timespec end_plan;
+        err = clock_gettime(c_id, &end_plan);
+        if (err) std::cout << "Unable to get planning end time for thread "
+                           << t_id << "!" << std::endl;
+
+        timespec plan_time = timespec_sub(end_plan, start_plan);
 
         g->as<ompl::base::GoalLazySamples>()->stopSampling();
 
@@ -417,6 +443,12 @@ void planning_problem::run_planner() {
                 else ms->failure_callback(query_id, ompl_status_to_failure_type(status));
             }
         } else {
+            // time eval
+            timespec start_post;
+            err = clock_gettime(c_id, &start_post);
+            if (err) std::cout << "Unable to get postprocess start time for thread "
+                               << t_id << "!" << std::endl;
+
             cur_ss->simplifySolution();
             ompl::geometric::PathGeometric pg = cur_ss->getSolutionPath();
             pg.interpolate();
@@ -439,6 +471,16 @@ void planning_problem::run_planner() {
 
             output_traj = path_to_trajectory(pg, cur_ss);
             has_trajectory = true;
+
+            timespec end_post;
+            err = clock_gettime(c_id, &end_post);
+            if (err) std::cout << "Unable to get postprocess end time for thread "
+                               << t_id << "!" << std::endl;
+
+            timespec post_time = timespec_sub(end_plan, start_plan);
+            timespec total_time = timespec_add(plan_time, post_time);
+
+            output_traj.planning_time = timespec_to_double(total_time);
 
             // notify SVS of new trajectory
             ms->new_trajectory_callback(query_id, output_traj);

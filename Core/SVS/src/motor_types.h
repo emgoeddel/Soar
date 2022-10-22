@@ -127,6 +127,8 @@ struct trajectory {
     std::vector<std::vector<double> > velocities; // velocity of each joint at waypoints
     std::vector<std::vector<double> > accelerations; // accel of each joint at waypoints
     std::vector<double> times; // time from start of each waypoint
+
+    double planning_time; // for eval
 };
 
 void to_ros_msg(trajectory& from, trajectory_msgs::JointTrajectory& to);
