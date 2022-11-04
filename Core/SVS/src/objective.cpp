@@ -40,7 +40,7 @@ bool objective::evaluate() {
     std::map<int, trajectory>::iterator i = trajectories.begin();
     for (; i != trajectories.end(); i++) {
         values[i->first] = evaluate_on(i->second);
-        std::cout << name << " " << i->first << ": " << values[i->first] << std::endl;
+        //std::cout << name << " " << i->first << ": " << values[i->first] << std::endl;
      }
 
     return true;

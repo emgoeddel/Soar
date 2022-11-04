@@ -79,6 +79,14 @@ private:
             return false;
         }
 
+        // EVAL ONLY
+        std::vector<std::string> names;
+        names.push_back("waypoints");
+        names.push_back("execution-time");
+        names.push_back("total-joint-movement");
+        names.push_back("min-clearance");
+        std::cout << ms->eval_objectives(traj_set_id, names);
+
         std::string out_type;
         if (!si->get_const_attr(root, "type", out_type)) {
             set_status("no type found");

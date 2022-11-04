@@ -67,6 +67,8 @@ public:
     std::vector<std::string> objective_names(int set_id);
     objective* get_objective(int set_id, std::string name);
 
+    std::string eval_objectives(int id, std::vector<std::string> objs);
+
     //// Joint state tracking ////
     void set_joints(std::map<std::string, double> j);
     std::map<std::string, double> get_joints();

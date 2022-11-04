@@ -5,6 +5,12 @@
 #include "objective.h"
 #include "scene.h"
 
+ // for eval
+#include "objective_table.h"
+#include <pthread.h>
+#include <time.h>
+#include "motor/timespec/timespec.h"
+
 motor_state::motor_state(std::shared_ptr<motor> m,
                          scene* s,
                          std::string n) : mtr(m),
@@ -245,6 +251,70 @@ std::vector<std::string> motor_state::objective_names(int set_id) {
 
 objective* motor_state::get_objective(int set_id, std::string name) {
     return objectives[set_id][name];
+}
+
+// EVAL
+std::string motor_state::eval_objectives(int id, std::vector<std::string> objs) {
+    std::lock_guard<std::mutex> guard(traj_mtx);
+
+    std::stringstream ss;
+
+    ss << "STARTOBJECTIVEOUTPUT" << std::endl;
+    ss << "traj_num";
+
+    for (int n = 0; n < trajectories[id].size(); n++) {
+        ss << ", " << n << ", " << n << "_time";
+    }
+    ss << std::endl;
+
+    std::vector<std::string>::iterator i = objs.begin();
+    for (; i != objs.end(); i++) {
+        ss << *i;
+
+        objective_input in;
+        in["output-type"] = new filter_val_c<std::string>("value");
+        in["name"] = new filter_val_c<std::string>(*i);
+        in["number"] = new filter_val_c<int>(1);
+        in["maximize"] = new filter_val_c<bool>(true);
+        in["set-id"] = new filter_val_c<int>(id);
+
+        objective* obj_obj = get_objective_table().make_objective(*i,
+                                                                  NULL,
+                                                                  NULL,
+                                                                  this,
+                                                                  &in);
+
+        std::vector<trajectory>::iterator t = trajectories[id].begin();
+        for (; t != trajectories[id].end(); t++) {
+            // time eval
+            pthread_t t_id = pthread_self();
+            clockid_t c_id;
+            int err = pthread_getcpuclockid(t_id, &c_id);
+            if (err) std::cout << "Unable to get clock id for thread "
+                               << t_id << "!" << std::endl;
+
+            timespec start_eval;
+            err = clock_gettime(c_id, &start_eval);
+            if (err) std::cout << "Unable to get eval start time for thread "
+                               << t_id << "!" << std::endl;
+
+            double out = obj_obj->evaluate_on(*t);
+
+            timespec end_eval;
+            err = clock_gettime(c_id, &end_eval);
+            if (err) std::cout << "Unable to get eval end time for thread "
+                               << t_id << "!" << std::endl;
+
+            timespec eval_time = timespec_sub(end_eval, start_eval);
+            double t_s = timespec_to_double(eval_time);
+
+            ss << ", " << out << ", " << t_s;
+        }
+        ss << std::endl;
+    }
+    ss << "ENDOBJECTIVEOUTPUT" << std::endl;
+
+    return ss.str();
 }
 
 void motor_state::set_joints(std::map<std::string, double> j) {
