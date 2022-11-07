@@ -26,6 +26,7 @@ void objective_table_entry::proxy_use_sub(const std::vector<std::string>& args,
 
 // LENGTH
 objective_table_entry* waypoints_objective_entry();
+objective_table_entry* planning_time_objective_entry();
 objective_table_entry* execution_time_objective_entry();
 objective_table_entry* total_joint_objective_entry();
 objective_table_entry* ee_length_objective_entry();
@@ -63,6 +64,7 @@ objective_table::objective_table() {
     set_help("Prints out a list of all objectives.");
 
     add(waypoints_objective_entry());
+    add(planning_time_objective_entry());
     add(execution_time_objective_entry());
     add(total_joint_objective_entry());
     add(ee_length_objective_entry());

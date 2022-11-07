@@ -35,6 +35,36 @@ objective_table_entry* waypoints_objective_entry() {
     return e;
 }
 
+/////////////////////////////// Planning Time //////////////////////////////////////
+
+planning_time_objective::planning_time_objective(Symbol* cmd_rt,
+                                                 soar_interface* si,
+                                                 motor_state* ms,
+                                                 objective_input* oi) : objective(cmd_rt,
+                                                                                  si,
+                                                                                  ms,
+                                                                                  oi) {}
+
+double planning_time_objective::evaluate_on(trajectory& t) {
+    return t.planning_time;
+}
+
+objective* make_planning_time_objective(Symbol* cmd_rt,
+                                        soar_interface* si,
+                                        motor_state* ms,
+                                        objective_input* oi) {
+    return new planning_time_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* planning_time_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "planning-time";
+    e->description = "Amount of time taken to plan the trajectory";
+    e->parameters["set-id"] = "Trajectory set";
+    e->create = &make_planning_time_objective;
+    return e;
+}
+
 /////////////////////////////// AET //////////////////////////////////////
 
 execution_time_objective::execution_time_objective(Symbol* cmd_rt,

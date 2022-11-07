@@ -224,7 +224,8 @@ planning_problem::planning_problem(int qid,
                                                                      reached_max_time(false),
                                                                      agent_stopped(false),
                                                                      notified_cont(false),
-                                                                     notified_comp(false)
+                                                                     notified_comp(false),
+                                                                     solve_time(-1)
 {
     joint_group = query.soar_query.joint_group;
     if (joint_group == "") joint_group = m->get_default_joint_group();
@@ -492,6 +493,8 @@ void planning_problem::run_planner() {
             num_solns = solutions.size();
         }
 
+        std::chrono::duration<double> tpt = std::chrono::system_clock::now() - start_time;
+
         {
             std::lock_guard<std::mutex> guard(ptc_mtx);
             if (top_ptcs.front().eval()) {
@@ -499,12 +502,11 @@ void planning_problem::run_planner() {
 
                 if (agent_ptcs.front().eval())
                     ms->query_status_callback(query_id, "stopped");
+                solve_time = tpt.count();
 
                 continue;
             }
         }
-
-        std::chrono::duration<double> tpt = std::chrono::system_clock::now() - start_time;
 
         // Check for min time
         if (!reached_min_time &&
@@ -579,6 +581,8 @@ void planning_problem::run_planner() {
             if (!notified_comp) {
                 notified_comp = true;
                 ms->query_status_callback(query_id, "complete");
+
+                solve_time = tpt.count();
             }
             restart_search = false;
         } else restart_search = true;

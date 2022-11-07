@@ -83,6 +83,7 @@ private:
 
         // EVAL ONLY
         std::vector<std::string> names;
+        names.push_back("planning-time");
         names.push_back("waypoints");
         names.push_back("execution-time");
         names.push_back("total-joint-movement");

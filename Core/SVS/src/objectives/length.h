@@ -26,6 +26,17 @@ public:
     double evaluate_on(trajectory& t);
 };
 
+// Planning time [eval only]
+// Reports the amount of time a trajectory took to find
+class planning_time_objective : public objective {
+public:
+    planning_time_objective(Symbol* cmd_rt,
+                            soar_interface* si,
+                            motor_state* ms,
+                            objective_input* oi);
+    double evaluate_on(trajectory& t);
+};
+
 // AET - Action Execution Time [minimize]
 // How long a trajectory will take to execute in seconds
 class execution_time_objective : public objective {
