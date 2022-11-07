@@ -8,6 +8,8 @@
 #include "scene.h"
 #include "motor_state.h"
 
+#include <iostream> // eval
+
 /*
  * evaluate_trajectories_command class
  *
@@ -85,7 +87,13 @@ private:
         names.push_back("execution-time");
         names.push_back("total-joint-movement");
         names.push_back("min-clearance");
-        std::cout << ms->eval_objectives(traj_set_id, names);
+
+        std::ofstream df;
+        df.open("objectives.txt", std::ios::out | std::ios::app);
+        if (!df.is_open()) std::cout << "ERROR writing to file!" << std::endl;
+        df << ms->eval_objectives(traj_set_id, names) << std::endl;
+        df.close();
+        // END EVAL
 
         std::string out_type;
         if (!si->get_const_attr(root, "type", out_type)) {
@@ -161,6 +169,14 @@ private:
 
         obj->update_outputs();
         ms->new_objective_callback(traj_set_id, obj);
+
+        // EVAL
+        std::ofstream df2;
+        df2.open("selections.txt", std::ios::out | std::ios::app);
+        if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
+        df2 << obj_name << " " << obj->get_selected() << std::endl;
+        df2.close();
+        // END EVAL
 
         return true;
     }

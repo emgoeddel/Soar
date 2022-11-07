@@ -259,11 +259,10 @@ std::string motor_state::eval_objectives(int id, std::vector<std::string> objs) 
 
     std::stringstream ss;
 
-    ss << "STARTOBJECTIVEOUTPUT" << std::endl;
     ss << "traj_num";
 
     for (int n = 0; n < trajectories[id].size(); n++) {
-        ss << ", " << n << ", " << n << "_time";
+        ss << ", " << n;
     }
     ss << std::endl;
 
@@ -285,6 +284,7 @@ std::string motor_state::eval_objectives(int id, std::vector<std::string> objs) 
                                                                   &in);
 
         std::vector<trajectory>::iterator t = trajectories[id].begin();
+        std::vector<double> times;
         for (; t != trajectories[id].end(); t++) {
             // time eval
             pthread_t t_id = pthread_self();
@@ -307,12 +307,18 @@ std::string motor_state::eval_objectives(int id, std::vector<std::string> objs) 
 
             timespec eval_time = timespec_sub(end_eval, start_eval);
             double t_s = timespec_to_double(eval_time);
+            times.push_back(t_s);
 
-            ss << ", " << out << ", " << t_s;
+            ss << ", " << out;
+        }
+        ss << std::endl;
+
+        ss << *i << "_time";
+        for (std::vector<double>::iterator s = times.begin(); s != times.end(); s++) {
+            ss << ", " << *s;
         }
         ss << std::endl;
     }
-    ss << "ENDOBJECTIVEOUTPUT" << std::endl;
 
     return ss.str();
 }

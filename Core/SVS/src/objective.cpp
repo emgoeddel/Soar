@@ -40,7 +40,7 @@ bool objective::evaluate() {
     std::map<int, trajectory>::iterator i = trajectories.begin();
     for (; i != trajectories.end(); i++) {
         values[i->first] = evaluate_on(i->second);
-        //std::cout << name << " " << i->first << ": " << values[i->first] << std::endl;
+        std::cout << name << " " << i->first << ": " << values[i->first] << std::endl;
      }
 
     return true;
@@ -107,6 +107,19 @@ bool objective::update_outputs() {
 
     if (outputs.size() > prev_size) return true;
     return false;
+}
+
+int objective::get_selected() {
+    if (ot == SELECT) {
+        std::map<int, double>::iterator o = outputs.begin();
+        for (; o != outputs.end(); o++) {
+            if (o->second == 1) return o->first;
+        }
+    }
+    else {
+        std::cout << "[Error] No selection to report from objective" << std::endl;
+    }
+    return 0;
 }
 
 void objective::set_status(const std::string& msg) {
