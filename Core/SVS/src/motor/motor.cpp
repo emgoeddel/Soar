@@ -67,6 +67,18 @@ void motor::stop_planner_query(int id) {
                           << std::endl;
 }
 
+double motor::query_solve_time(int id) {
+    std::vector<planning_problem*>::iterator i = ongoing.begin();
+    bool found = false;
+    for (; i != ongoing.end(); i++) {
+        if ((*i)->get_id() == id) {
+            return (*i)->get_solve_time();
+        }
+    }
+    if (!found) std::cout << "[WARNING] Attempting to get time from a non-existent query!"
+                          << std::endl;
+}
+
 bool motor::plan_straight_line(std::map<std::string, double> start,
                                vec3 goal_xyz, trajectory& out) {
     transform3 xform_start = model->end_effector_xform(start);

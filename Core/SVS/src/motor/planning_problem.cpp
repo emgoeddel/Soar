@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <time.h>
 #include "timespec/timespec.h"
+#include <fstream>
 
 double sample_double(double min, double max) {
     std::random_device rd;
@@ -303,6 +304,11 @@ void planning_problem::stop_solve() {
     thread_vec.clear();
 }
 
+double planning_problem::get_solve_time() {
+    std::lock_guard<std::mutex> guard1(st_mtx);
+    return solve_time;
+}
+
 // Note that this implements, via callbacks, the status updates defined in
 // find_trajectories.cpp--it notifies the motor_state when a query should be
 // considered "running" "continuing" or "complete"
@@ -502,8 +508,9 @@ void planning_problem::run_planner() {
 
                 if (agent_ptcs.front().eval())
                     ms->query_status_callback(query_id, "stopped");
-                solve_time = tpt.count();
 
+                std::lock_guard<std::mutex> guard2(st_mtx);
+                solve_time = tpt.count();
                 continue;
             }
         }
@@ -582,6 +589,7 @@ void planning_problem::run_planner() {
                 notified_comp = true;
                 ms->query_status_callback(query_id, "complete");
 
+                std::lock_guard<std::mutex> guard2(st_mtx);
                 solve_time = tpt.count();
             }
             restart_search = false;

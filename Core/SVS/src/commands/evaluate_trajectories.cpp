@@ -8,7 +8,7 @@
 #include "scene.h"
 #include "motor_state.h"
 
-#include <iostream> // eval
+#include <fstream> // eval
 
 /*
  * evaluate_trajectories_command class
@@ -175,7 +175,10 @@ private:
         std::ofstream df2;
         df2.open("selections.txt", std::ios::out | std::ios::app);
         if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
-        df2 << obj_name << " " << obj->get_selected() << std::endl;
+        df2 << traj_set_id << " "
+            << ms->query_solve_time(traj_set_id) << " "
+            << obj_name << " "
+            << obj->get_selected() << std::endl;
         df2.close();
         // END EVAL
 

@@ -88,6 +88,10 @@ void motor_state::stop_query(int id) {
     mtr->stop_planner_query(id);
 }
 
+double motor_state::query_solve_time(int id) {
+    return mtr->query_solve_time(id);
+}
+
 std::vector<int> motor_state::get_query_ids() {
     std::vector<int> out;
 

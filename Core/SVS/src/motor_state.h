@@ -40,6 +40,7 @@ public:
     std::string get_query_status(int id);
     std::vector<int> get_query_failures(int id);
     void stop_query(int id);
+    double query_solve_time(int id);
 
     int num_queries() { return queries.size(); }
     std::vector<int> get_query_ids();

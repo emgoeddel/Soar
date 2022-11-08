@@ -66,7 +66,7 @@ public:
     void start_solve();
     void stop_solve();
     int get_id() const { return query_id; }
-    double get_solution_time() { return solve_time; }
+    double get_solve_time();
 
 private:
     void run_planner();
@@ -99,6 +99,7 @@ private:
     bool agent_stopped;
     bool notified_cont, notified_comp;
     double solve_time;
+    std::mutex st_mtx;
 
     std::chrono::time_point<std::chrono::system_clock> start_time;
     unsigned int MAX_THREADS;
