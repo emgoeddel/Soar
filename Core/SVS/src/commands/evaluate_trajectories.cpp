@@ -178,7 +178,7 @@ private:
         df2 << traj_set_id << " "
             << ms->query_solve_time(traj_set_id) << " "
             << obj_name << " "
-            << obj->get_selected() << std::endl;
+            << obj->get_selected() << " ";
         df2.close();
         // END EVAL
 
