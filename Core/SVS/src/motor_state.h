@@ -34,6 +34,7 @@ public:
 
     std::shared_ptr<motor> get_motor();
     void get_scene_obstacles(std::vector<obstacle>& out);
+    scene* get_scene() { return scn; }
 
     //// Trajectory planning ////
     void new_query(int id, query q);
