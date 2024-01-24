@@ -15,9 +15,26 @@
  *
  */
 
+// Base class for visibility objectives
+class base_vis_objective : public objective {
+public:
+    base_vis_objective(Symbol* cmd_rt,
+                       soar_interface* si,
+                       motor_state* ms,
+                       objective_input* oi);
+    ~base_vis_objective();
+
+protected:
+    bool has_valid_obj;
+    std::string obj_name;
+    sgnode* obj_int;
+    sgnode* eye;
+    std::vector<view_line> views;
+};
+
 // AOO - Average Occlusion of Object [minimize]
 // Average amount of occlusion of an object of interest across trajectory
-class average_occlusion_objective : public objective {
+class average_occlusion_objective : public base_vis_objective {
 public:
     average_occlusion_objective(Symbol* cmd_rt,
                                 soar_interface* si,
@@ -25,13 +42,6 @@ public:
                                 objective_input* oi);
 
     double evaluate_on(trajectory& t);
-
-private:
-    std::string obj_name;
-    sgnode* obj_int;
-    sgnode* eye;
-    std::vector<const sgnode*> occluders;
-    std::vector<view_line> views;
 };
 
 // OTO - Occlusion Time of Object [minimize]

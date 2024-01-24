@@ -145,7 +145,7 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
 
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
-        double PADDING = 0.03;
+        double PADDING = 0.01;
         if (i->geometry == BALL_OBSTACLE) {
             world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(i->ball_radius + (PADDING/2.0))));
             geom_types.push_back(BALL_OBSTACLE);

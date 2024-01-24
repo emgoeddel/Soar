@@ -378,6 +378,10 @@ std::map<std::string, transform3> motor_state::get_link_transforms() {
     return mtr->get_link_transforms_at(joints);
 }
 
+std::map<std::string, transform3> motor_state::get_link_transforms_at(std::map<std::string, double> j) {
+    return mtr->get_link_transforms_at(j);
+}
+
 std::map<std::string, vec3> motor_state::get_link_boxes() {
     return mtr->get_link_boxes();
 }

@@ -77,6 +77,7 @@ double motor::query_solve_time(int id) {
     }
     if (!found) std::cout << "[WARNING] Attempting to get time from a non-existent query!"
                           << std::endl;
+    return -1;
 }
 
 bool motor::plan_straight_line(std::map<std::string, double> start,
