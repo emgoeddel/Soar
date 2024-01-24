@@ -46,21 +46,15 @@ public:
 
 // OTO - Occlusion Time of Object [minimize]
 // Amount of time that an object is at least partially occluded by the arm
-// class occlusion_time_objective : public objective {
-// public:
-//     occlusion_time_objective(Symbol* cmd_rt,
-//                              soar_interface* si,
-//                              motor_state* ms,
-//                              objective_input* oi);
-//     ~occlusion_time_objective();
+class occlusion_time_objective : public base_vis_objective {
+public:
+    occlusion_time_objective(Symbol* cmd_rt,
+                             soar_interface* si,
+                             motor_state* ms,
+                             objective_input* oi);
 
-//     double evaluate_on(trajectory& t);
-
-// private:
-//     std::string oi_name;
-//     sgnode* oi;
-//     sgnode* eye;
-// };
+    double evaluate_on(trajectory& t);
+};
 
 #endif
 #endif

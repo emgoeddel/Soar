@@ -89,22 +89,8 @@ double average_occlusion_objective::evaluate_on(trajectory& t) {
         nodes[b->first] = new convex_node(b->first, verts);
     }
 
-    ////// DBG //////
-    // std::map<std::string, convex_node*>::const_iterator n = nodes.begin();
-    // for (; n != nodes.end(); n++) {
-    //     std::cout << n->first << ": ";
-    //     ptlist::const_iterator p = n->second->get_verts().begin();
-    //     for (; p != n->second->get_verts().end(); p++) {
-    //         std::cout << "("
-    //              << (*p)[0] << ", "
-    //              << (*p)[1] << ", "
-    //              << (*p)[2] << "), ";
-    //     }
-    // }
-    ////////////////
-
     transform3 base = ms->get_base_xform();
-    double occlusion_total;
+    double occlusion_total = 0;
 
     // Iterate through waypoints
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
@@ -119,19 +105,24 @@ double average_occlusion_objective::evaluate_on(trajectory& t) {
 
         std::map<std::string, transform3> wp_xf = ms->get_link_transforms_at(joint_map);
         std::map<std::string, convex_node*>::iterator n = nodes.begin();
-                 for (; n != nodes.end(); n++) {
-                     transform3 world = base * wp_xf[n->first];
-                     vec3 p, r, s;
-                     world.position(p);
-                     world.rotation(r);
-                     world.scale(s);
-                     n->second->set_trans(p, r, s);
-                     occluders.push_back(n->second);
-                 }
+        for (; n != nodes.end(); n++) {
+            transform3 world = base * wp_xf[n->first];
+            vec3 p, r, s;
+            world.position(p);
+            world.rotation(r);
+            world.scale(s);
+            n->second->set_trans(p, r, s);
+            occluders.push_back(n->second);
+        }
 
-                 occlusion_total += convex_occlusion(views, occluders);
+        double co =  convex_occlusion(views, occluders);
+        occlusion_total += co;
     }
 
+    std::map<std::string, convex_node*>::iterator d = nodes.begin();
+    for (; d != nodes.end(); d++) {
+        delete d->second;
+    }
     return (occlusion_total / t.length);
 }
 
@@ -149,6 +140,101 @@ objective_table_entry* average_occlusion_objective_entry() {
     e->parameters["set-id"] = "Trajectory set";
     e->parameters["obstacle"] = "Object of interest";
     e->create = &make_average_occlusion_objective;
+    return e;
+}
+
+/////////////////////////////// OTO //////////////////////////////////////
+occlusion_time_objective::occlusion_time_objective(Symbol* cmd_rt,
+                                                   soar_interface* si,
+                                                   motor_state* ms,
+                                                   objective_input* oi) :
+    base_vis_objective(cmd_rt, si, ms, oi) {}
+
+double occlusion_time_objective::evaluate_on(trajectory& t) {
+    if (!has_valid_obj) return 0;
+
+    // Box dimensions stay the same across the trajectory
+    std::map<std::string, vec3> boxes = ms->get_link_boxes();
+    std::map<std::string, convex_node*> nodes;
+    std::map<std::string, vec3>::iterator b = boxes.begin();
+    for (; b != boxes.end(); b++) {
+        ptlist verts;
+        for (int i = -1; i <= 1; i++) {
+            if (i == 0) continue;
+            for (int j = -1; j <= 1; j++) {
+                if (j == 0) continue;
+                for (int k = -1; k <= 1; k++) {
+                    if (k == 0) continue;
+
+                    // Ignore links that don't have dimensions
+                    if (b->second[0] == 0 &&
+                        b->second[1] == 0 &&
+                        b->second[2] == 0) continue;
+                    verts.push_back(vec3(i * b->second[0],
+                                         j * b->second[1],
+                                         k * b->second[2]));
+                }
+            }
+        }
+        nodes[b->first] = new convex_node(b->first, verts);
+    }
+
+    transform3 base = ms->get_base_xform();
+    double occlusion_time = 0;
+
+    // Iterate through waypoints
+    std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
+    w++; // need to start one waypoint in for time subtraction
+    int w_i = 1;
+    for (; w != t.waypoints.end(); w++) {
+        std::map<std::string, double> joint_map;
+        for (int i = 0; i < w->size(); i++) {
+            joint_map[t.joints[i]] = (*w)[i];
+        }
+
+        // Need to get new transforms for each link box at each waypoint
+        std::vector<const sgnode*> occluders;
+
+        std::map<std::string, transform3> wp_xf = ms->get_link_transforms_at(joint_map);
+        std::map<std::string, convex_node*>::iterator n = nodes.begin();
+        for (; n != nodes.end(); n++) {
+            transform3 world = base * wp_xf[n->first];
+            vec3 p, r, s;
+            world.position(p);
+            world.rotation(r);
+            world.scale(s);
+            n->second->set_trans(p, r, s);
+            occluders.push_back(n->second);
+        }
+
+        double co =  convex_occlusion(views, occluders);
+        if (co > 0.0) {
+            occlusion_time += (t.times[w_i] - t.times[w_i-1]);
+        }
+        w_i++;
+    }
+
+    std::map<std::string, convex_node*>::iterator d = nodes.begin();
+    for (; d != nodes.end(); d++) {
+        delete d->second;
+    }
+    return occlusion_time;
+}
+
+objective* make_occlusion_time_objective(Symbol* cmd_rt,
+                                            soar_interface* si,
+                                            motor_state* ms,
+                                            objective_input* oi) {
+    return new occlusion_time_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* occlusion_time_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "occlusion-time";
+    e->description = "Time that an object is occluded across trajectory";
+    e->parameters["set-id"] = "Trajectory set";
+    e->parameters["obstacle"] = "Object of interest";
+    e->create = &make_occlusion_time_objective;
     return e;
 }
 
