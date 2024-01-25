@@ -47,9 +47,9 @@ public:
 
 // PRO - Proportion of Trajectory Object is Occluded [minimize]
 // How much of a trajectory is spent with at least two corners of object occluded
-class proportion_occlusion_objective : public base_vis_objective {
+class proportion_occluded_objective : public base_vis_objective {
 public:
-    proportion_occlusion_objective(Symbol* cmd_rt,
+    proportion_occluded_objective(Symbol* cmd_rt,
                                    soar_interface* si,
                                    motor_state* ms,
                                    objective_input* oi);

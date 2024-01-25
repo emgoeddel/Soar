@@ -189,13 +189,13 @@ objective_table_entry* average_occlusion_objective_entry() {
 }
 
 /////////////////////////////// PRO //////////////////////////////////////
-proportion_occlusion_objective::proportion_occlusion_objective(Symbol* cmd_rt,
+proportion_occluded_objective::proportion_occluded_objective(Symbol* cmd_rt,
                                                    soar_interface* si,
                                                    motor_state* ms,
                                                    objective_input* oi) :
     base_vis_objective(cmd_rt, si, ms, oi) {}
 
-double proportion_occlusion_objective::evaluate_on(trajectory& t) {
+double proportion_occluded_objective::evaluate_on(trajectory& t) {
     if (!has_valid_obj) return 0;
 
     // Box dimensions stay the same across the trajectory
@@ -272,20 +272,20 @@ double proportion_occlusion_objective::evaluate_on(trajectory& t) {
     return (occluded_states/t.length);
 }
 
-objective* make_proportion_occlusion_objective(Symbol* cmd_rt,
+objective* make_proportion_occluded_objective(Symbol* cmd_rt,
                                             soar_interface* si,
                                             motor_state* ms,
                                             objective_input* oi) {
-    return new proportion_occlusion_objective(cmd_rt, si, ms, oi);
+    return new proportion_occluded_objective(cmd_rt, si, ms, oi);
 }
 
-objective_table_entry* proportion_occlusion_objective_entry() {
+objective_table_entry* proportion_occluded_objective_entry() {
     objective_table_entry* e = new objective_table_entry();
     e->name = "proportion-occluded";
     e->description = "Proportion of trajectory object is occluded";
     e->parameters["set-id"] = "Trajectory set";
     e->parameters["obstacle"] = "Object of interest";
-    e->create = &make_proportion_occlusion_objective;
+    e->create = &make_proportion_occluded_objective;
     return e;
 }
 
