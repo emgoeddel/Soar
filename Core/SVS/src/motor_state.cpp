@@ -386,6 +386,21 @@ std::map<std::string, vec3> motor_state::get_link_boxes() {
     return mtr->get_link_boxes();
 }
 
+std::vector<std::string> motor_state::get_arm_link_names() {
+    std::vector<std::string> names;
+    names.push_back("shoulder_lift_link");
+    names.push_back("shoulder_pan_link");
+    names.push_back("upperarm_roll_link");
+    names.push_back("elbow_flex_link");
+    names.push_back("forearm_roll_link");
+    names.push_back("wrist_flex_link");
+    names.push_back("wrist_roll_link");
+    names.push_back("gripper_link");
+    names.push_back("l_gripper_finger_link");
+    names.push_back("r_gripper_finger_link");
+    return names;
+}
+
 std::string motor_state::robot_name() {
     return mtr->get_robot_name();
 }

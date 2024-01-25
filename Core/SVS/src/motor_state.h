@@ -84,6 +84,7 @@ public:
     std::map<std::string, transform3> get_link_transforms();
     std::map<std::string, transform3> get_link_transforms_at(std::map<std::string, double> j);
     std::map<std::string, vec3> get_link_boxes();
+    std::vector<std::string> get_arm_link_names();
 
     std::string robot_name();
 

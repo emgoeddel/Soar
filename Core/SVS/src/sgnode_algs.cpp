@@ -392,8 +392,8 @@ view_line create_view_line(const string& name, const vec3& p1, const vec3& p2){
 // view_line.first is a convex_node that actually represents the line
 // view_line.second is a bool which is T if that view line is occluded by another object
 void calc_view_lines(const sgnode* target, const sgnode* eye, view_line_list& view_lines){
-	vec3 eyePos = eye->get_centroid();
-//	std::cout << "EYE: " << eyePos[0] << ", " << eyePos[1] << ", " << eyePos[2] << std::endl;
+    vec3 eyePos = eye->get_world_trans()(eye->get_centroid());
+    //std::cout << "EYE: " << eyePos[0] << ", " << eyePos[1] << ", " << eyePos[2] << std::endl;
 
 	// Create a view_line for the centroid
 	//std::string name = "_centroid_line_";
@@ -405,10 +405,12 @@ void calc_view_lines(const sgnode* target, const sgnode* eye, view_line_list& vi
 	// Go through each vertex in the node and create a view_line to that vertex
 	for(c_geom_node_list::const_iterator i = geom_nodes.begin(); i != geom_nodes.end(); i++){
 		const convex_node* c_node = dynamic_cast<const convex_node*>(*i);
+                //std::cout << "Node: " << c_node->get_id() << std::endl;
+
 		if(c_node){
 			const ptlist& verts = c_node->get_world_verts();
 			for(ptlist::const_iterator i = verts.begin(); i != verts.end(); i++){
-				//std::cout << "Point " << view_lines.size() << ": " << (*i)[0] << ", " << (*i)[1] << ", " << (*i)[2] << endl;
+                            //std::cout << "Point " << view_lines.size() << ": " << (*i)[0] << ", " << (*i)[1] << ", " << (*i)[2] << endl;
 				std::string name = "_temp_line_" + tostring(view_lines.size());
 				view_lines.push_back(create_view_line(name, eyePos, *i));
 			}

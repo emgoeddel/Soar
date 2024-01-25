@@ -30,6 +30,7 @@ protected:
     sgnode* obj_int;
     sgnode* eye;
     std::vector<view_line> views;
+    std::vector<std::string> arm;
 };
 
 // AOO - Average Occlusion of Object [minimize]
@@ -44,8 +45,20 @@ public:
     double evaluate_on(trajectory& t);
 };
 
+// PRO - Proportion of Trajectory Object is Occluded [minimize]
+// How much of a trajectory is spent with at least two corners of object occluded
+class proportion_occlusion_objective : public base_vis_objective {
+public:
+    proportion_occlusion_objective(Symbol* cmd_rt,
+                                   soar_interface* si,
+                                   motor_state* ms,
+                                   objective_input* oi);
+
+    double evaluate_on(trajectory& t);
+};
+
 // OTO - Occlusion Time of Object [minimize]
-// Amount of time that an object is at least partially occluded by the arm
+// Amount of time that at least two corners of object are occluded by the arm
 class occlusion_time_objective : public base_vis_objective {
 public:
     occlusion_time_objective(Symbol* cmd_rt,
