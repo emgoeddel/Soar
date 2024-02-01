@@ -59,6 +59,7 @@ class collision_checker : public ompl::base::StateValidityChecker {
 public:
     collision_checker(ompl::base::SpaceInformation* si);
     collision_checker(const ompl::base::SpaceInformationPtr& si);
+    // Not holding an object
     collision_checker(ompl::base::SpaceInformation* si,
                       std::shared_ptr<robot_model> m,
                       transform3 rb,
@@ -71,6 +72,21 @@ public:
                       std::string group,
                       std::map<std::string, double> fixed,
                       std::vector<obstacle>& obstacles);
+    // Holding an object
+    collision_checker(ompl::base::SpaceInformation* si,
+                      std::shared_ptr<robot_model> m,
+                      transform3 rb,
+                      std::string group,
+                      std::map<std::string, double> fixed,
+                      std::vector<obstacle>& obstacles,
+                      obstacle held_object);
+    collision_checker(const ompl::base::SpaceInformationPtr& si,
+                      std::shared_ptr<robot_model> m,
+                      transform3 rb,
+                      std::string group,
+                      std::map<std::string, double> fixed,
+                      std::vector<obstacle>& obstacles,
+                      obstacle held_object);
     ~collision_checker();
 
     bool isValid(const ompl::base::State* state) const override;
@@ -90,6 +106,10 @@ private:
     std::map<std::string, double> fixed_joints;
     std::shared_ptr<robot_model> model;
     transform3 robot_base;
+
+    bool holding_object;
+    obstacle held_object;
+    std::shared_ptr<fcl::CollisionGeometry> held_obj_geom;
 
     fcl::BroadPhaseCollisionManager* world;
     std::vector<fcl::CollisionObject*> world_objects;

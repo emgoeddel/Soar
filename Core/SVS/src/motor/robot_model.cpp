@@ -635,6 +635,17 @@ transform3 robot_model::end_effector_xform(std::map<std::string, double> joints)
     return transform3(pos, quat);
 }
 
+std::set<std::string> robot_model::end_effector_links() {
+    std::set<std::string> links;
+    if (!initialized) return links;
+
+    links.insert("gripper_link");
+    links.insert("l_gripper_finger_link");
+    links.insert("r_gripper_finger_link");
+
+    return links;
+}
+
 // Specialized calculation for the torso only, since this xform is sometimes
 // used on its own
 transform3 robot_model::torso_xform(double pos) {

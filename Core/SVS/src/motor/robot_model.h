@@ -98,6 +98,7 @@ public:
     vec3 end_effector_pos(std::map<std::string, double> joints);
     vec4 end_effector_rot(std::map<std::string, double> joints);
     transform3 end_effector_xform(std::map<std::string, double> joints);
+    std::set<std::string> end_effector_links();
 
 private:
     transform3 torso_xform(double pos);

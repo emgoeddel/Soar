@@ -33,7 +33,7 @@ public:
     void copy_from(motor_state* other);
 
     std::shared_ptr<motor> get_motor();
-    void get_scene_obstacles(std::vector<obstacle>& out);
+    void get_scene_obstacles(std::vector<obstacle>& out, std::string held="");
     scene* get_scene() { return scn; }
 
     //// Trajectory planning ////

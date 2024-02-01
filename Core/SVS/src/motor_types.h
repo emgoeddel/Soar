@@ -8,6 +8,34 @@
 
 #include "mat.h"
 
+/*
+ * obstacle struct
+ *
+ * Holds geometry-only information about an object in the scene
+ */
+
+enum ObstacleType {
+    BALL_OBSTACLE,
+    BOX_OBSTACLE,
+    CONVEX_OBSTACLE,
+    NON_OBSTACLE
+};
+
+
+struct obstacle {
+    std::string name;
+
+    ObstacleType geometry;
+    vec3 box_dim; // used for BOX_OBSTACLE
+    double ball_radius; // used for BALL_OBSTACLE
+    std::vector<vec3> convex_pts; //used for CONVEX_OBSTACLE
+
+    transform3 transform; // expected to be in world coordinates
+};
+
+class sgnode;
+void from_sgnode(sgnode* node, obstacle& to);
+
 enum TargetType {
     POINT_TARGET,
     BOX_TARGET,
@@ -40,6 +68,9 @@ struct query {
     bool use_orientation_flex;
     double orientation_flex;
 
+    bool holding_object;
+    std::string held_object_id;
+
     std::string to_str() {
         std::stringstream ss;
 
@@ -49,37 +80,11 @@ struct query {
            << target_center[2] << std::endl << "Target type: " << target_type << std::endl
            << "Target frame: " << target_frame;
 
+        if (holding_object) ss << "Holding object: " << held_object_id;
+
         return ss.str();
     }
 };
-
-/*
- * obstacle struct
- *
- * Holds geometry-only information about an object in the scene
- */
-
-enum ObstacleType {
-    BALL_OBSTACLE,
-    BOX_OBSTACLE,
-    CONVEX_OBSTACLE,
-    NON_OBSTACLE
-};
-
-
-struct obstacle {
-    std::string name;
-
-    ObstacleType geometry;
-    vec3 box_dim; // used for BOX_OBSTACLE
-    double ball_radius; // used for BALL_OBSTACLE
-    std::vector<vec3> convex_pts; //used for CONVEX_OBSTACLE
-
-    transform3 transform; // expected to be in world coordinates
-};
-
-class sgnode;
-void from_sgnode(sgnode* node, obstacle& to);
 
 /*
  * motor_query struct
@@ -90,6 +95,7 @@ void from_sgnode(sgnode* node, obstacle& to);
 struct motor_query {
     query soar_query;
     std::vector<obstacle> obstacles;
+    obstacle held_object; // transform is assumed to be relative to ee frame
     transform3 base_pose;
     std::map<std::string, double> start_state;
 

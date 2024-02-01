@@ -42,7 +42,7 @@ std::shared_ptr<motor> motor_state::get_motor() {
     return mtr;
 }
 
-void motor_state::get_scene_obstacles(std::vector<obstacle>& out) {
+void motor_state::get_scene_obstacles(std::vector<obstacle>& out, std::string held) {
     out.clear();
 
     std::vector<sgnode*> scn_nodes;
@@ -50,6 +50,7 @@ void motor_state::get_scene_obstacles(std::vector<obstacle>& out) {
     for (std::vector<sgnode*>::iterator i = scn_nodes.begin();
          i != scn_nodes.end(); i++) {
         if ((*i)->is_group()) continue; // No geometry to consider as an obstacle
+        if ((*i)->get_id() == held) continue; // Held object is treated differently
         obstacle o;
         from_sgnode(*i, o);
         out.push_back(o);
@@ -65,7 +66,15 @@ void motor_state::new_query(int id, query q) {
     vec3 base_rpy = scn->get_self_root()->get_trans('r');
     mq.base_pose = transform3(base_xyz, base_rpy, vec3(1, 1, 1));
 
-    get_scene_obstacles(mq.obstacles);
+    if (q.holding_object) {
+        from_sgnode(scn->get_node(q.held_object_id), mq.held_object);
+
+        // Change held object transform so that it's relative to ee frame
+        transform3 ee_world = ee_frame_for_joints();
+        mq.held_object.transform = ee_world.inv()*mq.held_object.transform;
+
+        get_scene_obstacles(mq.obstacles, mq.held_object.name);
+    } else get_scene_obstacles(mq.obstacles);
 
     queries[id] = mq;
     if (!mtr->new_planner_query(id, mq, this)) {

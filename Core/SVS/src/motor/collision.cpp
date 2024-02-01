@@ -81,7 +81,8 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
     : ompl::base::StateValidityChecker(si),
     robot_base(rb),
     fixed_joints(fixed),
-    model(m)
+    model(m),
+    holding_object(false)
 {
     world_ready = false;
 
@@ -94,6 +95,7 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
     world_ready = true;
 }
 
+
 collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
                                      std::shared_ptr<robot_model> m,
                                      transform3 rb,
@@ -103,7 +105,8 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
     : ompl::base::StateValidityChecker(si),
     robot_base(rb),
     fixed_joints(fixed),
-    model(m)
+    model(m),
+    holding_object(false)
 {
     world_ready = false;
 
@@ -112,6 +115,86 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
     world = new fcl::DynamicAABBTreeCollisionManager();
 
     setup_obstacles(obstacles);
+
+    world_ready = true;
+}
+
+collision_checker::collision_checker(ompl::base::SpaceInformation* si,
+                                     std::shared_ptr<robot_model> m,
+                                     transform3 rb,
+                                     std::string group,
+                                     std::map<std::string, double> fixed,
+                                     std::vector<obstacle>& obstacles,
+                                     obstacle held_object)
+    : ompl::base::StateValidityChecker(si),
+    robot_base(rb),
+    fixed_joints(fixed),
+    model(m),
+    holding_object(true),
+    held_object(held_object)
+{
+    world_ready = false;
+
+    joint_names = model->get_joint_group(group);
+
+    world = new fcl::DynamicAABBTreeCollisionManager();
+
+    setup_obstacles(obstacles);
+
+    if (held_object.geometry == BALL_OBSTACLE) {
+        held_obj_geom =
+            std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(held_object.ball_radius));
+    } else if (held_object.geometry == BOX_OBSTACLE) {
+        held_obj_geom =
+            std::shared_ptr<fcl::CollisionGeometry>(
+                new fcl::Box(held_object.box_dim[0],
+                             held_object.box_dim[1],
+                             held_object.box_dim[2]));
+    } else if (held_object.geometry == CONVEX_OBSTACLE) {
+        std::cout << "Warning: Collision detection for convex held object "
+                  << held_object.name << " not supported" << std::endl;
+        // XXX See note in setup_obstacles
+    }
+
+    world_ready = true;
+}
+
+collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
+                                     std::shared_ptr<robot_model> m,
+                                     transform3 rb,
+                                     std::string group,
+                                     std::map<std::string, double> fixed,
+                                     std::vector<obstacle>& obstacles,
+                                     obstacle held_object)
+    : ompl::base::StateValidityChecker(si),
+    robot_base(rb),
+    fixed_joints(fixed),
+    model(m),
+    holding_object(true),
+    held_object(held_object)
+{
+    world_ready = false;
+
+    joint_names = model->get_joint_group(group);
+
+    world = new fcl::DynamicAABBTreeCollisionManager();
+
+    setup_obstacles(obstacles);
+
+    if (held_object.geometry == BALL_OBSTACLE) {
+        held_obj_geom =
+            std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(held_object.ball_radius));
+    } else if (held_object.geometry == BOX_OBSTACLE) {
+        held_obj_geom =
+            std::shared_ptr<fcl::CollisionGeometry>(
+                new fcl::Box(held_object.box_dim[0],
+                             held_object.box_dim[1],
+                             held_object.box_dim[2]));
+    } else if (held_object.geometry == CONVEX_OBSTACLE) {
+        std::cout << "Warning: Collision detection for convex held object "
+                  << held_object.name << " not supported" << std::endl;
+        // XXX See note in setup_obstacles
+    }
 
     world_ready = true;
 }
@@ -212,6 +295,27 @@ bool collision_checker::collide_internal(std::map<std::string, double> joint_sta
         obj_datas.push_back(new object_data());
         obj_datas.back()->name = t->first;
         obj_datas.back()->allowed_collisions = model->get_allowed_collisions(t->first);
+        obj_ptrs.back()->setUserData(obj_datas.back());
+        robot->registerObject(obj_ptrs.back());
+    }
+
+    if (holding_object) {
+        transform3 ee_world = robot_base*model->end_effector_xform(joint_state);
+        transform3 held_world = ee_world*held_object.transform;
+
+        vec4 quat;
+        held_world.rotation(quat);
+        fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
+        vec3 pos;
+        held_world.position(pos);
+        fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
+        fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
+
+        obj_ptrs.push_back(new fcl::CollisionObject(held_obj_geom,
+                                                    fcl_xf));
+        obj_datas.push_back(new object_data());
+        obj_datas.back()->name = held_object.name;
+        obj_datas.back()->allowed_collisions = model->end_effector_links();
         obj_ptrs.back()->setUserData(obj_datas.back());
         robot->registerObject(obj_ptrs.back());
     }
