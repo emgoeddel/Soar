@@ -502,6 +502,8 @@ robot_model::link_transforms(std::map<std::string, double> p,
     // IN TERMS OF MESH MODELS
     for (std::map<std::string, transform3>::iterator x = xforms.begin();
          x != xforms.end(); x++) {
+        if (x->first == "r_gripper_finger_link" ||
+            x->first == "l_gripper_finger_link") continue;
         if (box_translation)
             x->second = (x->second)*(all_links[x->first].aabb_origin);
         else x->second = (x->second)*(all_links[x->first].collision_origin);
