@@ -132,8 +132,9 @@ double convex_distance(const sgnode* a, const sgnode* b)
 // Returns the euclidean distance between the centroids of two nodes //
 double centroid_distance(const sgnode* a, const sgnode* b)
 {
-    vec3 ca = a->get_trans('p');
-    vec3 cb = b->get_trans('p');
+    vec3 ca, cb;
+    a->get_world_trans().position(ca);
+    b->get_world_trans().position(cb);
     return (cb - ca).norm();
 }
 
