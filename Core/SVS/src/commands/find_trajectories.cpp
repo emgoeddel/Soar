@@ -215,6 +215,9 @@ private:
 
         search_query.joint_group = "arm"; // XXX Possibly make option
 
+        search_query.holding_object = false;
+        // XXX add ability to parse held object
+
         std::cout << "--- COMMAND WITH ID " << id << " ---" << std::endl
                   << search_query.to_str() << std::endl
                   << "--------------------------" << std::endl;
