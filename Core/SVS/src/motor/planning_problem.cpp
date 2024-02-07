@@ -381,10 +381,17 @@ void planning_problem::run_planner() {
     //                               query.obstacles,
     //                               query.start_state["torso_lift_joint"])));
     collision_checker* cc;
-    cc = new collision_checker(cur_ss->getSpaceInformation(),
-                               model, query.base_pose,
-                               joint_group, fixed_joints,
-                               query.obstacles);
+    if (query.soar_query.holding_object) {
+        cc = new collision_checker(cur_ss->getSpaceInformation(),
+                                   model, query.base_pose,
+                                   joint_group, fixed_joints,
+                                   query.obstacles, query.held_object);
+    } else {
+        cc = new collision_checker(cur_ss->getSpaceInformation(),
+                                   model, query.base_pose,
+                                   joint_group, fixed_joints,
+                                   query.obstacles);
+    }
     cur_ss->setStateValidityChecker(ompl::base::StateValidityCheckerPtr(cc));
 
     // set up the planner
