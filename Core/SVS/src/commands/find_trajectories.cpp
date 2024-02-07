@@ -25,6 +25,7 @@
  *    ^min-time - [Optional] minumum seconds to spend planning**
  *    ^max-time - [Optional] maximum seconds to spend planning**
  *    ^target-samples - [Optional] number of IK solutions to explore for target state
+ *    ^holding-object - [Optional] object that is attached to the gripper link
  *
  * * After finding the min number of trajectories, the search will continue and
  *   wait to be cut off, although its status will switch to "continuing". After
@@ -46,6 +47,7 @@ public:
                                                                 parsed(false) {
         si = state->get_svs()->get_soar_interface();
         ms = state->get_motor_state();
+        scn = state->get_scene();
 
         // All data about target and search limits are stored in query struct,
         // will be updated with actual values when command is parsed
@@ -215,8 +217,20 @@ private:
 
         search_query.joint_group = "arm"; // XXX Possibly make option
 
-        search_query.holding_object = false;
-        // XXX add ability to parse held object
+        // ^holding-object
+        if (!si->get_const_attr(root,
+                                "holding-object",
+                                search_query.held_object_id)) {
+            search_query.holding_object = false;
+        } else {
+            search_query.holding_object = true;
+        }
+
+        if (search_query.holding_object &&
+            !scn->get_node(search_query.held_object_id)) {
+            set_status("could not find held object in scene");
+            return false;
+        }
 
         std::cout << "--- COMMAND WITH ID " << id << " ---" << std::endl
                   << search_query.to_str() << std::endl
@@ -227,6 +241,7 @@ private:
 
     soar_interface* si;
     motor_state* ms;
+    scene* scn;
     Symbol* root;
     Symbol* fails_root;
     std::vector<wme*> failure_wmes;

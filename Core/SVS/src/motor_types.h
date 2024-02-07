@@ -80,7 +80,7 @@ struct query {
            << target_center[2] << std::endl << "Target type: " << target_type << std::endl
            << "Target frame: " << target_frame;
 
-        if (holding_object) ss << "Holding object: " << held_object_id;
+        if (holding_object) ss << std::endl << "Holding object: " << held_object_id;
 
         return ss.str();
     }
