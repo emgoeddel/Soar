@@ -37,7 +37,7 @@ public:
     void stop_planner_query(int id);
     double query_solve_time(int id);
     bool plan_straight_line(std::map<std::string, double> start,
-                            vec3 goal, trajectory& out);
+                            vec3 goal, std::string goal_type, trajectory& out);
 
     collision_checker* build_collision_checker(transform3 robot_base,
                                                std::map<std::string, double> pose,

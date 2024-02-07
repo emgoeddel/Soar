@@ -17,7 +17,9 @@
  * XXX Currently also handles execution of this trajectory!
  *
  * Usage:
- *    ^target <vec3> - gripper target pose for the motion
+ *    ^target <vec3> - gripper target for the motion
+ *    ^type <pose relative> - [Optional] target is a 3D pose OR relative to current pose,
+ *                                       pose is default
  */
 
 class straight_line_trajectory_command : public command {
@@ -69,7 +71,15 @@ private:
             return false;
         }
 
-        if (!mtr->plan_straight_line(ms->get_joints(), gripper_target, t)) {
+        if (!si->get_const_attr(root, "type", type)) {
+            type = "pose";
+        }
+        if (type != "pose" && type != "relative") {
+            set_status("invalid target type");
+            return false;
+        }
+
+        if (!mtr->plan_straight_line(ms->get_joints(), gripper_target, type, t)) {
             set_status("planning_failure");
             return false;
         }
@@ -89,6 +99,7 @@ private:
 
     bool parsed;
     vec3 gripper_target;
+    std::string type;
     trajectory t;
     std::string last_status;
 };

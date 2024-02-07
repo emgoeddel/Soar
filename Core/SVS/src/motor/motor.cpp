@@ -81,12 +81,16 @@ double motor::query_solve_time(int id) {
 }
 
 bool motor::plan_straight_line(std::map<std::string, double> start,
-                               vec3 goal_xyz, trajectory& out) {
+                               vec3 goal_xyz, std::string goal_type, trajectory& out) {
     transform3 xform_start = model->end_effector_xform(start);
     vec3 start_xyz;
     xform_start.position(start_xyz);
     vec3 start_rpy;
     xform_start.rotation(start_rpy);
+
+    if (goal_type == "relative") {
+        goal_xyz = start_xyz + goal_xyz;
+    }
 
     // Calculate amount of desired hand movement per IK step
     double move_len = sqrt(pow(goal_xyz.x() - start_xyz.x(), 2) +
