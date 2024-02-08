@@ -42,11 +42,21 @@ public:
     collision_checker* build_collision_checker(transform3 robot_base,
                                                std::map<std::string, double> pose,
                                                std::vector<obstacle>& obstacles);
+    collision_checker* build_collision_checker(transform3 robot_base,
+                                               std::map<std::string, double> pose,
+                                               std::vector<obstacle>& obstacles,
+                                               obstacle held_object);
     void check_collision_state(transform3 robot_base,
                                std::map<std::string, double> pose,
                                std::vector<obstacle>& obstacles);
 
 private:
+    collision_checker* build_collision_internal(transform3 robot_base,
+                                                std::map<std::string, double> pose,
+                                                std::vector<obstacle>& obstacles,
+                                                bool holding_obj,
+                                                obstacle held_object);
+
     std::shared_ptr<robot_model> model;
     std::vector<planning_problem*> ongoing;
 };

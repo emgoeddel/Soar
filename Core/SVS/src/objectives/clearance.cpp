@@ -2,7 +2,6 @@
 
 #include "clearance.h"
 #include "objective_table.h"
-#include "motor/motor.h"
 #include "motor_state.h"
 
 /////////////////////////////// MCA //////////////////////////////////////
@@ -12,22 +11,34 @@ min_clearance_objective::min_clearance_objective(Symbol* cmd_rt,
                                                  objective_input* oi) : objective(cmd_rt,
                                                                                   si,
                                                                                   ms,
-                                                                                  oi) {
-    std::shared_ptr<motor> mtr = ms->get_motor();
-
-    std::vector<obstacle> obstacles;
+                                                                                  oi),
+                                                                        mtr(ms->get_motor())
+{
     ms->get_scene_obstacles(obstacles);
-
-    cc = mtr->build_collision_checker(ms->get_base_xform(),
-                                      ms->get_joints(),
-                                      obstacles);
 }
 
-min_clearance_objective::~min_clearance_objective() {
-    delete cc;
-}
+min_clearance_objective::~min_clearance_objective() {}
 
 double min_clearance_objective::evaluate_on(trajectory& t) {
+    collision_checker* cc;
+    if (t.holding_object) {
+        // Need to remove held object from obstacles
+        std::vector<obstacle> scene_obstacles;
+        std::vector<obstacle>::iterator o = obstacles.begin();
+        for (; o != obstacles.end(); o++) {
+            if (o->name == t.held_object.name) continue;
+            scene_obstacles.push_back(*o);
+        }
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          scene_obstacles,
+                                          t.held_object);
+    } else {
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          obstacles);
+    }
+
     double min_clear = 1000;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
     for (; w != t.waypoints.end(); w++) {
@@ -35,6 +46,7 @@ double min_clearance_objective::evaluate_on(trajectory& t) {
         if (clr < min_clear) min_clear = clr;
     }
 
+    delete cc;
     return min_clear;
 }
 
@@ -59,9 +71,9 @@ min_clear_subset_objective::min_clear_subset_objective(Symbol* cmd_rt,
                                                        soar_interface* si,
                                                        motor_state* ms,
                                                        objective_input* oi) :
-    objective(cmd_rt, si, ms, oi) {
-    std::shared_ptr<motor> mtr = ms->get_motor();
-
+    objective(cmd_rt, si, ms, oi),
+    mtr(ms->get_motor())
+{
     if (input->count("obstacles")) {
         filter_val_c<std::string>* names_str =
             dynamic_cast<filter_val_c<std::string>*>((*input)["obstacles"]);
@@ -84,7 +96,7 @@ min_clear_subset_objective::min_clear_subset_objective(Symbol* cmd_rt,
         std::vector<obstacle> obstacles;
         ms->get_scene_obstacles(obstacles);
 
-        std::vector<obstacle> subset;
+        subset.clear();
         std::vector<std::string>::iterator s = subset_names.begin();
         for (; s != subset_names.end(); s++) {
             bool match = false;
@@ -106,10 +118,6 @@ min_clear_subset_objective::min_clear_subset_objective(Symbol* cmd_rt,
                       << std::endl;
 
         subset_empty = false;
-        cc = mtr->build_collision_checker(ms->get_base_xform(),
-                                          ms->get_joints(),
-                                          subset);
-
         //////// DBG ///////
         // std::map<std::string, double> joints = ms->get_joints();
         // cc->print_scene(joints);
@@ -120,13 +128,24 @@ min_clear_subset_objective::min_clear_subset_objective(Symbol* cmd_rt,
     }
 }
 
-min_clear_subset_objective::~min_clear_subset_objective() {
-    delete cc;
-}
+min_clear_subset_objective::~min_clear_subset_objective() {}
 
 double min_clear_subset_objective::evaluate_on(trajectory& t) {
     double min_clear = 1000;
     if (subset_empty) return min_clear;
+
+    collision_checker* cc;
+    if (t.holding_object) {
+        // Assumes held object has NOT been specified in the subset!
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          subset,
+                                          t.held_object);
+    } else {
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          subset);
+    }
 
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
     for (; w != t.waypoints.end(); w++) {
@@ -134,6 +153,7 @@ double min_clear_subset_objective::evaluate_on(trajectory& t) {
         if (clr < min_clear) min_clear = clr;
     }
 
+    delete cc;
     return min_clear;
 }
 
@@ -162,26 +182,37 @@ weighted_avg_clearance_objective::weighted_avg_clearance_objective(Symbol* cmd_r
                                                  objective_input* oi) : objective(cmd_rt,
                                                                                   si,
                                                                                   ms,
-                                                                                  oi) {
-    std::shared_ptr<motor> mtr = ms->get_motor();
-
-    std::vector<obstacle> obstacles;
+                                                                                  oi),
+                                                                        mtr(ms->get_motor())
+{
     ms->get_scene_obstacles(obstacles);
-
-    cc = mtr->build_collision_checker(ms->get_base_xform(),
-                                      ms->get_joints(),
-                                      obstacles);
 
     MAX_CLR_FOR_AVG = 0.05; // XXX 5cm, but should probably be input
 }
 
-weighted_avg_clearance_objective::~weighted_avg_clearance_objective() {
-    delete cc;
-}
+weighted_avg_clearance_objective::~weighted_avg_clearance_objective() {}
 
 double weighted_avg_clearance_objective::evaluate_on(trajectory& t) {
-    double cost_total = 0;
+    collision_checker* cc;
+    if (t.holding_object) {
+        // Need to remove held object from obstacles
+        std::vector<obstacle> scene_obstacles;
+        std::vector<obstacle>::iterator o = obstacles.begin();
+        for (; o != obstacles.end(); o++) {
+            if (o->name == t.held_object.name) continue;
+            scene_obstacles.push_back(*o);
+        }
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          scene_obstacles,
+                                          t.held_object);
+    } else {
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          obstacles);
+    }
 
+    double cost_total = 0;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
     for (; w != t.waypoints.end(); w++) {
         double clr = cc->minimum_distance(*w);
@@ -193,6 +224,7 @@ double weighted_avg_clearance_objective::evaluate_on(trajectory& t) {
         cost_total += ((MAX_CLR_FOR_AVG - clr) / MAX_CLR_FOR_AVG);
     }
 
+    delete cc;
     return (cost_total / (double)t.length);
 }
 

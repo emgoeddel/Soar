@@ -484,6 +484,8 @@ void planning_problem::run_planner() {
             // }
 
             output_traj = path_to_trajectory(pg, cur_ss);
+            output_traj.holding_object = query.soar_query.holding_object;
+            if (output_traj.holding_object) output_traj.held_object = query.held_object;
             has_trajectory = true;
 
             timespec end_post;

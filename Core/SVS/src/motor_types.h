@@ -134,6 +134,9 @@ struct trajectory {
     std::vector<std::vector<double> > accelerations; // accel of each joint at waypoints
     std::vector<double> times; // time from start of each waypoint
 
+    bool holding_object;
+    obstacle held_object; // transform is assumed to be relative to ee frame
+
     double planning_time; // for eval
 };
 

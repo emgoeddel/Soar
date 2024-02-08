@@ -165,6 +165,21 @@ bool motor::plan_straight_line(std::map<std::string, double> start,
 collision_checker* motor::build_collision_checker(transform3 robot_base,
                                                   std::map<std::string, double> pose,
                                                   std::vector<obstacle>& obstacles) {
+    return build_collision_internal(robot_base, pose, obstacles, false, obstacle());
+}
+
+collision_checker* motor::build_collision_checker(transform3 robot_base,
+                                                  std::map<std::string, double> pose,
+                                                  std::vector<obstacle>& obstacles,
+                                                  obstacle held_object) {
+    return build_collision_internal(robot_base, pose, obstacles, true, held_object);
+}
+
+collision_checker* motor::build_collision_internal(transform3 robot_base,
+                                                   std::map<std::string, double> pose,
+                                                   std::vector<obstacle>& obstacles,
+                                                   bool holding_obj,
+                                                   obstacle held_object) {
     // construct vector state space for arm
     std::vector<std::string> joints = model->get_joint_group("arm");
     int dof = joints.size();
@@ -206,8 +221,21 @@ collision_checker* motor::build_collision_checker(transform3 robot_base,
         if (is_fixed) fixed[i->first] = i->second;
     }
 
-    return new collision_checker(new ompl::base::SpaceInformation(space), model,
-                                 robot_base, "arm", fixed, obstacles);
+    if (holding_obj) {
+        std::vector<obstacle>::iterator o = obstacles.begin();
+        for (; o != obstacles.end(); o++) {
+            if (o->name == held_object.name) {
+                std::cout << "[WARNING] Using " << held_object.name
+                          << " as environment obstacle AND held object!" << std::endl;
+            }
+        }
+
+        return new collision_checker(new ompl::base::SpaceInformation(space), model,
+                                     robot_base, "arm", fixed, obstacles, held_object);
+    } else {
+        return new collision_checker(new ompl::base::SpaceInformation(space), model,
+                                     robot_base, "arm", fixed, obstacles);
+    }
 }
 
 void motor::check_collision_state(transform3 robot_base,

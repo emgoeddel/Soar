@@ -5,6 +5,7 @@
 
 #include "objective.h"
 #include "motor/collision.h"
+#include "motor/motor.h"
 
 /*
  * CLEARANCE OBJECTIVES
@@ -28,7 +29,8 @@ public:
     double evaluate_on(trajectory& t);
 
 private:
-    collision_checker* cc;
+    std::shared_ptr<motor> mtr;
+    std::vector<obstacle> obstacles;
 };
 
 // MCS - Minimum Clearance, Subset [maximize]
@@ -44,7 +46,8 @@ public:
     double evaluate_on(trajectory& t);
 
 private:
-    collision_checker* cc;
+    std::shared_ptr<motor> mtr;
+    std::vector<obstacle> subset;
     bool subset_empty;
 };
 
@@ -61,7 +64,8 @@ public:
     double evaluate_on(trajectory& t);
 
 private:
-    collision_checker* cc;
+    std::shared_ptr<motor> mtr;
+    std::vector<obstacle> obstacles;
     double MAX_CLR_FOR_AVG;
 };
 
