@@ -70,6 +70,8 @@ public:
     objective* get_objective(int set_id, std::string name);
 
     std::string eval_objectives(int id, std::vector<std::string> objs);
+    void set_output(bool on) { output_values = on; }
+    bool do_output() { return output_values; }
 
     //// Joint state tracking ////
     void set_joints(std::map<std::string, double> j);
@@ -119,6 +121,8 @@ private:
     std::mutex stat_mtx;
     std::map<int, std::vector<int> > failures;
     std::mutex fail_mtx;
+
+    bool output_values;
 
     motor_link* listener;
 };

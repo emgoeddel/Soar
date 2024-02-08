@@ -824,6 +824,11 @@ void svs::proxy_get_children(map<string, cliproxy*>& c)
 #ifdef ENABLE_ROS
     c["objectives"] = &get_objective_table();
     c["ros"] = ri;
+
+    c["objective_output"] = new memfunc_proxy<svs>(this, &svs::cli_objective_output);
+    c["objective_output"]->set_help("Control objective value logging.")
+    .add_arg("on, off", "Whether objectives should be logged to file or not")
+    ;
 #endif
 
     for (size_t j = 0, jend = state_stack.size(); j < jend; ++j)
@@ -877,4 +882,24 @@ void svs::cli_connect_viewer(const vector<string>& args, ostream& os)
 void svs::cli_disconnect_viewer(const vector<string>& args, ostream& os)
 {
     draw->disconnect();
+}
+
+void svs::cli_objective_output(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        if (state_stack[0]->get_motor_state()->do_output()) {
+                os << "objective logging is ON" << endl;
+        } else {
+            os << "objective logging is OFF" << endl;
+        }
+        return;
+    }
+    bool enable_output = false;
+    if (args[0] == "on") enable_output = true;
+    else if (args[0] == "off") enable_output = false;
+    else {
+        os << "invalid parameter provided" << endl;
+    }
+
+    // Only turn objective logging on/off for the topstate
+    state_stack[0]->get_motor_state()->set_output(enable_output);
 }

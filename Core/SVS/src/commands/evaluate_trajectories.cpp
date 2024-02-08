@@ -82,18 +82,20 @@ private:
         }
 
         // EVAL ONLY
-        std::vector<std::string> names;
-        names.push_back("planning-time");
-        names.push_back("waypoints");
-        names.push_back("execution-time");
-        names.push_back("total-joint-movement");
-        names.push_back("min-clearance");
+        if (ms->do_output()) {
+            std::vector<std::string> names;
+            names.push_back("planning-time");
+            names.push_back("waypoints");
+            names.push_back("execution-time");
+            names.push_back("total-joint-movement");
+            names.push_back("min-clearance");
 
-        std::ofstream df;
-        df.open("objectives.txt", std::ios::out | std::ios::app);
-        if (!df.is_open()) std::cout << "ERROR writing to file!" << std::endl;
-        df << ms->eval_objectives(traj_set_id, names) << std::endl;
-        df.close();
+            std::ofstream df;
+            df.open("objectives.txt", std::ios::out | std::ios::app);
+            if (!df.is_open()) std::cout << "ERROR writing to file!" << std::endl;
+            df << ms->eval_objectives(traj_set_id, names) << std::endl;
+            df.close();
+        }
         // END EVAL
 
         std::string out_type;

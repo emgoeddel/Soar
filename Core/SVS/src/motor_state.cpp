@@ -16,7 +16,8 @@ motor_state::motor_state(std::shared_ptr<motor> m,
                          std::string n) : mtr(m),
                                           scn(s),
                                           state_name(n),
-                                          joints_type("none")
+                                          joints_type("none"),
+                                          output_values(false)
 {
     base_xform = transform3::identity();
 }
