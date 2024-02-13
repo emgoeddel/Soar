@@ -87,6 +87,9 @@ filter_table_entry* monitor_volume_filter_entry();
 // filters/tag_select.cpp
 filter_table_entry* tag_select_filter_entry();
 
+// filters/put_down_position.cpp
+filter_table_entry* put_down_area_filter_entry();
+
 filter_table::filter_table()
 {
     set_help("Prints out a list of all filter types.");
@@ -141,6 +144,8 @@ filter_table::filter_table()
     add(monitor_position_filter_entry());
 
     add(tag_select_filter_entry());
+
+    add(put_down_area_filter_entry());
 }
 
 void filter_table::proxy_get_children(map<string, cliproxy*>& c)

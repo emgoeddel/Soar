@@ -75,10 +75,34 @@ struct query {
         std::stringstream ss;
 
         ss << "Min num: " << min_num << " Max num: " << max_num << std::endl
-           << "Min time: " << min_time << " Max time: " << max_time << std::endl
-           << "Target: " << target_center[0] << ", " << target_center[1] << ", "
-           << target_center[2] << std::endl << "Target type: " << target_type << std::endl
-           << "Target frame: " << target_frame;
+           << "Min time: " << min_time << " Max time: " << max_time << std::endl;
+
+        ss << "Target center: " << target_center[0] << ", " << target_center[1] << ", "
+           << target_center[2] << std::endl;
+
+        if (target_type == POINT_TARGET) {
+            ss << "Target type: POINT" << std::endl;
+        } else if (target_type == BOX_TARGET) {
+            ss << "Target type: BOX, dimensions = [" <<  target_box_size[0] << ", "
+               <<  target_box_size[1] << ", "
+               <<  target_box_size[2] << "]" << std::endl;
+        } else if (target_type == SPHERE_TARGET) {
+            ss << "Target type: SPHERE, radius = " << target_sphere_radius << std::endl;
+        } else {
+            ss << "Target type: INVALID" << std::endl;
+        }
+
+        if (use_orientation) {
+            ss << "Target orientation: " << orientation[0] << ", " << orientation[1] << ", "
+               << orientation[2];
+            if (use_orientation_flex) {
+                ss << ", flexible by " << orientation_flex << std::endl;
+            } else {
+                ss << std::endl;
+            }
+        }
+
+        ss << "Target frame: " << target_frame;
 
         if (holding_object) ss << std::endl << "Holding object: " << held_object_id;
 
