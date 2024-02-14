@@ -18,7 +18,7 @@ class motor;
 
 // CTR - Endpoint Centrality
 // Returns how close to the center of a given area the endpoint is
-// Scale is 0 (perfectly centered) to 1 (very edge)
+// Scale is 0 (very edge) to 1 (perfectly centered)
 class centrality_objective : public objective {
 public:
     centrality_objective(Symbol* cmd_rt,

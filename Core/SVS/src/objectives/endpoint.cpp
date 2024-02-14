@@ -66,7 +66,10 @@ double centrality_objective::evaluate_on(trajectory& t) {
 
     double dist = (center_pt - ee_pos).norm();
 
-    return dist/max_dist;
+    //std::cout << "Endpoint [" << ee_pos[0] << ", " << ee_pos[1] << ", "
+    //          << ee_pos[2] << "] = " << dist/max_dist << " centrality value" << std::endl;
+
+    return (max_dist - dist)/max_dist;
 }
 
 objective* make_centrality_objective(Symbol* cmd_rt,
