@@ -148,6 +148,24 @@ private:
             obstacles = ss.str();
         }
 
+        bool has_area_center = false;
+        vec3 area_center;
+        if (si->get_vec3(root, "area-center", area_center)) {
+            has_area_center = true;
+        }
+
+        bool has_area_dimensions = false;
+        vec3 area_dimensions;
+        if (si->get_vec3(root, "area-dimensions", area_dimensions)) {
+            has_area_dimensions = true;
+        }
+
+        bool has_area_radius = false;
+        double area_radius;
+        if (si->get_const_attr(root, "area-radius", area_radius)) {
+            has_area_radius = true;
+        }
+
         input = new objective_input();
         (*input)["output-type"] = new filter_val_c<std::string>(out_type);
         (*input)["name"] = new filter_val_c<std::string>(obj_name);
@@ -157,6 +175,15 @@ private:
 
         if (obstacles != "")
             (*input)["obstacles"] = new filter_val_c<std::string>(obstacles);
+
+        if (has_area_center)
+            (*input)["area-center"] = new filter_val_c<vec3>(area_center);
+
+        if (has_area_dimensions)
+            (*input)["area-dimensions"] = new filter_val_c<vec3>(area_dimensions);
+
+        if (has_area_radius)
+            (*input)["area-radius"] = new filter_val_c<double>(area_radius);
 
         obj = get_objective_table().make_objective(obj_name,
                                                    root,

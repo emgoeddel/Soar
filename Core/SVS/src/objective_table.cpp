@@ -46,6 +46,9 @@ objective_table_entry* average_occlusion_objective_entry();
 objective_table_entry* proportion_occluded_objective_entry();
 objective_table_entry* occlusion_time_objective_entry();
 
+// ENDPOINT
+objective_table_entry* centrality_objective_entry();
+
 //////////////////////////////////////////////
 
 void objective_table::del_entries() {
@@ -82,6 +85,7 @@ objective_table::objective_table() {
     add(average_occlusion_objective_entry());
     add(proportion_occluded_objective_entry());
     add(occlusion_time_objective_entry());
+    add(centrality_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {
