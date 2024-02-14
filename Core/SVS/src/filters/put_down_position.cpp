@@ -100,6 +100,9 @@ public:
             return false;
         }
 
+        // Assuming that the frame of the object is at its center
+        pos[2] += (t_dim[2] / 2.0);
+
          // Swap in the target dimensions instead of orientation
         // We want an area the size of the target minus held object in x, y
         // but not much z variation
