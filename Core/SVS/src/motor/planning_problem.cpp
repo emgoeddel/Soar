@@ -21,8 +21,9 @@ double sample_double(double min, double max) {
 bool sample_svs_goal(const ompl::base::GoalLazySamples* gls, ompl::base::State* st) {
     const svs_goal* goal = static_cast<const svs_goal*>(gls);
 
+    // Does this cause the weird cases where the system stops being able to sample?
     if (gls->getStateCount() >= goal->num_samples) return false;
-    if (gls->samplingAttemptsCount() > 20 && gls->getStateCount() == 0) return false;
+    //if (gls->samplingAttemptsCount() > 100 && gls->getStateCount() == 0) return false;
 
     std::vector<double> jnt_values;
     if (goal->target_type == POINT_TARGET) {
@@ -152,7 +153,7 @@ svs_goal::svs_goal(ompl::base::SpaceInformationPtr si,
     model(m)
 {
     if (mq.has_target_samples()) num_samples = mq.soar_query.target_samples;
-    else num_samples = 1;
+    else num_samples = 10;
 
     joint_names = model->get_joint_group(mq.soar_query.joint_group);
     torso_jnt_val = mq.start_state["torso_lift_joint"]; // Only fixed joint needed for IK
