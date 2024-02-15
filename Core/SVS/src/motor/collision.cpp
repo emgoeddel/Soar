@@ -300,14 +300,14 @@ bool collision_checker::collide_internal(std::map<std::string, double> joint_sta
     }
 
     if (holding_object) {
-        transform3 ee_world = robot_base*model->end_effector_xform(joint_state);
-        transform3 held_world = ee_world*held_object.transform;
+        transform3 ee = model->end_effector_xform(joint_state);
+        transform3 held = ee*held_object.transform;
 
         vec4 quat;
-        held_world.rotation(quat);
+        held.rotation(quat);
         fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
         vec3 pos;
-        held_world.position(pos);
+        held.position(pos);
         fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
