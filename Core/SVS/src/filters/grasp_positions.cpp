@@ -181,3 +181,60 @@ filter_table_entry* grasp_second_filter_entry()
     e->create = &make_grasp_second_filter;
     return e;
 }
+
+////// filter grasp_vector //////
+class grasp_vector_filter : public map_filter<vec3> {
+public:
+    grasp_vector_filter(Symbol *root,
+                       soar_interface *si,
+                       scene *scn,
+                       filter_input *input) :
+        map_filter<vec3>(root, si, input),
+        scn(scn) {}
+
+    bool compute(const filter_params *p, vec3& out) {
+        sgnode *a;
+
+        if (!get_filter_param(this, p, "a", a)) {
+            set_status("expecting parameter a");
+            return false;
+        }
+        if (!scn->node_has_grasp(a->get_id())) {
+            set_status("a is not graspable");
+            return false;
+        }
+
+        std::vector<std::pair<transform3, transform3> > grasp_pairs =
+            scn->node_grasps(a->get_id());
+        if (grasp_pairs.empty()) {
+            set_status("a is not graspable");
+            return false;
+        }
+
+        vec3 pos1, pos2;
+        grasp_pairs[0].first.position(pos1);
+        grasp_pairs[0].second.position(pos2);
+        vec3 diff = pos2 - pos1;
+
+        out = diff;
+        return true;
+    }
+
+private:
+    scene *scn;
+};
+
+filter* make_grasp_vector_filter(Symbol* root, soar_interface* si, scene* scn, filter_input* input)
+{
+    return new grasp_vector_filter(root, si, scn, input);
+}
+
+filter_table_entry* grasp_vector_filter_entry()
+{
+    filter_table_entry* e = new filter_table_entry();
+    e->name = "grasp_vector";
+    e->description = "Returns a vector from first to second grasp poses of a";
+    e->parameters["a"] = "Sgnode a";
+    e->create = &make_grasp_vector_filter;
+    return e;
+}

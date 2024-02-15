@@ -100,15 +100,16 @@ public:
             return false;
         }
 
-        // Assuming that the frame of the object is at its center
-        pos[2] += (t_dim[2] / 2.0);
+        // Assuming that the frame of the object is at its bottom, center (?)
+        // And include some extra space to avoid mashing
+        pos[2] += t_dim[2] + 0.02;
 
          // Swap in the target dimensions instead of orientation
         // We want an area the size of the target minus held object in x, y
         // but not much z variation
         pos[3] = t_dim[0] - h_dim[0];
         pos[4] = t_dim[1] - h_dim[1];
-        pos[5] = 0.01;
+        pos[5] = 0.005;
 
         out = pos;
         return true;
