@@ -474,6 +474,13 @@ std::map<std::string, vec3> robot_model::models_as_boxes() {
     for (std::map<std::string, link_info>::iterator i = all_links.begin();
          i != all_links.end(); i++) {
         boxes[i->first] = i->second.aabb_size;
+        // Pad the fingers
+        if (i->first == "r_gripper_finger_link" ||
+            i->first == "l_gripper_finger_link") {
+            boxes[i->first][0] += 0.01; // finger length
+            boxes[i->first][1] += 0.005;
+            boxes[i->first][2] += 0.005;
+        }
     }
 
     return boxes;
