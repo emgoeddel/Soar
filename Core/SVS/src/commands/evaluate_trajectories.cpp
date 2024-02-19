@@ -48,9 +48,9 @@ public:
         if (!parsed) {
             parsed = true;
             if (parse()) {
-                set_status("parsed");
+                set_status("success");
                 return true;
-            } else return false;
+            } else return false; // status already set
         }
 
         if (update) {
@@ -61,8 +61,10 @@ public:
                 return false;
             }
 
-            if (obj->update_outputs())
+            if (obj->update_outputs()) {
                 ms->update_objective_callback(traj_set_id, obj->get_name());
+                set_status("success");
+            }
         }
 
         return true;
