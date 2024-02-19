@@ -48,6 +48,7 @@ objective_table_entry* occlusion_time_objective_entry();
 
 // ENDPOINT
 objective_table_entry* centrality_objective_entry();
+objective_table_entry* distance_objective_entry();
 
 //////////////////////////////////////////////
 
@@ -86,6 +87,7 @@ objective_table::objective_table() {
     add(proportion_occluded_objective_entry());
     add(occlusion_time_objective_entry());
     add(centrality_objective_entry());
+    add(distance_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {
