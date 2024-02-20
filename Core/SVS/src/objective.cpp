@@ -22,6 +22,19 @@ objective::objective(Symbol* cmd_rt,
     name = nm_fv->get_value();
     filter_val_c<std::string>* type_fv = dynamic_cast<filter_val_c<std::string>*>((*input)["output-type"]);
     ot = str_to_output(type_fv->get_value());
+
+    if (input->count("previous-selection")) {
+        filter_val_c<std::string>* prev_fv =
+            dynamic_cast<filter_val_c<std::string>*>((*input)["previous-selection"]);
+        std::string obj_name = prev_fv->get_value();
+
+        objective* prev_obj = ms->get_objective(set_id, obj_name);
+        std::map<int, double> prev_outputs = prev_obj->get_outputs();
+        std::map<int, double>::iterator p = prev_outputs.begin();
+        for (; p != prev_outputs.end(); p++) {
+            if (p->second) prev_selected.insert(p->first);
+        }
+    }
 }
 
 objective::~objective() {
@@ -39,6 +52,7 @@ bool pair_comp_max(std::pair<int, double> a, std::pair<int, double> b) {
 bool objective::evaluate() {
     std::map<int, trajectory>::iterator i = trajectories.begin();
     for (; i != trajectories.end(); i++) {
+        if (!prev_selected.empty() && !prev_selected.count(i->first)) continue;
         values[i->first] = evaluate_on(i->second);
         std::cout << name << " " << i->first << ": " << values[i->first] << std::endl;
      }

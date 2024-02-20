@@ -23,10 +23,12 @@
  *    ^number <n> - [Optional] number of trajectories to select *
  *    ^direction <d> - [Optional] <max, min>; whether to maximize or minimize **
  *    ^update <true/false> - [Optional] whether to update output at each decision cyle ***
+ *    ^previous-selection <name> - [Optional] run on subset from previous evaluation ****
  *
  * * If not included and using type select, assumes select 1; ignored if using other types
  * ** If not included, assumes minimize; ignored if using value
  * *** If not included, assumes false
+ * **** Will only work if a previous objective with this name has made selections!
  */
 
 class evaluate_trajectories_command : public command
@@ -112,6 +114,21 @@ private:
             return false;
         }
 
+        bool use_previous_selection = false;
+        std::string prev_selection_name;
+        if (si->get_const_attr(root, "previous-selection", prev_selection_name)) {
+            use_previous_selection = true;
+            objective* prev_obj = ms->get_objective(traj_set_id, prev_selection_name);
+            if (!prev_obj) {
+                set_status("invalid previous selection");
+                return false;
+            }
+            if (prev_obj->output_type() != SELECT) {
+                set_status("previous must be select");
+                return false;
+            }
+        }
+
         double num_traj = 1;
         si->get_const_attr(root, "number", num_traj);
 
@@ -175,6 +192,10 @@ private:
         (*input)["maximize"] = new filter_val_c<bool>(max);
         (*input)["set-id"] = new filter_val_c<int>(traj_set_id);
 
+        if (use_previous_selection)
+            (*input)["previous-selection"] =
+                new filter_val_c<std::string>(prev_selection_name);
+
         if (obstacles != "")
             (*input)["obstacles"] = new filter_val_c<std::string>(obstacles);
 
@@ -202,16 +223,17 @@ private:
         obj->update_outputs();
         ms->new_objective_callback(traj_set_id, obj);
 
-        // EVAL
-        std::ofstream df2;
-        df2.open("selections.txt", std::ios::out | std::ios::app);
-        if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
-        df2 << traj_set_id << " "
-            << ms->query_solve_time(traj_set_id) << " "
-            << obj_name << " "
-            << obj->get_selected() << " ";
-        df2.close();
-        // END EVAL
+        // EVAL ONLY
+        if (ms->do_output()) {
+            std::ofstream df2;
+            df2.open("selections.txt", std::ios::out | std::ios::app);
+            if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
+            df2 << traj_set_id << " "
+                << ms->query_solve_time(traj_set_id) << " "
+                << obj_name << " "
+                << obj->get_selected() << " ";
+            df2.close();
+        }
 
         return true;
     }

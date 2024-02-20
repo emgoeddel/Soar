@@ -54,6 +54,7 @@ protected:
     motor_state* ms;
     int set_id;
     std::map<int, trajectory> trajectories;
+    std::set<int> prev_selected;
     int subset_size;
     bool maximize;
 
