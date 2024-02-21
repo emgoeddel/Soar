@@ -3,7 +3,7 @@
 #include "combination.h"
 #include "objective_table.h"
 
-/////////////////////////////// LES //////////////////////////////////////
+/////////////////////////////// CRL //////////////////////////////////////
 
 ee_combo_objective::ee_combo_objective(Symbol* cmd_rt,
                                        soar_interface* si,
