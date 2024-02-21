@@ -69,5 +69,39 @@ private:
     double MAX_CLR_FOR_AVG;
 };
 
+// CHO - Minimum Clearance of Held Object [maximize]
+// Finds the minimum clearance between the held object and environment
+class held_clearance_objective : public objective {
+public:
+    held_clearance_objective(Symbol* cmd_rt,
+                             soar_interface* si,
+                             motor_state* ms,
+                             objective_input* oi);
+    ~held_clearance_objective();
+
+    double evaluate_on(trajectory& t);
+
+private:
+    std::shared_ptr<motor> mtr;
+    std::vector<obstacle> obstacles;
+};
+
+// CEE - Minimum Clearance of End Effector [maximize]
+// Finds the minimum clearance between the end effector links and environment
+class ee_clearance_objective : public objective {
+public:
+    ee_clearance_objective(Symbol* cmd_rt,
+                           soar_interface* si,
+                           motor_state* ms,
+                           objective_input* oi);
+    ~ee_clearance_objective();
+
+    double evaluate_on(trajectory& t);
+
+private:
+    std::shared_ptr<motor> mtr;
+    std::vector<obstacle> obstacles;
+};
+
 #endif
 #endif

@@ -98,6 +98,11 @@ public:
 
     ompl::base::StateSpacePtr get_space() { return si_->getStateSpace(); }
 
+    void use_ee_only(bool ee) { ee_only = ee; }
+    bool get_ee_only() { return ee_only; }
+    void use_held_only(bool held) { held_only = held; }
+    bool get_held_only() { return held_only; }
+
 private:
     void setup_obstacles(std::vector<obstacle>& obstacles);
     bool collide_internal(std::map<std::string, double> joint_state) const;
@@ -110,6 +115,9 @@ private:
     bool holding_object;
     obstacle held_object;
     std::shared_ptr<fcl::CollisionGeometry> held_obj_geom;
+
+    bool ee_only;
+    bool held_only; // for objectives
 
     fcl::BroadPhaseCollisionManager* world;
     std::vector<fcl::CollisionObject*> world_objects;

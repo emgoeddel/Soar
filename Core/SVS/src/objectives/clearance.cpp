@@ -244,4 +244,128 @@ objective_table_entry* weighted_avg_clearance_objective_entry() {
     return e;
 }
 
+/////////////////////////////// CHO //////////////////////////////////////
+
+held_clearance_objective::held_clearance_objective(Symbol* cmd_rt,
+                                                   soar_interface* si,
+                                                   motor_state* ms,
+                                                   objective_input* oi) :
+    objective(cmd_rt, si, ms, oi),
+    mtr(ms->get_motor())
+{
+    ms->get_scene_obstacles(obstacles);
+}
+
+held_clearance_objective::~held_clearance_objective() {}
+
+double held_clearance_objective::evaluate_on(trajectory& t) {
+    if (!t.holding_object) {
+        std::cout << "[Warning] Calling CHO on trajectory with no held object!" << std::endl;
+        return 0;
+    }
+
+    collision_checker* cc;
+    // Need to remove held object from obstacles
+    std::vector<obstacle> scene_obstacles;
+    std::vector<obstacle>::iterator o = obstacles.begin();
+    for (; o != obstacles.end(); o++) {
+        if (o->name == t.held_object.name) continue;
+        scene_obstacles.push_back(*o);
+    }
+    cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                      ms->get_joints(),
+                                      scene_obstacles,
+                                      t.held_object);
+    cc->use_held_only(true);
+
+    double min_clear = 1000;
+    std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
+    for (; w != t.waypoints.end(); w++) {
+        double clr = cc->minimum_distance(*w);
+        if (clr < min_clear) min_clear = clr;
+    }
+
+    delete cc;
+    return min_clear;
+}
+
+objective* make_held_clearance_objective(Symbol* cmd_rt,
+                                         soar_interface* si,
+                                         motor_state* ms,
+                                         objective_input* oi) {
+    return new held_clearance_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* held_clearance_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "held-obj-clearance";
+    e->description = "Minimum clearance of held object";
+    e->parameters["set-id"] = "Trajectory set";
+    e->create = &make_held_clearance_objective;
+    return e;
+}
+
+/////////////////////////////// CEE //////////////////////////////////////
+
+ee_clearance_objective::ee_clearance_objective(Symbol* cmd_rt,
+                                                   soar_interface* si,
+                                                   motor_state* ms,
+                                                   objective_input* oi) :
+    objective(cmd_rt, si, ms, oi),
+    mtr(ms->get_motor())
+{
+    ms->get_scene_obstacles(obstacles);
+}
+
+ee_clearance_objective::~ee_clearance_objective() {}
+
+double ee_clearance_objective::evaluate_on(trajectory& t) {
+    collision_checker* cc;
+    if (t.holding_object) {
+        // Need to remove held object from obstacles
+        std::vector<obstacle> scene_obstacles;
+        std::vector<obstacle>::iterator o = obstacles.begin();
+        for (; o != obstacles.end(); o++) {
+            if (o->name == t.held_object.name) continue;
+            scene_obstacles.push_back(*o);
+        }
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          scene_obstacles,
+                                          t.held_object);
+    } else {
+        cc = mtr->build_collision_checker(ms->get_base_xform(),
+                                          ms->get_joints(),
+                                          obstacles);
+    }
+
+    cc->use_ee_only(true);
+
+    double min_clear = 1000;
+    std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
+    for (; w != t.waypoints.end(); w++) {
+        double clr = cc->minimum_distance(*w);
+        if (clr < min_clear) min_clear = clr;
+    }
+
+    delete cc;
+    return min_clear;
+}
+
+objective* make_ee_clearance_objective(Symbol* cmd_rt,
+                                         soar_interface* si,
+                                         motor_state* ms,
+                                         objective_input* oi) {
+    return new ee_clearance_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* ee_clearance_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "end-effector-clearance";
+    e->description = "Minimum clearance of end effector";
+    e->parameters["set-id"] = "Trajectory set";
+    e->create = &make_ee_clearance_objective;
+    return e;
+}
+
 #endif
