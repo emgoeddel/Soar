@@ -108,8 +108,8 @@ public:
         // We want an area the size of the target minus held object in x, y,
         // with a little fudge to avoid the very edge
         // but not much z variation
-        pos[3] = t_dim[0] - h_dim[0] - 0.02;
-        pos[4] = t_dim[1] - h_dim[1] - 0.02;
+        pos[3] = t_dim[0] - h_dim[0] - 0.03;
+        pos[4] = t_dim[1] - h_dim[1] - 0.03;
         pos[5] = 0.005;
 
         out = pos;
