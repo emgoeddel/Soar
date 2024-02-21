@@ -1,9 +1,11 @@
 #include "objective_table.h"
 
-#include "objectives/length.h"
-#include "objectives/clearance.h"
-#include "objectives/relative.h"
-#include "objectives/visibility.h"
+// #include "objectives/length.h"
+// #include "objectives/clearance.h"
+// #include "objectives/relative.h"
+// #include "objectives/visibility.h"
+// #include "objectives/endpoint.h"
+// #include "objectives/combination.h"
 
 objective_table_entry::objective_table_entry() : //create(NULL),
                                                  description("") {
@@ -53,6 +55,9 @@ objective_table_entry* occlusion_time_objective_entry();
 objective_table_entry* centrality_objective_entry();
 objective_table_entry* distance_objective_entry();
 
+//COMBO
+objective_table_entry* ee_combo_objective_entry();
+
 //////////////////////////////////////////////
 
 void objective_table::del_entries() {
@@ -94,6 +99,7 @@ objective_table::objective_table() {
     add(occlusion_time_objective_entry());
     add(centrality_objective_entry());
     add(distance_objective_entry());
+    add(ee_combo_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {
