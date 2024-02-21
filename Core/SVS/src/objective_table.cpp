@@ -31,6 +31,7 @@ objective_table_entry* planning_time_objective_entry();
 objective_table_entry* execution_time_objective_entry();
 objective_table_entry* total_joint_objective_entry();
 objective_table_entry* ee_length_objective_entry();
+objective_table_entry* ee_rotation_objective_entry();
 
 // CLEARANCE
 objective_table_entry* min_clearance_objective_entry();
@@ -80,6 +81,7 @@ objective_table::objective_table() {
     add(execution_time_objective_entry());
     add(total_joint_objective_entry());
     add(ee_length_objective_entry());
+    add(ee_rotation_objective_entry());
     add(min_clearance_objective_entry());
     add(min_clear_subset_objective_entry());
     add(weighted_avg_clearance_objective_entry());

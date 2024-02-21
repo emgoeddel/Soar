@@ -198,9 +198,76 @@ objective* make_ee_length_objective(Symbol* cmd_rt,
 objective_table_entry* ee_length_objective_entry() {
     objective_table_entry* e = new objective_table_entry();
     e->name = "end-effector-length";
-    e->description = "Sum of end-effector movement";
+    e->description = "Sum of end-effector linear movement";
     e->parameters["set-id"] = "Trajectory set";
     e->create = &make_ee_length_objective;
+    return e;
+}
+
+/////////////////////////////// LER //////////////////////////////////////
+
+ee_rotation_objective::ee_rotation_objective(Symbol* cmd_rt,
+                                             soar_interface* si,
+                                             motor_state* ms,
+                                             objective_input* oi) : objective(cmd_rt,
+                                                                              si,
+                                                                              ms,
+                                                                              oi),
+                                                                    mtr(ms->get_motor()) {}
+
+double ee_rotation_objective::evaluate_on(trajectory& t) {
+    double ee_sum = 0;
+
+    // Get first waypoint ee xform
+    std::map<std::string, double> init_state;
+    std::vector<std::string>::iterator n = t.joints.begin();
+    int m = 0;
+    for (; n != t.joints.end(); n++) {
+        init_state[*n] = t.waypoints[0][m];
+        m++;
+    }
+    std::map<std::string, double>::iterator f = t.fixed_joints.begin();
+    for (; f != t.fixed_joints.end(); f++) {
+        init_state[f->first] = f->second;
+    }
+    transform3 prev_xform = mtr->get_ee_frame_transform_at(init_state);
+
+    // Go through rest of waypoints
+    for (int w = 1; w < t.length; w++) {
+        std::map<std::string, double> jnt_state;
+        n = t.joints.begin();
+        m = 0;
+        for (; n != t.joints.end(); n++) {
+            jnt_state[*n] = t.waypoints[w][m];
+            m++;
+        }
+        f = t.fixed_joints.begin();
+        for (; f != t.fixed_joints.end(); f++) {
+            jnt_state[f->first] = f->second;
+        }
+        transform3 cur_xform = mtr->get_ee_frame_transform_at(jnt_state);
+
+        // Add angular dist from prev to total
+        ee_sum += fabs(cur_xform.angle_difference(prev_xform));
+        prev_xform = cur_xform;
+    }
+
+    return ee_sum;
+}
+
+objective* make_ee_rotation_objective(Symbol* cmd_rt,
+                                         soar_interface* si,
+                                         motor_state* ms,
+                                         objective_input* oi) {
+    return new ee_rotation_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* ee_rotation_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "end-effector-rotation";
+    e->description = "Sum of end-effector rotational movement";
+    e->parameters["set-id"] = "Trajectory set";
+    e->create = &make_ee_rotation_objective;
     return e;
 }
 

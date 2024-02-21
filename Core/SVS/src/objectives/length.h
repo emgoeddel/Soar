@@ -75,5 +75,19 @@ private:
     std::shared_ptr<motor> mtr;
 };
 
+// LER - Length in End-effector Rotation [minimize]
+// Total amount that the ee rotates across the trajectory in rad
+class ee_rotation_objective : public objective {
+public:
+    ee_rotation_objective(Symbol* cmd_rt,
+                          soar_interface* si,
+                          motor_state* ms,
+                          objective_input* oi);
+    double evaluate_on(trajectory& t);
+
+private:
+    std::shared_ptr<motor> mtr;
+};
+
 #endif
 #endif
