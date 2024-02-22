@@ -134,6 +134,23 @@ double average_occlusion_objective::evaluate_on(trajectory& t) {
         nodes[b->first] = new convex_node(b->first, verts);
     }
 
+    if (t.holding_object) {
+        ptlist verts;
+        for (int i = -1; i <= 1; i++) {
+            if (i == 0) continue;
+            for (int j = -1; j <= 1; j++) {
+                if (j == 0) continue;
+                for (int k = -1; k <= 1; k++) {
+                    if (k == 0) continue;
+                    verts.push_back(vec3(i * t.held_object.box_dim[0],
+                                         j * t.held_object.box_dim[1],
+                                         k * t.held_object.box_dim[2]));
+                }
+            }
+        }
+        nodes[t.held_object.name] = new convex_node(t.held_object.name, verts);
+    }
+
     transform3 base = ms->get_base_xform();
     double occlusion_total = 0;
 
@@ -149,6 +166,9 @@ double average_occlusion_objective::evaluate_on(trajectory& t) {
         std::vector<const sgnode*> occluders;
 
         std::map<std::string, transform3> wp_xf = ms->get_link_transforms_at(joint_map);
+        if (t.holding_object) {
+            wp_xf[t.held_object.name] = ms->ee_frame_at(joint_map) * t.held_object.transform;
+        }
         std::map<std::string, convex_node*>::iterator n = nodes.begin();
         for (; n != nodes.end(); n++) {
             transform3 world = base * wp_xf[n->first];
@@ -230,6 +250,23 @@ double proportion_occluded_objective::evaluate_on(trajectory& t) {
         nodes[b->first] = new convex_node(b->first, verts);
     }
 
+    if (t.holding_object) {
+        ptlist verts;
+        for (int i = -1; i <= 1; i++) {
+            if (i == 0) continue;
+            for (int j = -1; j <= 1; j++) {
+                if (j == 0) continue;
+                for (int k = -1; k <= 1; k++) {
+                    if (k == 0) continue;
+                    verts.push_back(vec3(i * t.held_object.box_dim[0],
+                                         j * t.held_object.box_dim[1],
+                                         k * t.held_object.box_dim[2]));
+                }
+            }
+        }
+        nodes[t.held_object.name] = new convex_node(t.held_object.name, verts);
+    }
+
     transform3 base = ms->get_base_xform();
     double occluded_states = 0;
 
@@ -245,6 +282,9 @@ double proportion_occluded_objective::evaluate_on(trajectory& t) {
         std::vector<const sgnode*> occluders;
 
         std::map<std::string, transform3> wp_xf = ms->get_link_transforms_at(joint_map);
+        if (t.holding_object) {
+            wp_xf[t.held_object.name] = ms->ee_frame_at(joint_map) * t.held_object.transform;
+        }
         std::map<std::string, convex_node*>::iterator n = nodes.begin();
         for (; n != nodes.end(); n++) {
             transform3 world = base * wp_xf[n->first];
@@ -331,6 +371,23 @@ double occlusion_time_objective::evaluate_on(trajectory& t) {
         nodes[b->first] = new convex_node(b->first, verts);
     }
 
+    if (t.holding_object) {
+        ptlist verts;
+        for (int i = -1; i <= 1; i++) {
+            if (i == 0) continue;
+            for (int j = -1; j <= 1; j++) {
+                if (j == 0) continue;
+                for (int k = -1; k <= 1; k++) {
+                    if (k == 0) continue;
+                    verts.push_back(vec3(i * t.held_object.box_dim[0],
+                                         j * t.held_object.box_dim[1],
+                                         k * t.held_object.box_dim[2]));
+                }
+            }
+        }
+        nodes[t.held_object.name] = new convex_node(t.held_object.name, verts);
+    }
+
     transform3 base = ms->get_base_xform();
     double occlusion_time = 0;
 
@@ -348,6 +405,9 @@ double occlusion_time_objective::evaluate_on(trajectory& t) {
         std::vector<const sgnode*> occluders;
 
         std::map<std::string, transform3> wp_xf = ms->get_link_transforms_at(joint_map);
+        if (t.holding_object) {
+            wp_xf[t.held_object.name] = ms->ee_frame_at(joint_map) * t.held_object.transform;
+        }
         std::map<std::string, convex_node*>::iterator n = nodes.begin();
         for (; n != nodes.end(); n++) {
             transform3 world = base * wp_xf[n->first];

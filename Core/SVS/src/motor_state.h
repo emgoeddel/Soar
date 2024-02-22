@@ -77,6 +77,7 @@ public:
     void set_joints(std::map<std::string, double> j);
     std::map<std::string, double> get_joints();
     transform3 ee_frame_for_joints();
+    transform3 ee_frame_at(std::map<std::string, double> j);
     bool has_joints();
     void set_joints_type(std::string jt);
     std::string get_joints_type() { return joints_type; }

@@ -358,6 +358,10 @@ transform3 motor_state::ee_frame_for_joints() {
     return mtr->get_ee_frame_transform_at(joints);
 }
 
+transform3 motor_state::ee_frame_at(std::map<std::string, double> j) {
+    return mtr->get_ee_frame_transform_at(j);
+}
+
 bool motor_state::has_joints() {
     std::lock_guard<std::mutex> guard(joints_mtx);
 
