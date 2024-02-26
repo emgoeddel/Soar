@@ -56,6 +56,7 @@ protected:
     std::map<int, trajectory> trajectories;
     std::set<int> prev_selected;
     int subset_size;
+    std::string subset_type;
     bool maximize;
 
     std::map<int, double> values;

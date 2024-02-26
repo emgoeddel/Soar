@@ -23,6 +23,12 @@ objective::objective(Symbol* cmd_rt,
     filter_val_c<std::string>* type_fv = dynamic_cast<filter_val_c<std::string>*>((*input)["output-type"]);
     ot = str_to_output(type_fv->get_value());
 
+    if (input->count("subset-type")) {
+        filter_val_c<std::string>* st_fv =
+            dynamic_cast<filter_val_c<std::string>*>((*input)["subset-type"]);
+        subset_type = st_fv->get_value();
+    } else subset_type = "exact";
+
     if (input->count("previous-selection")) {
         filter_val_c<std::string>* prev_fv =
             dynamic_cast<filter_val_c<std::string>*>((*input)["previous-selection"]);
@@ -102,11 +108,30 @@ bool objective::update_outputs() {
             std::sort(sorted.begin(), sorted.end(), pair_comp_min);
         }
 
+        int c_i = 0;
+        double cutoff_value;
+        std::vector<std::pair<int, double> >::iterator c = sorted.begin();
+        for (; c != sorted.end(); c++) {
+            if (c_i == subset_size-1) {
+                cutoff_value = c->second;
+                break;
+            }
+            c_i++;
+        }
+
         int o = 0;
         std::vector<std::pair<int, double> >::iterator j = sorted.begin();
         for (; j != sorted.end(); j++) {
-            if (o < subset_size) outputs[j->first] = 1;
-            else outputs[j->first] = 0;
+            if (subset_type == "exact") {
+                if (o < subset_size) outputs[j->first] = 1;
+            } else if (subset_type == "strict") {
+                if (o < subset_size && j->second < cutoff_value) outputs[j->first] = 1;
+                if (j->second == cutoff_value && outputs[subset_size] > cutoff_value)
+                    outputs[j->first] = 1;
+            } else if (subset_type == "loose") {
+                if (j->second <= cutoff_value) outputs[j->first] = 1;
+            } else outputs[j->first] = 0;
+
             o++;
         }
     } break;

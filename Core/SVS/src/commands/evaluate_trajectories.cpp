@@ -21,11 +21,14 @@
  *    ^type <t> - <select, value, rank>; type of output from objective
  *    ^objective <ob> - objective to base selection on
  *    ^number <n> - [Optional] number of trajectories to select *
+ *    ^subset-type - [Optional] <strict, exact, loose> how to handle ties *
  *    ^direction <d> - [Optional] <max, min>; whether to maximize or minimize **
  *    ^update <true/false> - [Optional] whether to update output at each decision cyle ***
  *    ^previous-selection <name> - [Optional] run on subset from previous evaluation ****
  *
- * * If not included and using type select, assumes select 1; ignored if using other types
+ * * For use with "select" only; subset-type specifies whether an <exact> subset of n is
+ *   wanted, a <strict> subset that can be < n if a tie would take us over, or a <loose>
+ *   subset that can be > n and will include all tied values
  * ** If not included, assumes minimize; ignored if using value
  * *** If not included, assumes false
  * **** Will only work if a previous objective with this name has made selections!
@@ -132,6 +135,14 @@ private:
         double num_traj = 1;
         si->get_const_attr(root, "number", num_traj);
 
+        std::string subset_type = "";
+        si->get_const_attr(root, "subset-type", subset_type);
+        if (!(subset_type == "strict" || subset_type == "exact" ||
+              subset_type == "loose" || subset_type == "")) {
+            set_status("invalid subset-type given");
+            return false;
+        }
+
         std::string up;
         si->get_const_attr(root, "update", up);
         if (up == "true") update = true;
@@ -191,6 +202,9 @@ private:
         (*input)["number"] = new filter_val_c<int>(num_traj);
         (*input)["maximize"] = new filter_val_c<bool>(max);
         (*input)["set-id"] = new filter_val_c<int>(traj_set_id);
+
+        if (subset_type != "")
+            (*input)["subset-type"] = new filter_val_c<std::string>(subset_type);
 
         if (use_previous_selection)
             (*input)["previous-selection"] =
