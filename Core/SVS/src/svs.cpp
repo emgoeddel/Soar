@@ -213,6 +213,7 @@ svs_state::~svs_state()
 
     if (ms) {
         delete mowme;
+        std::cout << "Deleting a motor state... " << std::endl;
         delete ms;
     }
 }
@@ -260,9 +261,11 @@ void svs_state::init()
     if (!ms) {
         ms = new motor_state(svsp->get_motor(), scn, name);
 
-        if (parent) {
-            ms->copy_from(parent->ms);
-        }
+        // XXX Managing motor information in substates is beyond current
+        //     scope and would take some careful design
+        // if (parent) {
+        //     ms->copy_from(parent->ms);
+        // }
         mowme = new motor_link(si, mtr_link, ms);
     }
 }
@@ -686,8 +689,11 @@ void svs::proc_input(svs_state* s)
     {
         std::lock_guard<std::mutex> guard2(joint_in_mtx);
         s->get_motor_state()->set_joints(joint_inputs);
-        if (s->get_motor_state()->get_joints_type() != "current") {
-            std::cout << "Set joints to current!" << std::endl;
+        if (!joint_inputs.empty() &&
+            s->get_motor_state()->get_joints_type() != "current") {
+            std::cout << std::endl
+                      << "Robot joint input received! Setting joints to current."
+                      << std::endl;
             s->get_motor_state()->set_joints_type("current");
         }
     }

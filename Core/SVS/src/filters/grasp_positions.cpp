@@ -71,6 +71,11 @@ public:
             transform3 wt = a->get_world_trans()*grasp_pairs[0].first;
             wt.xyzrpy(pos);
         } else if (f == "self") {
+            if (!scn->get_self_root()) {
+                set_status("no self in scene");
+                return false;
+            }
+
             transform3 b = scn->get_self_root()->get_world_trans();
             transform3 o = a->get_world_trans()*grasp_pairs[0].first;
 

@@ -463,7 +463,7 @@ void ros_interface::enable(const std::vector<std::string>& args, std::ostream& o
                 enable_fxns[i->first]();
             }
         }
-        os << "All ROS inputs enabled" << std::endl;
+        os << std::endl << "All ROS inputs enabled" << std::endl;
         return;
     }
 
@@ -473,7 +473,7 @@ void ros_interface::enable(const std::vector<std::string>& args, std::ostream& o
     }
 
     if (!update_inputs[args[0]]) enable_fxns[args[0]]();
-    os << args[0] << " ROS input enabled" << std::endl;
+    os << std::endl << args[0] << " ROS input enabled" << std::endl;
 }
 
 // The function called by the user command svs ros.disable; unsubscribes to the
