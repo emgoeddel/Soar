@@ -338,7 +338,7 @@ void planning_problem::run_planner() {
     bounds.check();
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
     // XXX Parameter
-    space->setLongestValidSegmentFraction(0.001);
+    space->setLongestValidSegmentFraction(0.01);
 
     // add a SimpleSetup object for this planning thread
     ompl::geometric::SimpleSetup* cur_ss;
@@ -446,13 +446,14 @@ void planning_problem::run_planner() {
         timespec plan_time = timespec_sub(end_plan, start_plan);
 
         g->as<ompl::base::GoalLazySamples>()->stopSampling();
+        if (agent_stopped) break;
 
         bool has_trajectory = false;
         trajectory output_traj;
         int num_solns = 0;
 
         if (!cur_ss->haveExactSolutionPath()) {
-            if (!agent_stopped && !notified_comp) {
+            if (!notified_comp) {
                 if (!g->as<ompl::base::GoalLazySamples>()->hasStates())
                     ms->failure_callback(query_id, GOAL_INVALID);
                 else ms->failure_callback(query_id, ompl_status_to_failure_type(status));
