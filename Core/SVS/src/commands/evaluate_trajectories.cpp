@@ -222,6 +222,7 @@ private:
         if (has_area_radius)
             (*input)["area-radius"] = new filter_val_c<double>(area_radius);
 
+        // Note obj is created here but deleted by the motor state later
         obj = get_objective_table().make_objective(obj_name,
                                                    root,
                                                    si,

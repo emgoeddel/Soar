@@ -22,6 +22,20 @@ motor_state::motor_state(std::shared_ptr<motor> m,
     base_xform = transform3::identity();
 }
 
+motor_state::~motor_state() {
+    std::map<int, std::map<std::string, objective*> >::iterator o = objectives.begin();
+    for (; o != objectives.end(); o++) {
+        std::map<std::string, objective*>::iterator p = o->second.begin();
+        for (; p != o->second.end(); p++) {
+            delete p->second;
+        }
+    }
+
+    std::vector<int> qids = get_query_ids();
+    for (std::vector<int>::iterator i = qids.begin(); i != qids.end(); i++) {
+        stop_query(*i);
+    }
+}
 void motor_state::copy_from(motor_state* other) {
     // XXX Give agent a choice of what it wants here
     joints_type = "copy";

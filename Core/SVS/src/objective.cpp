@@ -44,6 +44,9 @@ objective::objective(Symbol* cmd_rt,
 }
 
 objective::~objective() {
+    for (objective_input::iterator i = input->begin(); i != input->end(); i++) {
+        delete i->second;
+    }
     delete input;
 }
 

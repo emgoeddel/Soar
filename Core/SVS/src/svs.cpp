@@ -207,14 +207,13 @@ svs_state::~svs_state()
     }
 
     if (img) {
-        delete imwme;
         delete img;
+        delete imwme;
     }
 
     if (ms) {
-        delete mowme;
-        std::cout << "Deleting a motor state... " << std::endl;
         delete ms;
+        delete mowme;
     }
 }
 
@@ -728,7 +727,6 @@ void svs::output_callback()
     //{
     //    (**i).update_cmd_results(true);
     //}
-    
 }
 
 void svs::input_callback()

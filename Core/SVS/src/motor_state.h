@@ -30,6 +30,7 @@ class scene;
 class motor_state {
 public:
     motor_state(std::shared_ptr<motor> m, scene* s, std::string n);
+    ~motor_state();
     void copy_from(motor_state* other);
 
     std::shared_ptr<motor> get_motor();
