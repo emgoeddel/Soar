@@ -6,6 +6,9 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <pthread.h>
+#include <time.h>
+#include "motor/timespec/timespec.h"
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -102,6 +105,8 @@ private:
 
     actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> axn_client;
     actionlib::SimpleActionClient<control_msgs::GripperCommandAction> gripper_client;
+    timespec delay_start;
+    bool delaying;
 
     std::string robot_desc;
     std::string robot_name;

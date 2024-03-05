@@ -20,6 +20,7 @@ ros_interface::ros_interface(svs* sp, std::shared_ptr<model_database> md)
       spinner(NULL),
       axn_client(n, "/arm_controller/follow_joint_trajectory", true),
       gripper_client(n, "/gripper_controller/gripper_action", true),
+      delaying(false),
       model_db(md)
 {
     svs_ptr = sp;
@@ -109,10 +110,38 @@ void ros_interface::send_gripper_pos(double p) {
     goal_msg.command.max_effort = 0.0;
     goal_msg.command.position = p;
 
+    delaying = false;
     gripper_client.sendGoal(goal_msg);
 }
 
 bool ros_interface::gripper_done() {
+    // Delaying is a hack to compensate for object attachment and detachment
+    // not being instantaneous in the gazebo plugin
+    if (!delaying && gripper_client.getState().isDone()) {
+        delaying = true;
+
+        pthread_t t_id = pthread_self();
+        clockid_t c_id;
+        int err = pthread_getcpuclockid(t_id, &c_id);
+        err = clock_gettime(c_id, &delay_start);
+        if (err) std::cout << "Error in gripper delay!" << std::endl;
+
+        return false;
+    }
+
+    if (delaying) {
+        timespec cur;
+        pthread_t t_id = pthread_self();
+        clockid_t c_id;
+        int err = pthread_getcpuclockid(t_id, &c_id);
+        err = clock_gettime(c_id, &cur);
+        if (err) std::cout << "Error in gripper delay!" << std::endl;
+
+        timespec delay_time = timespec_sub(cur, delay_start);
+
+        if (timespec_to_double(delay_time) < 0.05) return false;
+    }
+
     return gripper_client.getState().isDone();
 }
 
