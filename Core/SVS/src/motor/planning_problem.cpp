@@ -693,7 +693,7 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
 
     std::vector<double> time_diff(t.length-1, 0.0);
 
-    apply_vel_constraints(t, time_diff, 0.2, 20, 8.0);
+    apply_vel_constraints(t, time_diff, 0.3, 5, 5.0);
     update_trajectory(t, time_diff);
 
     return t;
@@ -731,12 +731,42 @@ void planning_problem::apply_vel_constraints(trajectory& t,
                                              int slowdown_length,
                                              double slowdown_factor)
 {
-    // Which diffs are included in the end slowdown
-    double slowdown_start = (t.length - 2) - slowdown_length;
-    if (slowdown_start < 0) slowdown_start = 0;
-    double m = (slowdown_factor - 1.0) / double(slowdown_length);
+    int n_diffs = t.length - 1;
+    std::vector<double> slow_factors(n_diffs, 1.0);
 
-    for (int i = 0; i < t.length - 1; i++)
+    // Which diffs are included in the end slowdown
+    int slowdown_start = n_diffs - slowdown_length;
+    if (slowdown_start < (n_diffs / 2.0))
+        slowdown_start = (int) (n_diffs / 2.0);
+
+    int speedup_end = slowdown_length;
+    if (speedup_end > ((n_diffs / 2.0) - 1) )
+        speedup_end = (int) ((n_diffs / 2.0) - 1);
+
+    // std::cout << "Speedup until " << speedup_end << " then slowdown starting at "
+    //           << slowdown_start << " out of " << n_diffs << std::endl;
+
+    double m_start, m_end;
+    if (speedup_end == slowdown_length) {
+        m_start = (1.0 - slowdown_factor) / slowdown_length;
+        m_end = (slowdown_factor - 1.0) / (slowdown_length - 1);
+    } else {
+        m_start = (1.0 - slowdown_factor) / speedup_end;
+        m_end = (slowdown_factor - 1.0) / (n_diffs - 1 - slowdown_start);
+    }
+
+    for (int i = 0; i < n_diffs; i++)
+    {
+        if (i < speedup_end) {
+            slow_factors[i] = m_start*i + slowdown_factor;
+        }
+
+        if (i >= slowdown_start) {
+            slow_factors[i] = m_end*i + (1.0 - m_end*slowdown_start);
+        }
+    }
+
+    for (int i = 0; i < n_diffs; i++)
     {
         std::vector<double> curr_waypoint = t.waypoints[i];
         std::vector<double> next_waypoint = t.waypoints[i + 1];
@@ -751,12 +781,12 @@ void planning_problem::apply_vel_constraints(trajectory& t,
                 time_diff[i] = t_min;
         }
 
-        // Implements linear slowdown to last diff
-        if (i >= slowdown_start) {
-            double x = (double)i - slowdown_start;
-            double scaling = m*x + 1.0;
-            time_diff[i] = time_diff[i]*scaling;
-        }
+        // std::cout << "   time diff " << i << " = " << time_diff[i] << ", scaling by "
+        //           << slow_factors[i];
+
+        time_diff[i] *= slow_factors[i];
+
+        // std::cout << " to " << time_diff[i] << std::endl;
     }
 }
 
