@@ -149,13 +149,13 @@ collision_checker::collision_checker(ompl::base::SpaceInformation* si,
 
     if (held_object.geometry == BALL_OBSTACLE) {
         held_obj_geom =
-            std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(held_object.ball_radius));
+            std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(held_object.ball_radius + 0.01));
     } else if (held_object.geometry == BOX_OBSTACLE) {
         held_obj_geom =
             std::shared_ptr<fcl::CollisionGeometry>(
-                new fcl::Box(held_object.box_dim[0],
-                             held_object.box_dim[1],
-                             held_object.box_dim[2]));
+                new fcl::Box(held_object.box_dim[0] + 0.01,
+                             held_object.box_dim[1] + 0.01,
+                             held_object.box_dim[2] + 0.01));
     } else if (held_object.geometry == CONVEX_OBSTACLE) {
         std::cout << "Warning: Collision detection for convex held object "
                   << held_object.name << " not supported" << std::endl;
@@ -191,13 +191,13 @@ collision_checker::collision_checker(const ompl::base::SpaceInformationPtr& si,
 
     if (held_object.geometry == BALL_OBSTACLE) {
         held_obj_geom =
-            std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(held_object.ball_radius));
+            std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(held_object.ball_radius + 0.01));
     } else if (held_object.geometry == BOX_OBSTACLE) {
         held_obj_geom =
             std::shared_ptr<fcl::CollisionGeometry>(
-                new fcl::Box(held_object.box_dim[0],
-                             held_object.box_dim[1],
-                             held_object.box_dim[2]));
+                new fcl::Box(held_object.box_dim[0] + 0.01,
+                             held_object.box_dim[1] + 0.01,
+                             held_object.box_dim[2] + 0.01));
     } else if (held_object.geometry == CONVEX_OBSTACLE) {
         std::cout << "Warning: Collision detection for convex held object "
                   << held_object.name << " not supported" << std::endl;
@@ -236,7 +236,7 @@ void collision_checker::setup_obstacles(std::vector<obstacle>& obstacles) {
 
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
-        double PADDING = 0.01;
+        double PADDING = 0.015;
         if (i->geometry == BALL_OBSTACLE) {
             world_obj_geoms.push_back(std::shared_ptr<fcl::CollisionGeometry>(new fcl::Sphere(i->ball_radius + (PADDING/2.0))));
             geom_types.push_back(BALL_OBSTACLE);
