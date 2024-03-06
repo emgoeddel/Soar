@@ -7,6 +7,8 @@
 #include <utility>
 #include <algorithm>
 #include <fstream>
+#include <chrono>
+#include <thread>
 
 #include "svs.h"
 #include "command.h"
@@ -727,6 +729,8 @@ void svs::output_callback()
     //{
     //    (**i).update_cmd_results(true);
     //}
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 void svs::input_callback()
