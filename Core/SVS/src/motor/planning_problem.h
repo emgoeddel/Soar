@@ -64,7 +64,7 @@ public:
     ~planning_problem();
 
     void start_solve();
-    void stop_solve();
+    void stop_solve(bool hard);
     int get_id() const { return query_id; }
     double get_solve_time();
 
@@ -97,6 +97,7 @@ private:
     bool reached_min_tc, reached_min_time;
     bool reached_max_tc, reached_max_time;
     bool agent_stopped;
+    bool hard_stopped;
     bool notified_cont, notified_comp;
     double solve_time;
     std::mutex st_mtx;

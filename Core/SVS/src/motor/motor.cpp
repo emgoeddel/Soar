@@ -53,12 +53,12 @@ bool motor::new_planner_query(int id, motor_query q, motor_state* msp) {
     return true;
 }
 
-void motor::stop_planner_query(int id) {
+void motor::stop_planner_query(int id, bool hard) {
     std::vector<planning_problem*>::iterator i = ongoing.begin();
     bool found = false;
     for (; i != ongoing.end(); i++) {
         if ((*i)->get_id() == id) {
-            (*i)->stop_solve();
+            (*i)->stop_solve(hard);
             found = true;
             break;
         }

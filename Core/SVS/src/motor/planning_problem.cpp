@@ -225,6 +225,7 @@ planning_problem::planning_problem(int qid,
                                                                      reached_max_tc(false),
                                                                      reached_max_time(false),
                                                                      agent_stopped(false),
+                                                                     hard_stopped(false),
                                                                      notified_cont(false),
                                                                      notified_comp(false),
                                                                      solve_time(-1)
@@ -288,7 +289,8 @@ void planning_problem::start_solve() {
     }
 }
 
-void planning_problem::stop_solve() {
+void planning_problem::stop_solve(bool hard) {
+    if (!hard)
     {
         std::lock_guard<std::mutex> guard1(ptc_mtx);
         std::list<ompl::base::PlannerTerminationCondition>::iterator p = agent_ptcs.begin();
@@ -296,13 +298,20 @@ void planning_problem::stop_solve() {
             if (!p->eval()) p->terminate();
         }
         agent_stopped = true;
-    }
+    } else {
+        std::lock_guard<std::mutex> guard1(ptc_mtx);
+        std::list<ompl::base::PlannerTerminationCondition>::iterator p = top_ptcs.begin();
+        for (; p != top_ptcs.end(); p++) {
+            if (!p->eval()) p->terminate();
+        }
+        hard_stopped = true;
 
-    for (std::vector<std::thread>::iterator i = thread_vec.begin();
-         i != thread_vec.end(); i++) {
-        if (i->joinable()) i->join();
+        for (std::vector<std::thread>::iterator i = thread_vec.begin();
+             i != thread_vec.end(); i++) {
+            if (i->joinable()) i->join();
+        }
+        thread_vec.clear();
     }
-    thread_vec.clear();
 }
 
 double planning_problem::get_solve_time() {
@@ -446,7 +455,7 @@ void planning_problem::run_planner() {
         timespec plan_time = timespec_sub(end_plan, start_plan);
 
         g->as<ompl::base::GoalLazySamples>()->stopSampling();
-        if (agent_stopped) break;
+        if (hard_stopped) break;
 
         bool has_trajectory = false;
         trajectory output_traj;
@@ -642,7 +651,7 @@ void planning_problem::run_planner() {
         //     }
         // }
 
-        // std::this_thread::sleep_for(std::chrono::seconds(2)); // dbg status updates
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100)); // dbg status updates
     } while (restart_search);
 }
 

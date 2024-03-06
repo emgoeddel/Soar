@@ -33,7 +33,7 @@ motor_state::~motor_state() {
 
     std::vector<int> qids = get_query_ids();
     for (std::vector<int>::iterator i = qids.begin(); i != qids.end(); i++) {
-        stop_query(*i);
+        stop_query(*i, true);
     }
 }
 void motor_state::copy_from(motor_state* other) {
@@ -108,8 +108,8 @@ std::vector<int> motor_state::get_query_failures(int id) {
     return failures[id];
 }
 
-void motor_state::stop_query(int id) {
-    mtr->stop_planner_query(id);
+void motor_state::stop_query(int id, bool hard) {
+    mtr->stop_planner_query(id, hard);
 }
 
 double motor_state::query_solve_time(int id) {

@@ -59,11 +59,12 @@ bool pair_comp_max(std::pair<int, double> a, std::pair<int, double> b) {
 }
 
 bool objective::evaluate() {
+    std::cout << "=============== " << name << " ===============" << std::endl;
     std::map<int, trajectory>::iterator i = trajectories.begin();
     for (; i != trajectories.end(); i++) {
         if (!prev_selected.empty() && !prev_selected.count(i->first)) continue;
         values[i->first] = evaluate_on(i->second);
-        std::cout << name << " " << i->first << ": " << values[i->first] << std::endl;
+        std::cout << i->first << ": " << values[i->first] << std::endl;
      }
 
     return true;

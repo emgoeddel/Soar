@@ -34,7 +34,7 @@ public:
 
     // Motion planning
     bool new_planner_query(int id, motor_query q, motor_state* msp);
-    void stop_planner_query(int id);
+    void stop_planner_query(int id, bool hard = false);
     double query_solve_time(int id);
     bool plan_straight_line(std::map<std::string, double> start,
                             vec3 goal, std::string goal_type, trajectory& out);
