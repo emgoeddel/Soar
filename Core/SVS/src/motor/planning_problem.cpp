@@ -748,9 +748,10 @@ void planning_problem::apply_vel_constraints(trajectory& t,
     if (slowdown_start < (n_diffs / 2.0))
         slowdown_start = (int) (n_diffs / 2.0);
 
-    int speedup_end = slowdown_length;
+    int speedup_end = slowdown_length - 1;
     if (speedup_end > ((n_diffs / 2.0) - 1) )
         speedup_end = (int) ((n_diffs / 2.0) - 1);
+    if (speedup_end < 1) speedup_end = 1;
 
     // std::cout << "Speedup until " << speedup_end << " then slowdown starting at "
     //           << slowdown_start << " out of " << n_diffs << std::endl;
@@ -805,7 +806,6 @@ void planning_problem::update_trajectory(trajectory& t, std::vector<double>& tim
     if (time_diff.empty()) return;
 
     double time_sum = 0.0;
-
 
     int num_points = t.length;
     t.times = std::vector<double>(num_points);
