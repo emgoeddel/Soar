@@ -119,6 +119,7 @@ private:
 
         bool use_previous_selection = false;
         std::string prev_selection_name;
+        std::string adj_name = obj_name;
         if (si->get_const_attr(root, "previous-selection", prev_selection_name)) {
             use_previous_selection = true;
             objective* prev_obj = ms->get_objective(traj_set_id, prev_selection_name);
@@ -129,6 +130,11 @@ private:
             if (prev_obj->output_type() != SELECT) {
                 set_status("previous must be select");
                 return false;
+            }
+            if (prev_selection_name == obj_name) {
+                std::stringstream ss;
+                ss << obj_name << "-d";
+                adj_name = ss.str();
             }
         }
 
@@ -198,7 +204,7 @@ private:
 
         input = new objective_input();
         (*input)["output-type"] = new filter_val_c<std::string>(out_type);
-        (*input)["name"] = new filter_val_c<std::string>(obj_name);
+        (*input)["name"] = new filter_val_c<std::string>(adj_name);
         (*input)["number"] = new filter_val_c<int>(num_traj);
         (*input)["maximize"] = new filter_val_c<bool>(max);
         (*input)["set-id"] = new filter_val_c<int>(traj_set_id);

@@ -277,6 +277,10 @@ std::vector<std::string> motor_state::objective_names(int set_id) {
     return v;
 }
 
+bool motor_state::has_objective(int set_id, std::string name) {
+    return objectives[set_id].count(name);
+}
+
 objective* motor_state::get_objective(int set_id, std::string name) {
     return objectives[set_id][name];
 }

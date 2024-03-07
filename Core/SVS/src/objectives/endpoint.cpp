@@ -148,6 +148,8 @@ distance_objective::distance_objective(Symbol* cmd_rt,
 }
 
 double distance_objective::evaluate_on(trajectory& t) {
+    if (!has_valid_obj) return 0;
+
     // Get last waypoint ee xyz
     std::map<std::string, double> end_state;
     std::vector<std::string>::iterator n = t.joints.begin();

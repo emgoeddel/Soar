@@ -68,6 +68,7 @@ public:
 
     int num_objectives(int set_id);
     std::vector<std::string> objective_names(int set_id);
+    bool has_objective(int set_id, std::string name);
     objective* get_objective(int set_id, std::string name);
 
     std::string eval_objectives(int id, std::vector<std::string> objs);

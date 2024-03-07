@@ -34,7 +34,20 @@ objective::objective(Symbol* cmd_rt,
             dynamic_cast<filter_val_c<std::string>*>((*input)["previous-selection"]);
         std::string obj_name = prev_fv->get_value();
 
-        objective* prev_obj = ms->get_objective(set_id, obj_name);
+        std::stringstream ss;
+        ss << obj_name << "-d";
+        std::string potential_duplicate = ss.str();
+
+        objective* prev_obj;
+        if (ms->has_objective(set_id, potential_duplicate))
+            // Base any further reasoning off the SECOND call to a previous objective
+            // if it exists
+            // XXX Note doesn't support calling the same objective 3x
+            prev_obj = ms->get_objective(set_id, potential_duplicate);
+        else
+            // Otherwise there's only one instance of the previous objective
+            prev_obj = ms->get_objective(set_id, obj_name);
+
         std::map<int, double> prev_outputs = prev_obj->get_outputs();
         std::map<int, double>::iterator p = prev_outputs.begin();
         for (; p != prev_outputs.end(); p++) {
