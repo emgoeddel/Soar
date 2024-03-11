@@ -347,7 +347,7 @@ void planning_problem::run_planner() {
     bounds.check();
     space->as<ompl::base::RealVectorStateSpace>()->setBounds(bounds);
     // XXX Parameter
-    space->setLongestValidSegmentFraction(0.01);
+    space->setLongestValidSegmentFraction(0.005);
 
     // add a SimpleSetup object for this planning thread
     ompl::geometric::SimpleSetup* cur_ss;
@@ -702,7 +702,7 @@ trajectory planning_problem::path_to_trajectory(ompl::geometric::PathGeometric& 
 
     std::vector<double> time_diff(t.length-1, 0.0);
 
-    apply_vel_constraints(t, time_diff, 0.3, 5, 5.0);
+    apply_vel_constraints(t, time_diff, 0.2, 5, 5.0);
     update_trajectory(t, time_diff);
 
     return t;
@@ -767,6 +767,11 @@ void planning_problem::apply_vel_constraints(trajectory& t,
 
     for (int i = 0; i < n_diffs; i++)
     {
+        if (n_diffs <= 2) {
+            slow_factors[i] = slowdown_factor;
+            continue;
+        }
+
         if (i < speedup_end) {
             slow_factors[i] = m_start*i + slowdown_factor;
         }
