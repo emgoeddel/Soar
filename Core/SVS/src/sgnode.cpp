@@ -752,9 +752,9 @@ void box_node::get_points_local(ptlist& pts) const {
             if (j == 0) continue;
             for (int k = -1; k <= 1; k++) {
                 if (k == 0) continue;
-                pts.push_back(vec3(i * dim(0) / 2,
-                                   j * dim(1) / 2,
-                                   k * dim(2) / 2));
+                pts.push_back(vec3(i * (dim(0) / 2.0),
+                                   j * (dim(1) / 2.0),
+                                   k * (dim(2) / 2.0)));
             }
         }
     }
@@ -766,7 +766,7 @@ void box_node::get_points_world(ptlist& pts) const {
     transform3 wt = get_world_trans();
 
     pts.clear();
-    for (ptlist::iterator i = pts.begin(); i != pts.end(); i++) {
+    for (ptlist::iterator i = local.begin(); i != local.end(); i++) {
         pts.push_back(wt(*i));
     }
 }
