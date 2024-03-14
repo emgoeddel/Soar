@@ -129,6 +129,31 @@ double convex_distance(const sgnode* a, const sgnode* b)
     return *min_element(dists.begin(), dists.end());
 }
 
+// Gets the min distance between two nodes' aabbs //
+double bbox_distance(const sgnode* a, const sgnode* b) {
+    bbox a_box = a->get_bounds();
+    bbox b_box = b->get_bounds();
+
+    vec3 a_min = a_box.get_min();
+    vec3 b_min = b_box.get_min();
+    vec3 a_max = a_box.get_max();
+    vec3 b_max = b_box.get_max();
+
+    vec3 int_min;
+    vec3 int_max;
+    double d_sq = 0.0;
+    for (int i = 0; i < 3; i++) {
+        int_min[i] = fmax(a_min[i], b_min[i]);
+        int_max[i] = fmin(a_max[i], b_max[i]);
+
+        if (int_min[i] > int_max[i]) {
+            d_sq += pow((int_min[i] - int_max[i]), 2);
+        }
+    }
+
+    return sqrt(d_sq);
+}
+
 // Returns the euclidean distance between the centroids of two nodes //
 double centroid_distance(const sgnode* a, const sgnode* b)
 {

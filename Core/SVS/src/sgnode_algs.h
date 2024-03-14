@@ -10,6 +10,8 @@ class scene;
 
 double convex_distance(const sgnode* a, const sgnode* b);
 
+double bbox_distance(const sgnode* a, const sgnode* b);
+
 double centroid_distance(const sgnode* a, const sgnode* b);
 
 double axis_distance(const sgnode* a, const sgnode* b, int axis);

@@ -59,8 +59,9 @@ double compare_distance(sgnode* a, sgnode* b, const filter_params* p)
     if (dist_type == "hull")
     {
         return convex_distance(a, b);
-    }
-    else
+    } else if (dist_type == "box") {
+        return bbox_distance(a, b);
+    } else
     {
         return centroid_distance(a, b);
     }
