@@ -474,13 +474,13 @@ std::map<std::string, vec3> robot_model::models_as_boxes() {
     for (std::map<std::string, link_info>::iterator i = all_links.begin();
          i != all_links.end(); i++) {
         boxes[i->first] = i->second.aabb_size;
-        // Pad the fingers
-        if (i->first == "r_gripper_finger_link" ||
-            i->first == "l_gripper_finger_link") {
-            boxes[i->first][0] += 0.02; // finger length
-            boxes[i->first][1] += 0.015;
-            boxes[i->first][2] += 0.01;
-        }
+        // // Pad the fingers
+        // if (i->first == "r_gripper_finger_link" ||
+        //     i->first == "l_gripper_finger_link") {
+        //     boxes[i->first][0] += 0.02; // finger length
+        //     boxes[i->first][1] += 0.015;
+        //     boxes[i->first][2] += 0.01;
+        // }
     }
 
     return boxes;
@@ -509,10 +509,11 @@ robot_model::link_transforms(std::map<std::string, double> p,
     // IN TERMS OF MESH MODELS
     for (std::map<std::string, transform3>::iterator x = xforms.begin();
          x != xforms.end(); x++) {
-        if (x->first == "r_gripper_finger_link" ||
-            x->first == "l_gripper_finger_link") continue;
-        if (box_translation)
+        if (box_translation) {
+            if (x->first == "r_gripper_finger_link" ||
+                x->first == "l_gripper_finger_link") continue;
             x->second = (x->second)*(all_links[x->first].aabb_origin);
+        }
         else x->second = (x->second)*(all_links[x->first].collision_origin);
     }
 
