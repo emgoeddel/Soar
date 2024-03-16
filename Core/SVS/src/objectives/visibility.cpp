@@ -40,21 +40,9 @@ base_vis_objective::base_vis_objective(Symbol* cmd_rt,
             has_valid_obj = true;
 
             box_node* box = static_cast<box_node*>(geom_oi);
-            vec3 dim = box->get_dimensions();
 
             ptlist verts;
-            for (int i = -1; i <= 1; i++) {
-                if (i == 0) continue;
-                for (int j = -1; j <= 1; j++) {
-                    if (j == 0) continue;
-                    for (int k = -1; k <= 1; k++) {
-                        if (k == 0) continue;
-                        verts.push_back(vec3(i * dim[0],
-                                             j * dim[1],
-                                             k * dim[2]));
-                    }
-                }
-            }
+            box->get_points_local(verts);
             obj_int = new convex_node("oi_convex", verts);
             vec3 p, r, s;
             geom_oi->get_trans(p, r, s);
@@ -125,9 +113,9 @@ double average_occlusion_objective::evaluate_on(trajectory& t) {
                 if (j == 0) continue;
                 for (int k = -1; k <= 1; k++) {
                     if (k == 0) continue;
-                    verts.push_back(vec3(i * b->second[0],
-                                         j * b->second[1],
-                                         k * b->second[2]));
+                    verts.push_back(vec3(i * (b->second[0]/2.0),
+                                         j * (b->second[1]/2.0),
+                                         k * (b->second[2]/2.0)));
                 }
             }
         }
@@ -142,9 +130,9 @@ double average_occlusion_objective::evaluate_on(trajectory& t) {
                 if (j == 0) continue;
                 for (int k = -1; k <= 1; k++) {
                     if (k == 0) continue;
-                    verts.push_back(vec3(i * t.held_object.box_dim[0],
-                                         j * t.held_object.box_dim[1],
-                                         k * t.held_object.box_dim[2]));
+                    verts.push_back(vec3(i * (t.held_object.box_dim[0]/2.0),
+                                         j * (t.held_object.box_dim[1]/2.0),
+                                         k * (t.held_object.box_dim[2]/2.0)));
                 }
             }
         }
@@ -241,9 +229,9 @@ double proportion_occluded_objective::evaluate_on(trajectory& t) {
                 if (j == 0) continue;
                 for (int k = -1; k <= 1; k++) {
                     if (k == 0) continue;
-                    verts.push_back(vec3(i * b->second[0],
-                                         j * b->second[1],
-                                         k * b->second[2]));
+                    verts.push_back(vec3(i * (b->second[0]/2.0),
+                                         j * (b->second[1]/2.0),
+                                         k * (b->second[2]/2.0)));
                 }
             }
         }
@@ -258,9 +246,9 @@ double proportion_occluded_objective::evaluate_on(trajectory& t) {
                 if (j == 0) continue;
                 for (int k = -1; k <= 1; k++) {
                     if (k == 0) continue;
-                    verts.push_back(vec3(i * t.held_object.box_dim[0],
-                                         j * t.held_object.box_dim[1],
-                                         k * t.held_object.box_dim[2]));
+                    verts.push_back(vec3(i * (t.held_object.box_dim[0]/2.0),
+                                         j * (t.held_object.box_dim[1]/2.0),
+                                         k * (t.held_object.box_dim[2]/2.0)));
                 }
             }
         }
@@ -362,9 +350,9 @@ double occlusion_time_objective::evaluate_on(trajectory& t) {
                 if (j == 0) continue;
                 for (int k = -1; k <= 1; k++) {
                     if (k == 0) continue;
-                    verts.push_back(vec3(i * b->second[0],
-                                         j * b->second[1],
-                                         k * b->second[2]));
+                    verts.push_back(vec3(i * (b->second[0]/2.0),
+                                         j * (b->second[1]/2.0),
+                                         k * (b->second[2]/2.0)));
                 }
             }
         }
@@ -379,9 +367,9 @@ double occlusion_time_objective::evaluate_on(trajectory& t) {
                 if (j == 0) continue;
                 for (int k = -1; k <= 1; k++) {
                     if (k == 0) continue;
-                    verts.push_back(vec3(i * t.held_object.box_dim[0],
-                                         j * t.held_object.box_dim[1],
-                                         k * t.held_object.box_dim[2]));
+                    verts.push_back(vec3(i * (t.held_object.box_dim[0]/2.0),
+                                         j * (t.held_object.box_dim[1]/2.0),
+                                         k * (t.held_object.box_dim[2]/2.0)));
                 }
             }
         }

@@ -275,12 +275,12 @@ public:
 
     void gjk_local_support(const vec3& dir, vec3& support) const;
 
+    void get_points_local(ptlist& pts) const;
+    void get_points_world(ptlist& pts) const;
+
 private:
     void update_shape();
     sgnode* clone_sub() const;
-
-    void get_points_local(ptlist& pts) const;
-    void get_points_world(ptlist& pts) const;
 
     vec3 dim;
 };
