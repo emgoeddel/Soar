@@ -415,9 +415,37 @@ void planning_problem::run_planner() {
     for (std::vector<std::string>::iterator j = joints.begin(); j != joints.end(); j++)
     {
         start[c] = query.start_state[*j];
+
+        if (start[c] > bounds.high[c]) {
+            if (fabs(start[c] - bounds.high[c]) < 0.001) {
+                std::cout << "Fixing joint value slightly over high!" << std::endl;
+                start[c] = bounds.high[c];
+            }
+        }
+        if (start[c] < bounds.low[c]) {
+            if (fabs(start[c] - bounds.low[c]) < 0.001) {
+                std::cout << "Fixing joint value slightly under low!" << std::endl;
+                start[c] = bounds.low[c];
+            }
+        }
+        // std::cout << "Start for " << *j << " = " << query.start_state[*j]
+        //           << ", " << start[c] << std::endl;
         c++;
     }
     cur_ss->setStartState(start);
+
+    if (!cur_ss->getSpaceInformation()->satisfiesBounds(start.get())) {
+        std::cout << "Start position is out of state space bounds!"
+                  << std::endl;
+    }
+
+    if (!cur_ss->getSpaceInformation()->isValid(start.get())) {
+        std::cout << "Start position is not valid! Collision information follows."
+                  << std::endl;
+        std::cout << "Collision checking result: " << cc->isValid(start.get()) << std::endl;
+        cc->print_scene(query.start_state);
+    }
+
 
     ompl::base::GoalPtr g(new svs_goal(cur_ss->getSpaceInformation(), query, model));
     cur_ss->setGoal(g);
