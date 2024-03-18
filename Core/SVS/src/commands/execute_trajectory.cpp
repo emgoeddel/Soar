@@ -8,6 +8,8 @@
 #include "motor_state.h"
 #include "objective_table.h" // for dbg only
 
+#include <time.h> // demo output
+
 class execute_trajectory_command : public command {
 public:
     execute_trajectory_command(svs_state* state, Symbol* root) : command(state, root),
@@ -38,7 +40,10 @@ public:
 
         bool finished = ri->execution_done();
         if (finished && last_status == "running") {
-            std::cout << "Trajectory finished executing!" << std::endl;
+            std::chrono::duration<double> et = std::chrono::system_clock::now() - start_time;
+            std::cout << "Execution of trajectory took "
+                      << et.count() << "s in wall time." << std::endl;
+
             last_status = "finished";
             set_status(last_status);
             si->make_wme(root, "result", ri->execution_result());
@@ -99,6 +104,7 @@ private:
 
         std::cout << "Executing trajectory " << traj_id << " from set " << set_id
                   << " with length " << t.length << std::endl;
+        start_time = std::chrono::system_clock::now();
         ri->send_trajectory(t);
 
         // EVAL
@@ -193,6 +199,7 @@ private:
 
     bool parsed;
     std::string last_status;
+    std::chrono::time_point<std::chrono::system_clock> start_time;
 };
 
 command* _make_execute_trajectory_command_(svs_state* state, Symbol* root)

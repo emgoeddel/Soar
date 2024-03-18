@@ -9,6 +9,7 @@
 #include "motor_state.h"
 
 #include <fstream> // eval
+#include <time.h> // demo output
 
 /*
  * evaluate_trajectories_command class
@@ -236,10 +237,15 @@ private:
                                                    input);
 
         obj->get_latest_trajectories();
+        std::chrono::time_point<std::chrono::system_clock> start_time =
+            std::chrono::system_clock::now();
         if (!obj->evaluate()) {
             set_status("could not evaluate");
             return false;
         }
+        std::chrono::duration<double> et = std::chrono::system_clock::now() - start_time;
+        std::cout << "Evaluation of objective " << adj_name << " on set " << traj_set_id
+                  << " took " << et.count() << "s in wall time." << std::endl;
 
         obj->update_outputs();
         ms->new_objective_callback(traj_set_id, obj);

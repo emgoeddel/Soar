@@ -88,6 +88,11 @@ public:
 
             if (stat != prev_status) {
                 set_status(stat);
+                prev_status = stat;
+                if (stat == "stopped" || stat == "complete") {
+                    std::cout << "Planning for command " << id << " took "
+                              << ms->query_solve_time(id) << "s in wall time." << std::endl;
+                }
             }
             std::vector<int> fails = ms->get_query_failures(id);
             // if (fails.size() > 0)
