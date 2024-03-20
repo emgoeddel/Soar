@@ -285,7 +285,7 @@ double proportion_occluded_objective::evaluate_on(trajectory& t) {
         }
 
         double co =  convex_occlusion(views, occluders);
-        if (co >= 0.25) { // 2 out of 8 box corners
+        if (co > 0) {
             occluded_states++;
         }
     }
@@ -408,7 +408,7 @@ double occlusion_time_objective::evaluate_on(trajectory& t) {
         }
 
         double co =  convex_occlusion(views, occluders);
-        if (co >= 0.25) { // 2 out of 8 box corners
+        if (co > 0) {
              occlusion_time += (t.times[w_i] - t.times[w_i-1]);
         }
         w_i++;
