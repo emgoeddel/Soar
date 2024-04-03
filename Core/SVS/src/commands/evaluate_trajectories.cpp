@@ -89,23 +89,6 @@ private:
             return false;
         }
 
-        // EVAL ONLY
-        if (ms->do_output()) {
-            std::vector<std::string> names;
-            names.push_back("planning-time");
-            names.push_back("waypoints");
-            names.push_back("execution-time");
-            names.push_back("total-joint-movement");
-            names.push_back("min-clearance");
-
-            std::ofstream df;
-            df.open("objectives.txt", std::ios::out | std::ios::app);
-            if (!df.is_open()) std::cout << "ERROR writing to file!" << std::endl;
-            df << ms->eval_objectives(traj_set_id, names) << std::endl;
-            df.close();
-        }
-        // END EVAL
-
         std::string out_type;
         if (!si->get_const_attr(root, "type", out_type)) {
             set_status("no type found");
@@ -255,11 +238,34 @@ private:
             std::ofstream df2;
             df2.open("selections.txt", std::ios::out | std::ios::app);
             if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
-            df2 << traj_set_id << " "
-                << ms->query_solve_time(traj_set_id) << " "
-                << obj_name << " "
+            df2 << obj_name << " "
                 << obj->get_selected() << " ";
             df2.close();
+
+            std::vector<std::string> names;
+            names.push_back("planning-time");
+            names.push_back("waypoints");
+            names.push_back("end-effector-rotation");
+            names.push_back("end-effector-length");
+            names.push_back("total-joint-movement");
+            names.push_back("execution-time");
+            names.push_back("end-effector-clearance");
+            names.push_back("weighted-avg-clearance");
+            names.push_back("min-clear-subset");
+            names.push_back("min-clearance");
+            names.push_back("time-over");
+            names.push_back("proportion-over");
+            names.push_back("avg-occlusion");
+            names.push_back("occlusion-time");
+            names.push_back("proportion-occluded");
+            names.push_back("end-effector-combo");
+            names.push_back("time-clear-combo");
+
+            std::ofstream df;
+            df.open("objectives.txt", std::ios::out | std::ios::app);
+            if (!df.is_open()) std::cout << "ERROR writing to file!" << std::endl;
+            df << ms->eval_objectives(traj_set_id, names, obstacles) << std::endl;
+            df.close();
         }
 
         return true;

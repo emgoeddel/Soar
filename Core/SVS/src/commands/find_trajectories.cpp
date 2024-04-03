@@ -7,6 +7,8 @@
 #include "scene.h"
 #include "motor_state.h"
 
+#include <fstream> // eval
+
 /*
  * find_trajectories_command class
  *
@@ -92,6 +94,15 @@ public:
                 if (stat == "stopped" || stat == "complete") {
                     std::cout << "Planning for command " << id << " took "
                               << ms->query_solve_time(id) << "s in wall time." << std::endl;
+
+                    if (ms->do_output()) {
+                        std::ofstream df;
+                        df.open("selections.txt", std::ios::out | std::ios::app);
+                        if (!df.is_open())
+                            std::cout << "ERROR writing to file!" << std::endl;
+                        df << id << " "
+                           << ms->query_solve_time(id) << " ";
+                    }
                 }
             }
             std::vector<int> fails = ms->get_query_failures(id);

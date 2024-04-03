@@ -286,7 +286,9 @@ objective* motor_state::get_objective(int set_id, std::string name) {
 }
 
 // EVAL
-std::string motor_state::eval_objectives(int id, std::vector<std::string> objs) {
+std::string motor_state::eval_objectives(int id,
+                                         std::vector<std::string> objs,
+                                         std::string obstacle) {
     std::lock_guard<std::mutex> guard(traj_mtx);
 
     std::stringstream ss;
@@ -308,6 +310,7 @@ std::string motor_state::eval_objectives(int id, std::vector<std::string> objs) 
         in["number"] = new filter_val_c<int>(1);
         in["maximize"] = new filter_val_c<bool>(true);
         in["set-id"] = new filter_val_c<int>(id);
+        in["obstacles"] = new filter_val_c<std::string>(obstacle);
 
         objective* obj_obj = get_objective_table().make_objective(*i,
                                                                   NULL,

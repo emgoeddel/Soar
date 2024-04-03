@@ -108,11 +108,13 @@ private:
         ri->send_trajectory(t);
 
         // EVAL
-        std::ofstream df2;
-        df2.open("selections.txt", std::ios::out | std::ios::app);
-        if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
-        df2 << traj_id << std::endl;
-        df2.close();
+        if (ms->do_output()) {
+            std::ofstream df2;
+            df2.open("selections.txt", std::ios::out | std::ios::app);
+            if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
+            df2 << traj_id << std::endl;
+            df2.close();
+        }
         // END EVAL
 
         ////////////////// FOR EVAL + DEBUGGING //////////////////////

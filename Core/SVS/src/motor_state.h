@@ -71,7 +71,9 @@ public:
     bool has_objective(int set_id, std::string name);
     objective* get_objective(int set_id, std::string name);
 
-    std::string eval_objectives(int id, std::vector<std::string> objs);
+    std::string eval_objectives(int id,
+                                std::vector<std::string> objs,
+                                std::string obstacle);
     void set_output(bool on) { output_values = on; }
     bool do_output() { return output_values; }
 
