@@ -5,6 +5,7 @@
 
 #include "objective.h"
 #include "length.h"
+#include "clearance.h"
 
 /*
  * COMBINATION OBJECTIVES
@@ -30,6 +31,23 @@ private:
 
     double LENGTH_WEIGHT;
     double ROTATION_WEIGHT;
+};
+
+// CTC - Combined Execution Time and Min Clearance [minimize]
+class time_clear_combo_objective : public objective {
+public:
+    time_clear_combo_objective(Symbol* cmd_rt,
+                               soar_interface* si,
+                               motor_state* ms,
+                               objective_input* oi);
+    double evaluate_on(trajectory& t);
+
+private:
+    execution_time_objective time;
+    min_clearance_objective clear;
+
+    double TIME_WEIGHT;
+    double CLEAR_WEIGHT;
 };
 
 

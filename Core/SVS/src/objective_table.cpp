@@ -57,6 +57,7 @@ objective_table_entry* distance_objective_entry();
 
 //COMBO
 objective_table_entry* ee_combo_objective_entry();
+objective_table_entry* time_clear_combo_objective_entry();
 
 //////////////////////////////////////////////
 
@@ -100,6 +101,7 @@ objective_table::objective_table() {
     add(centrality_objective_entry());
     add(distance_objective_entry());
     add(ee_combo_objective_entry());
+    add(time_clear_combo_objective_entry());
 }
 
 void objective_table::add(objective_table_entry* e) {
