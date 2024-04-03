@@ -895,9 +895,9 @@ void svs::cli_disconnect_viewer(const vector<string>& args, ostream& os)
 void svs::cli_objective_output(const std::vector<std::string>& args, std::ostream& os) {
     if (args.empty()) {
         if (state_stack[0]->get_motor_state()->do_output()) {
-                os << "objective logging is ON" << endl;
+                os << "Objective logging is ON" << endl;
         } else {
-            os << "objective logging is OFF" << endl;
+            os << "Objective logging is OFF" << endl;
         }
         return;
     }
@@ -905,9 +905,12 @@ void svs::cli_objective_output(const std::vector<std::string>& args, std::ostrea
     if (args[0] == "on") enable_output = true;
     else if (args[0] == "off") enable_output = false;
     else {
-        os << "invalid parameter provided" << endl;
+        os << "Invalid parameter provided" << endl;
+        return;
     }
 
     // Only turn objective logging on/off for the topstate
     state_stack[0]->get_motor_state()->set_output(enable_output);
+    if (enable_output) os << "Objective logging enabled" << endl;
+    else os << "Objective logging disabled" << endl;
 }
