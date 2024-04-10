@@ -339,6 +339,7 @@ bool collision_checker::collide_internal(std::map<std::string, double> joint_sta
 
     // Self-collision
     collision_data cds;
+    cds.done = false;
     cds.request = fcl::CollisionRequest();
     cds.request.enable_contact = false;
     cds.request.enable_cost = false;
@@ -347,6 +348,7 @@ bool collision_checker::collide_internal(std::map<std::string, double> joint_sta
 
     // World collision
     collision_data cdw;
+    cdw.done = false;
     cdw.request = fcl::CollisionRequest();
     cdw.request.enable_contact = false;
     cdw.request.enable_cost = false;
