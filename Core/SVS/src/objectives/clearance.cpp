@@ -47,7 +47,7 @@ double min_clearance_objective::evaluate_on(trajectory& t) {
                                           ms->get_joints(),
                                           obstacles);
     }
-    cc->print_scene(t.waypoints[0]);
+    // cc->print_scene(t.waypoints[0]); // DBG
 
     double min_clear = 1000;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
@@ -128,10 +128,6 @@ min_clear_subset_objective::min_clear_subset_objective(Symbol* cmd_rt,
                       << std::endl;
 
         subset_empty = false;
-        //////// DBG ///////
-        // std::map<std::string, double> joints = ms->get_joints();
-        // cc->print_scene(joints);
-        ///////////////////
     } else {
         std::cout << "[Warning] No obstacles provided to min-clear-subset!" << std::endl;
         subset_empty = true;
@@ -156,7 +152,7 @@ double min_clear_subset_objective::evaluate_on(trajectory& t) {
                                           ms->get_joints(),
                                           subset);
     }
-    cc->print_scene(t.waypoints[0]);
+    // cc->print_scene(t.waypoints[0]); // DBG
 
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
     for (; w != t.waypoints.end(); w++) {
@@ -304,7 +300,7 @@ double held_clearance_objective::evaluate_on(trajectory& t) {
                                       scene_obstacles,
                                       t.held_object);
     cc->use_held_only(true);
-    cc->print_scene(t.waypoints[0]);
+    // cc->print_scene(t.waypoints[0]); // DBG
 
     double min_clear = 1000;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
@@ -376,7 +372,7 @@ double ee_clearance_objective::evaluate_on(trajectory& t) {
     }
 
     cc->use_ee_only(true);
-    cc->print_scene(t.waypoints[0]);
+    // cc->print_scene(t.waypoints[0]); // DBG
 
     double min_clear = 1000;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();

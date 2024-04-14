@@ -433,7 +433,6 @@ void planning_problem::run_planner() {
         c++;
     }
     cur_ss->setStartState(start);
-    cc->print_scene(query.start_state);
 
     if (!cur_ss->getSpaceInformation()->satisfiesBounds(start.get())) {
         std::cout << "Start position is out of state space bounds!"

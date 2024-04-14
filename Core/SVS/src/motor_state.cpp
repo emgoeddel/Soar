@@ -319,7 +319,6 @@ std::string motor_state::eval_objectives(int id,
         in["set-id"] = new filter_val_c<int>(id);
         in["obstacles"] = new filter_val_c<std::string>(obstacle);
 
-        std::cout << "#############################" << *i << "#############################" << std::endl;
         objective* obj_obj = get_objective_table().make_objective(*i,
                                                                   NULL,
                                                                   NULL,
