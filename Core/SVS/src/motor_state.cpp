@@ -91,6 +91,13 @@ void motor_state::new_query(int id, query q) {
         get_scene_obstacles(mq.obstacles, mq.held_object.name);
     } else get_scene_obstacles(mq.obstacles);
 
+    obstacle ground;
+    ground.name = "ground_plane";
+    ground.geometry = BOX_OBSTACLE;
+    ground.box_dim = vec3(2, 2, 0.001);
+    ground.transform = transform3(base_xyz, vec3(0, 0, 0), vec3(1, 1, 1));
+    mq.obstacles.push_back(ground);
+
     queries[id] = mq;
     if (!mtr->new_planner_query(id, mq, this)) {
         std::cout << "Warning: Could not start planning for query " << id << std::endl;
@@ -312,6 +319,7 @@ std::string motor_state::eval_objectives(int id,
         in["set-id"] = new filter_val_c<int>(id);
         in["obstacles"] = new filter_val_c<std::string>(obstacle);
 
+        std::cout << "#############################" << *i << "#############################" << std::endl;
         objective* obj_obj = get_objective_table().make_objective(*i,
                                                                   NULL,
                                                                   NULL,

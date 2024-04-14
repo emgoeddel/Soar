@@ -213,6 +213,7 @@ bool robot_model::init(std::string robot_desc) {
     //allowed["base_link"].insert("estop_link");
     allowed["base_link"].insert("head_pan_link");
     allowed["base_link"].insert("head_tilt_link");
+    allowed["base_link"].insert("ground_plane"); // Not technically part of robot, but...
     //allowed["base_link"].insert("l_wheel_link");
     //allowed["base_link"].insert("laser_link");
     //allowed["base_link"].insert("r_wheel_link");
@@ -339,9 +340,11 @@ bool robot_model::init(std::string robot_desc) {
     allowed["shoulder_pan_link"].insert("torso_lift_link");
     allowed["shoulder_pan_link"].insert("wrist_flex_link");
     allowed["torso_fixed_link"].insert("torso_lift_link");
+    allowed["torso_fixed_link"].insert("ground_plane"); // Not technically part of robot, but...
     allowed["upperarm_roll_link"].insert("wrist_flex_link");
     allowed["upperarm_roll_link"].insert("wrist_roll_link");
     allowed["wrist_flex_link"].insert("wrist_roll_link");
+    allowed["torso_lift_link"].insert("ground_plane"); // Not technically part of robot, but...
 
     end_effector = "gripper_link";
 

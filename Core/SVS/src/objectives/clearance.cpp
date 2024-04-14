@@ -15,6 +15,15 @@ min_clearance_objective::min_clearance_objective(Symbol* cmd_rt,
                                                                         mtr(ms->get_motor())
 {
     ms->get_scene_obstacles(obstacles);
+
+    obstacle ground;
+    ground.name = "ground_plane";
+    ground.geometry = BOX_OBSTACLE;
+    ground.box_dim = vec3(2, 2, 0.001);
+    vec3 g_xyz;
+    ms->get_base_xform().position(g_xyz);
+    ground.transform = transform3(g_xyz, vec3(0, 0, 0), vec3(1, 1, 1));
+    obstacles.push_back(ground);
 }
 
 min_clearance_objective::~min_clearance_objective() {}
@@ -38,6 +47,7 @@ double min_clearance_objective::evaluate_on(trajectory& t) {
                                           ms->get_joints(),
                                           obstacles);
     }
+    cc->print_scene(t.waypoints[0]);
 
     double min_clear = 1000;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
@@ -146,6 +156,7 @@ double min_clear_subset_objective::evaluate_on(trajectory& t) {
                                           ms->get_joints(),
                                           subset);
     }
+    cc->print_scene(t.waypoints[0]);
 
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
     for (; w != t.waypoints.end(); w++) {
@@ -186,6 +197,14 @@ weighted_avg_clearance_objective::weighted_avg_clearance_objective(Symbol* cmd_r
                                                                         mtr(ms->get_motor())
 {
     ms->get_scene_obstacles(obstacles);
+    obstacle ground;
+    ground.name = "ground_plane";
+    ground.geometry = BOX_OBSTACLE;
+    ground.box_dim = vec3(2, 2, 0.001);
+    vec3 g_xyz;
+    ms->get_base_xform().position(g_xyz);
+    ground.transform = transform3(g_xyz, vec3(0, 0, 0), vec3(1, 1, 1));
+    obstacles.push_back(ground);
 
     MAX_CLR_FOR_AVG = 0.05; // XXX 5cm, but should probably be input
 }
@@ -254,6 +273,14 @@ held_clearance_objective::held_clearance_objective(Symbol* cmd_rt,
     mtr(ms->get_motor())
 {
     ms->get_scene_obstacles(obstacles);
+    obstacle ground;
+    ground.name = "ground_plane";
+    ground.geometry = BOX_OBSTACLE;
+    ground.box_dim = vec3(2, 2, 0.001);
+    vec3 g_xyz;
+    ms->get_base_xform().position(g_xyz);
+    ground.transform = transform3(g_xyz, vec3(0, 0, 0), vec3(1, 1, 1));
+    obstacles.push_back(ground);
 }
 
 held_clearance_objective::~held_clearance_objective() {}
@@ -277,6 +304,7 @@ double held_clearance_objective::evaluate_on(trajectory& t) {
                                       scene_obstacles,
                                       t.held_object);
     cc->use_held_only(true);
+    cc->print_scene(t.waypoints[0]);
 
     double min_clear = 1000;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();
@@ -315,6 +343,14 @@ ee_clearance_objective::ee_clearance_objective(Symbol* cmd_rt,
     mtr(ms->get_motor())
 {
     ms->get_scene_obstacles(obstacles);
+    obstacle ground;
+    ground.name = "ground_plane";
+    ground.geometry = BOX_OBSTACLE;
+    ground.box_dim = vec3(2, 2, 0.001);
+    vec3 g_xyz;
+    ms->get_base_xform().position(g_xyz);
+    ground.transform = transform3(g_xyz, vec3(0, 0, 0), vec3(1, 1, 1));
+    obstacles.push_back(ground);
 }
 
 ee_clearance_objective::~ee_clearance_objective() {}
@@ -340,6 +376,7 @@ double ee_clearance_objective::evaluate_on(trajectory& t) {
     }
 
     cc->use_ee_only(true);
+    cc->print_scene(t.waypoints[0]);
 
     double min_clear = 1000;
     std::vector<std::vector<double> >::iterator w = t.waypoints.begin();

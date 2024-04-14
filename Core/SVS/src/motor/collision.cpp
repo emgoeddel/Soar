@@ -55,6 +55,15 @@ bool distance_function(fcl::CollisionObject* o1,
         return true;
     }
 
+    object_data* o1_d = static_cast<object_data*>(o1->getUserData());
+    object_data* o2_d = static_cast<object_data*>(o2->getUserData());
+
+    if (o1_d->allowed_collisions.count(o2_d->name) ||
+        o2_d->allowed_collisions.count(o1_d->name)) {
+        dist = result.min_distance;
+        return dd->done;
+    }
+
     fcl::distance(o1, o2, request, result);
     dist = result.min_distance;
 
@@ -486,28 +495,60 @@ void collision_checker::print_scene(std::map<std::string, double> joint_state) {
 
     // Create the robot collision manager as in a normal collision check
     fcl::BroadPhaseCollisionManager* robot = new fcl::DynamicAABBTreeCollisionManager();
-
     std::vector<fcl::CollisionObject*> obj_ptrs;
     std::vector<object_data*> obj_datas;
-    for (std::map<std::string, transform3>::iterator t = xforms.begin();
-         t != xforms.end(); t++) {
-        transform3 wx = robot_base*t->second;
+
+    if (!held_only) {
+        // Asking for the transforms FOR THE MESH MODELS FOR COLLISION
+        std::map<std::string, transform3> xforms =
+            model->link_transforms(joint_state, false);
+
+        std::set<std::string> ee_names = model->end_effector_links();
+
+        for (std::map<std::string, transform3>::iterator t = xforms.begin();
+             t != xforms.end(); t++) {
+            if (ee_only) {
+                if (!ee_names.count(t->first)) continue;
+            }
+
+            transform3 wx = robot_base*t->second;
+
+            vec4 quat;
+            wx.rotation(quat);
+            fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
+            vec3 pos;
+            wx.position(pos);
+            fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
+            fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
+
+            obj_ptrs.push_back(new fcl::CollisionObject(model->get_collision_model(t->first),
+                                                        fcl_xf));
+            obj_datas.push_back(new object_data());
+            obj_datas.back()->name = t->first;
+            obj_datas.back()->allowed_collisions = model->get_allowed_collisions(t->first);
+            obj_ptrs.back()->setUserData(obj_datas.back());
+            robot->registerObject(obj_ptrs.back());
+        }
+    }
+
+    if (!ee_only && holding_object) {
+        transform3 ee = model->end_effector_xform(joint_state);
+        transform3 held = ee*held_object.transform;
 
         vec4 quat;
-        wx.rotation(quat);
+        held.rotation(quat);
         fcl::Quaternion3f fcl_quat(quat[3], quat[0], quat[1], quat[2]);
         vec3 pos;
-        wx.position(pos);
+        held.position(pos);
         fcl::Vec3f fcl_vec(pos[0], pos[1], pos[2]);
         fcl::Transform3f fcl_xf(fcl_quat, fcl_vec);
 
-        obj_ptrs.push_back(new fcl::CollisionObject(model->get_collision_model(t->first),
+        obj_ptrs.push_back(new fcl::CollisionObject(held_obj_geom,
                                                     fcl_xf));
         obj_datas.push_back(new object_data());
-        obj_datas.back()->name = t->first;
-        obj_datas.back()->allowed_collisions = model->get_allowed_collisions(t->first);
+        obj_datas.back()->name = held_object.name;
+        obj_datas.back()->allowed_collisions = model->end_effector_links();
         obj_ptrs.back()->setUserData(obj_datas.back());
-        model->get_collision_model(t->first)->setUserData(obj_datas.back());
         robot->registerObject(obj_ptrs.back());
     }
 
