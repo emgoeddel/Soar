@@ -418,12 +418,14 @@ view_line create_view_line(const string& name, const vec3& p1, const vec3& p2){
 // view_line.first is a convex_node that actually represents the line
 // view_line.second is a bool which is T if that view line is occluded by another object
 void calc_view_lines(const sgnode* target, const sgnode* eye, view_line_list& view_lines){
-    vec3 eyePos = eye->get_world_trans()(eye->get_centroid());
+    vec3 eyePos = eye->get_centroid();
     //std::cout << "EYE: " << eyePos[0] << ", " << eyePos[1] << ", " << eyePos[2] << std::endl;
 
 	// Create a view_line for the centroid
 	std::string name = "_centroid_line_";
 	view_lines.push_back(create_view_line(name, eyePos, target->get_centroid()));
+        //vec3 ctr = target->get_centroid();
+        //std::cout << "Centroid: " << ctr[0] << ", " << ctr[1] << ", " << ctr[2] << endl;
 
 	c_geom_node_list geom_nodes;
 	target->walk_geoms(geom_nodes);
@@ -475,9 +477,9 @@ double convex_occlusion(view_line_list& view_lines, const c_sgnode_list& occlude
 				if(n->get_id() == "arm"){
 					//std::cout << "ARM OCCLUSION!" << std::endl;
 				}
-				//std::cout << "Occlusion detected" << std::endl;
-				//std::cout << "  " << j->first->get_id() << std::endl;
-				//std::cout << "  " << n->get_id() << std::endl; 
+				// std::cout << "Occlusion detected" << std::endl;
+				// std::cout << "  " << j->first->get_id() << std::endl;
+				// std::cout << "  " << n->get_id() << std::endl; 
 
 				view_line.second = true;
 				num_occluded++;
