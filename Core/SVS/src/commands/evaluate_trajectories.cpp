@@ -248,6 +248,8 @@ private:
             names.push_back("end-effector-rotation");
             names.push_back("end-effector-length");
             names.push_back("total-joint-movement");
+            names.push_back("euclidean-joint");
+            names.push_back("sum-square-joint");
             names.push_back("execution-time");
             names.push_back("end-effector-clearance");
             names.push_back("weighted-avg-clearance");

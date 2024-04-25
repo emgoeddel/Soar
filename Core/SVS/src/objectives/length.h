@@ -59,6 +59,28 @@ public:
     double evaluate_on(trajectory& t);
 };
 
+// ELJ - Euclidean Length in Joint Space [minimize]
+// Joint movement calculated as straight lines through joint space
+class euclidean_joint_objective : public objective {
+public:
+    euclidean_joint_objective(Symbol* cmd_rt,
+                              soar_interface* si,
+                              motor_state* ms,
+                              objective_input* oi);
+    double evaluate_on(trajectory& t);
+};
+
+// SSJ - Sum of Squared Joint Movements [minimize]
+// Similar to ELJ but without taking the square root
+class sum_square_joint_objective : public objective {
+public:
+    sum_square_joint_objective(Symbol* cmd_rt,
+                               soar_interface* si,
+                               motor_state* ms,
+                               objective_input* oi);
+    double evaluate_on(trajectory& t);
+};
+
 class motor;
 
 // LES - Length in End-effector Space [minimize]

@@ -131,6 +131,80 @@ objective_table_entry* total_joint_objective_entry() {
     return e;
 }
 
+/////////////////////////////// ELJ //////////////////////////////////////
+
+euclidean_joint_objective::euclidean_joint_objective(Symbol* cmd_rt,
+                                                     soar_interface* si,
+                                                     motor_state* ms,
+                                                     objective_input* oi) : objective(cmd_rt,
+                                                                                      si,
+                                                                                      ms,
+                                                                                      oi) {}
+
+double euclidean_joint_objective::evaluate_on(trajectory& t) {
+    double j_sum = 0;
+    for (int w = 1; w < t.length; w++) {
+        double w_sum = 0;
+        for (int j = 0; j < t.waypoints[w].size(); j++) {
+            w_sum += powf((t.waypoints[w][j] - t.waypoints[w-1][j]), 2);
+        }
+        j_sum += sqrt(w_sum);
+    }
+    return j_sum;
+}
+
+objective* make_euclidean_joint_objective(Symbol* cmd_rt,
+                                          soar_interface* si,
+                                          motor_state* ms,
+                                          objective_input* oi) {
+    return new euclidean_joint_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* euclidean_joint_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "euclidean-joint";
+    e->description = "Sum of straight-line (Euclidean) joint space motion";
+    e->parameters["set-id"] = "Trajectory set";
+    e->create = &make_euclidean_joint_objective;
+    return e;
+}
+
+/////////////////////////////// SSJ //////////////////////////////////////
+
+sum_square_joint_objective::sum_square_joint_objective(Symbol* cmd_rt,
+                                                       soar_interface* si,
+                                                       motor_state* ms,
+                                                       objective_input* oi) : objective(cmd_rt,
+                                                                                        si,
+                                                                                        ms,
+                                                                                        oi) {}
+
+double sum_square_joint_objective::evaluate_on(trajectory& t) {
+    double j_sum = 0;
+    for (int w = 1; w < t.length; w++) {
+        for (int j = 0; j < t.waypoints[w].size(); j++) {
+            j_sum += powf((t.waypoints[w][j] - t.waypoints[w-1][j]), 2);
+        }
+    }
+    return j_sum;
+}
+
+objective* make_sum_square_joint_objective(Symbol* cmd_rt,
+                                           soar_interface* si,
+                                           motor_state* ms,
+                                           objective_input* oi) {
+    return new sum_square_joint_objective(cmd_rt, si, ms, oi);
+}
+
+objective_table_entry* sum_square_joint_objective_entry() {
+    objective_table_entry* e = new objective_table_entry();
+    e->name = "sum-square-joint";
+    e->description = "Sum of squared joint space motion";
+    e->parameters["set-id"] = "Trajectory set";
+    e->create = &make_sum_square_joint_objective;
+    return e;
+}
+
 /////////////////////////////// LES //////////////////////////////////////
 
 ee_length_objective::ee_length_objective(Symbol* cmd_rt,

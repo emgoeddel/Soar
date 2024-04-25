@@ -32,6 +32,8 @@ objective_table_entry* waypoints_objective_entry();
 objective_table_entry* planning_time_objective_entry();
 objective_table_entry* execution_time_objective_entry();
 objective_table_entry* total_joint_objective_entry();
+objective_table_entry* euclidean_joint_objective_entry();
+objective_table_entry* sum_square_joint_objective_entry();
 objective_table_entry* ee_length_objective_entry();
 objective_table_entry* ee_rotation_objective_entry();
 
@@ -86,6 +88,8 @@ objective_table::objective_table() {
     add(planning_time_objective_entry());
     add(execution_time_objective_entry());
     add(total_joint_objective_entry());
+    add(euclidean_joint_objective_entry());
+    add(sum_square_joint_objective_entry());
     add(ee_length_objective_entry());
     add(ee_rotation_objective_entry());
     add(min_clearance_objective_entry());
