@@ -39,9 +39,9 @@ class evaluate_trajectories_command : public command
 {
 public:
     evaluate_trajectories_command(svs_state* state, Symbol* root) : command(state, root),
-                                                                root(root),
-                                                                parsed(false),
-                                                                update(false) {
+                                                                    root(root),
+                                                                    parsed(false),
+                                                                    update(false) {
         si = state->get_svs()->get_soar_interface();
         ms = state->get_motor_state();
     }
@@ -238,8 +238,27 @@ private:
             std::ofstream df2;
             df2.open("selections.txt", std::ios::out | std::ios::app);
             if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
-            df2 << obj_name << " "
-                << obj->get_selected() << " ";
+
+            std::stringstream name_strm;
+            if (use_previous_selection) {
+                name_strm << "-then-";
+            }
+
+            name_strm << obj_name;
+            // Comment out obstacles check for name-only output for one objective
+            // (ie behavior in first data sets)
+            if (obstacles != "") {
+                name_strm << "-" << obstacles;
+            }
+
+            df2 << name_strm.str();
+
+            if (obj->get_subset_size() == 1) {
+                df2 << " " << obj->get_selected() << " ";
+            } else {
+                df2 << "-subset-" << obj->get_subset_size();
+            }
+
             df2.close();
 
             std::vector<std::string> names;

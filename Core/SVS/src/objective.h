@@ -33,6 +33,7 @@ public:
     void get_latest_trajectories();
     bool update_outputs();
     OutputType output_type() { return ot; }
+    int get_subset_size() { return subset_size; }
 
     std::string get_name() { return name; }
     std::map<int, double> get_outputs() { return outputs; }
