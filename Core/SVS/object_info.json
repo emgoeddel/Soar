@@ -196,6 +196,84 @@
             ]
         },
         {
+            "name" : "demo_generic_2",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_lamp_2",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_dropoff_box_2",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_vase_2",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_cat_2",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "demo_cardboard_box_2",
+            "shapes" : [
+                {
+                    "shape" : "box",
+                    "dimensions" : [0.34, 0.34, 0.42],
+                    "transform" : {
+                        "translation" : [0, 0, 0.21],
+                        "rotation" : [0, 0, 0, 1]
+                    }
+                }
+            ]
+        },
+        {
             "name" : "bottle_red_wine",
             "shapes" : [
                 {
