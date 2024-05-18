@@ -80,7 +80,7 @@ base_vis_objective::~base_vis_objective() {
     delete obj_int;
 }
 
-/////////////////////////////// AOO //////////////////////////////////////
+/////////////////////////////// AOS //////////////////////////////////////
 average_occlusion_objective::average_occlusion_objective(Symbol* cmd_rt,
                                                          soar_interface* si,
                                                          motor_state* ms,
@@ -196,7 +196,7 @@ objective_table_entry* average_occlusion_objective_entry() {
     return e;
 }
 
-/////////////////////////////// PRO //////////////////////////////////////
+/////////////////////////////// PRS //////////////////////////////////////
 proportion_occluded_objective::proportion_occluded_objective(Symbol* cmd_rt,
                                                    soar_interface* si,
                                                    motor_state* ms,
@@ -317,7 +317,7 @@ objective_table_entry* proportion_occluded_objective_entry() {
     return e;
 }
 
-/////////////////////////////// OTO //////////////////////////////////////
+/////////////////////////////// OTS //////////////////////////////////////
 occlusion_time_objective::occlusion_time_objective(Symbol* cmd_rt,
                                                    soar_interface* si,
                                                    motor_state* ms,

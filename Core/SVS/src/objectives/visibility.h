@@ -13,6 +13,8 @@
  * object(s) in the environment when moving through a trajectory. Require access to the
  * scene graph (via the motor_state).
  *
+ * Note that these say subset, but in implementation, they only can take one object.
+ *
  */
 
 // Base class for visibility objectives
@@ -33,7 +35,7 @@ protected:
     std::vector<std::string> arm;
 };
 
-// AOO - Average Occlusion of Object [minimize]
+// AOS - Average Occlusion of Subset [minimize]
 // Average amount of occlusion of an object of interest across trajectory
 class average_occlusion_objective : public base_vis_objective {
 public:
@@ -45,7 +47,7 @@ public:
     double evaluate_on(trajectory& t);
 };
 
-// PRO - Proportion of Trajectory Object is Occluded [minimize]
+// PRS - Proportion of Trajectory Subset is Occluded [minimize]
 // How much of a trajectory is spent with at least two corners of object occluded
 class proportion_occluded_objective : public base_vis_objective {
 public:
@@ -57,7 +59,7 @@ public:
     double evaluate_on(trajectory& t);
 };
 
-// OTO - Occlusion Time of Object [minimize]
+// OTS - Occlusion Time of Subset [minimize]
 // Amount of time that at least two corners of object are occluded by the arm
 class occlusion_time_objective : public base_vis_objective {
 public:

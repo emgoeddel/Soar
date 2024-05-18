@@ -34,6 +34,7 @@ protected:
     collision_checker* cc;
 };
 
+// Specialization of PTR
 // PTO - Proportion of Trajectory spent Over a selected object
 // Calculates how much of a trajectory is spent with part of the arm "over" object
 class proportion_over_objective : public base_over_objective {
@@ -59,6 +60,7 @@ public:
 //     double evaluate_on(trajectory& t);
 // };
 
+// Specialization of TTR
 // TTO - Time during Trajectory spent Over a selected object
 // Calculates how much time is spent with part of the arm "over" object
 class time_over_objective : public base_over_objective {
