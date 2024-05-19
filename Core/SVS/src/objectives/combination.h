@@ -14,9 +14,10 @@
  * objectives, but due to Soar interface limitations, I've pre-selected the combinations
  * and hard-coded them into their own objectives.
  *
+ * Both of these are versions of CRL as defined in thesis
  */
 
-// CRL - Combined End Effector Rotational and Linear Lengths [minimize]
+// CRL (1) - Combined End Effector Rotational and Linear Lengths [minimize]
 class ee_combo_objective : public objective {
 public:
     ee_combo_objective(Symbol* cmd_rt,
@@ -33,7 +34,7 @@ private:
     double ROTATION_WEIGHT;
 };
 
-// CTC - Combined Execution Time and Min Clearance [minimize]
+// CRL (2) - Combined Execution Time and Min Clearance [minimize]
 class time_clear_combo_objective : public objective {
 public:
     time_clear_combo_objective(Symbol* cmd_rt,

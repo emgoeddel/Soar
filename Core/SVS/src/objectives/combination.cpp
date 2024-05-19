@@ -3,7 +3,7 @@
 #include "combination.h"
 #include "objective_table.h"
 
-/////////////////////////////// CRL //////////////////////////////////////
+/////////////////////////////// CRL (1) //////////////////////////////////////
 
 ee_combo_objective::ee_combo_objective(Symbol* cmd_rt,
                                        soar_interface* si,
@@ -40,7 +40,7 @@ objective_table_entry* ee_combo_objective_entry() {
     return e;
 }
 
-/////////////////////////////// CTC //////////////////////////////////////
+/////////////////////////////// CRL (2) //////////////////////////////////////
 
 time_clear_combo_objective::time_clear_combo_objective(Symbol* cmd_rt,
                                                        soar_interface* si,
