@@ -73,7 +73,8 @@ public:
 
     std::string eval_objectives(int id,
                                 std::vector<std::string> objs,
-                                std::string obstacle);
+                                std::string obstacle,
+                                vec3 area_ctr, vec3 area_dim);
     void set_output(bool on) { output_values = on; }
     bool do_output() { return output_values; }
 

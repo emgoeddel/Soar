@@ -95,7 +95,7 @@ public:
                     std::cout << "Planning for command " << id << " took "
                               << ms->query_solve_time(id) << "s in wall time." << std::endl;
 
-                    if (ms->do_output()) {
+                    if (ms->do_output() && id > 0) {
                         std::ofstream df;
                         df.open("selections.txt", std::ios::out | std::ios::app);
                         if (!df.is_open())
