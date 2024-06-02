@@ -234,34 +234,32 @@ private:
         ms->new_objective_callback(traj_set_id, obj);
 
         // EVAL ONLY
-        if (ms->do_output()) {
-            if (traj_set_id > 0) {
-                std::ofstream df2;
-                df2.open("selections.txt", std::ios::out | std::ios::app);
-                if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
+        if (ms->do_output() && !update) {
+            std::ofstream df2;
+            df2.open("selections.txt", std::ios::out | std::ios::app);
+            if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
 
-                std::stringstream name_strm;
-                if (use_previous_selection) {
-                    name_strm << "-then-";
-                }
-
-                name_strm << obj_name;
-                // Comment out obstacles check for name-only output for one objective
-                // (ie behavior in first data sets)
-                if (obstacles != "") {
-                    name_strm << "-" << obstacles;
-                }
-
-                df2 << name_strm.str();
-
-                if (obj->get_subset_size() == 1) {
-                    df2 << " " << obj->get_selected() << " ";
-                } else {
-                    df2 << "-subset-" << obj->get_subset_size();
-                }
-
-                df2.close();
+            std::stringstream name_strm;
+            if (use_previous_selection) {
+                name_strm << "-then-";
             }
+
+            name_strm << obj_name;
+            // Comment out obstacles check for name-only output for one objective
+            // (ie behavior in first data sets)
+            if (obstacles != "") {
+                name_strm << "-" << obstacles;
+            }
+
+            df2 << name_strm.str();
+
+            if (obj->get_subset_size() == 1) {
+                df2 << " " << obj->get_selected() << " ";
+            } else {
+                df2 << "-subset-" << obj->get_subset_size();
+            }
+
+            df2.close();
 
             std::vector<std::string> names;
             names.push_back("planning-time");
@@ -273,7 +271,7 @@ private:
             names.push_back("sum-square-joint");
             names.push_back("execution-time");
             names.push_back("end-effector-clearance");
-            names.push_back("held-obj-clearance");
+            //names.push_back("held-obj-clearance");
             names.push_back("weighted-avg-clearance");
             names.push_back("min-clear-subset");
             names.push_back("min-clearance");
@@ -284,8 +282,8 @@ private:
             names.push_back("proportion-occluded");
             names.push_back("end-effector-combo");
             names.push_back("time-clear-combo");
-            names.push_back("endpoint-centrality");
-            names.push_back("endpoint-distance");
+            //names.push_back("endpoint-centrality");
+            //names.push_back("endpoint-distance");
 
             std::ofstream df;
             df.open("objectives.txt", std::ios::out | std::ios::app);
