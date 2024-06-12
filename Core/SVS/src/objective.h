@@ -37,6 +37,7 @@ public:
 
     std::string get_name() { return name; }
     std::map<int, double> get_outputs() { return outputs; }
+    int get_num_selected() { return num_selected; }
     int get_selected();
 
     // Put a status on the command object
@@ -56,7 +57,8 @@ protected:
     int set_id;
     std::map<int, trajectory> trajectories;
     std::set<int> prev_selected;
-    int subset_size;
+    int subset_size; // Agent's request
+    int num_selected; // Possibly different from above with flexible subset cases
     std::string subset_type;
     bool maximize;
 

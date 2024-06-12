@@ -11,7 +11,8 @@ objective::objective(Symbol* cmd_rt,
                      objective_input* oi) : cmd_rt(cmd_rt),
                                             si(si),
                                             ms(ms),
-                                            input(oi) {
+                                            input(oi),
+                                            num_selected(0) {
     filter_val_c<int>* sid_fv = dynamic_cast<filter_val_c<int>*>((*input)["set-id"]);
     set_id = sid_fv->get_value();
     filter_val_c<int>* n_fv = dynamic_cast<filter_val_c<int>*>((*input)["number"]);
@@ -137,16 +138,28 @@ bool objective::update_outputs() {
         }
 
         int o = 0;
+        num_selected = 0;
         std::vector<std::pair<int, double> >::iterator j = sorted.begin();
         for (; j != sorted.end(); j++) {
             if (subset_type == "exact") {
-                if (o < subset_size) outputs[j->first] = 1;
-            } else if (subset_type == "strict") {
-                if (o < subset_size && j->second < cutoff_value) outputs[j->first] = 1;
-                if (j->second == cutoff_value && outputs[subset_size] > cutoff_value)
+                if (o < subset_size) {
                     outputs[j->first] = 1;
+                    num_selected++;
+                } else outputs[j->first] = 0;
+            } else if (subset_type == "strict") {
+                if (o < subset_size && j->second < cutoff_value) {
+                    outputs[j->first] = 1;
+                    num_selected++;
+                } else outputs[j->first] = 0;
+                if (j->second == cutoff_value && outputs[subset_size] > cutoff_value) {
+                    outputs[j->first] = 1;
+                    num_selected++;
+                } else outputs[j->first] = 0;
             } else if (subset_type == "loose") {
-                if (j->second <= cutoff_value) outputs[j->first] = 1;
+                if (j->second <= cutoff_value) {
+                    outputs[j->first] = 1;
+                    num_selected++;
+                } else outputs[j->first] = 0;
             } else outputs[j->first] = 0;
 
             o++;

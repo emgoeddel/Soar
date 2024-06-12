@@ -168,13 +168,13 @@ private:
     Symbol* state_sym;
     wme* joints_type_wme;
     Symbol* traj_sets_sym;
-    std::vector<Symbol*> sets_syms;
 
     std::string joints_type;
 
     std::map<int, Symbol*> query_sym_map;
     std::map<int, wme*> query_count_map;
     std::map<int, std::map<int, Symbol*> > query_traj_map;
+    std::map<int, wme*> query_sel_map;
     std::map<int, std::map<std::string, std::map<int, wme*> > > query_obj_map;
 };
 
