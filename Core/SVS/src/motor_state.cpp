@@ -564,7 +564,6 @@ void motor_link::update_desc() {
 
                 std::map<int, double> obj_out = ms->get_objective(*i, *o)->get_outputs();
                 OutputType out_type = ms->get_objective(*i, *o)->output_type();
-                int num_sel = ms->get_objective(*i, *o)->get_num_selected();
 
                 switch (out_type) {
                 case RANK: {
@@ -595,12 +594,11 @@ void motor_link::update_desc() {
                     }
                 } break;
                 case SELECT: {
-                    if (query_sel_map.count(*i)) {
-                            si->remove_wme(query_sel_map[*i]);
-                            query_sel_map.erase(*i);
-                    }
-                    query_sel_map[*i] = si->make_wme(query_sym_map[*i],
-                                                     "last-selection-count", num_sel);
+                    int num_sel = ms->get_objective(*i, *o)->get_num_selected();
+                    Symbol* sm = si->get_wme_val(si->make_id_wme(query_sym_map[*i],
+                                                                 "selection"));
+                    si->make_wme(sm, "name", *o);
+                    si->make_wme(sm, "count", num_sel);
 
                     std::map<int, double>::iterator s = obj_out.begin();
                     for (; s != obj_out.end(); s++) {
