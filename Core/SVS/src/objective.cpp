@@ -147,16 +147,19 @@ bool objective::update_outputs() {
                     num_selected++;
                 } else outputs[j->first] = 0;
             } else if (subset_type == "strict") {
-                if (o < subset_size && j->second < cutoff_value) {
+                if (o < subset_size && ((!maximize && j->second < cutoff_value) ||
+                                        (maximize && j->second > cutoff_value))) {
                     outputs[j->first] = 1;
                     num_selected++;
                 } else outputs[j->first] = 0;
-                if (j->second == cutoff_value && outputs[subset_size] > cutoff_value) {
+                if (j->second == cutoff_value && ((!maximize && outputs[subset_size] > cutoff_value) ||
+                                                  (maximize && outputs[subset_size] < cutoff_value))) {
                     outputs[j->first] = 1;
                     num_selected++;
                 } else outputs[j->first] = 0;
             } else if (subset_type == "loose") {
-                if (j->second <= cutoff_value) {
+                if ((maximize && j->second >= cutoff_value)
+                    || (!maximize && j->second <= cutoff_value)) {
                     outputs[j->first] = 1;
                     num_selected++;
                 } else outputs[j->first] = 0;
