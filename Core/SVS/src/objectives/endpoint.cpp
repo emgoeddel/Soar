@@ -163,14 +163,16 @@ double distance_objective::evaluate_on(trajectory& t) {
         end_state[f->first] = f->second;
     }
 
+    transform3 base = ms->get_base_xform();
     transform3 ee_end = mtr->get_ee_frame_transform_at(end_state);
-    vec3 ee_pos;
-    ee_end.position(ee_pos);
+    vec3 ee_local;
+    ee_end.position(ee_local);
+    vec3 ee_world = base(ee_local);
 
     vec3 obj_pos;
     object.transform.position(obj_pos);
 
-    double dist = (obj_pos - ee_pos).norm();
+    double dist = (obj_pos - ee_world).norm();
 
     return dist;
 }
