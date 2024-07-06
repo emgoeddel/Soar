@@ -109,9 +109,9 @@ private:
 
         // EVAL
         // Reach
-        // if (ms->do_output()) {
+        if (ms->do_output()) {
         // Place
-        if (ms->do_output() && set_id > 0) {
+        // if (ms->do_output() && set_id > 0) {
             std::ofstream df2;
             df2.open("selections.txt", std::ios::out | std::ios::app);
             if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;

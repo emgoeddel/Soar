@@ -235,9 +235,9 @@ private:
 
         // EVAL ONLY
         // Reach agent
-        // if (ms->do_output() && !update && obstacles != "") {
+        if (ms->do_output() && !update && obstacles != "") {
         // Place agent needs to skip the first action
-        if (ms->do_output() && !update && obstacles != "" && traj_set_id > 0) {
+        // if (ms->do_output() && !update && obstacles != "" && traj_set_id > 0) {
             std::ofstream df2;
             df2.open("selections.txt", std::ios::out | std::ios::app);
             if (!df2.is_open()) std::cout << "ERROR writing to file!" << std::endl;
@@ -266,28 +266,28 @@ private:
 
             if (!use_previous_selection) {
                 std::vector<std::string> names;
-                names.push_back("planning-time");
-                names.push_back("waypoints");
-                names.push_back("end-effector-rotation");
-                names.push_back("end-effector-length");
-                names.push_back("total-joint-movement");
-                names.push_back("euclidean-joint");
-                names.push_back("sum-square-joint");
+                //names.push_back("planning-time");
+                //names.push_back("waypoints");
+                //names.push_back("end-effector-rotation");
+                //names.push_back("end-effector-length");
+                //names.push_back("total-joint-movement");
+                //names.push_back("euclidean-joint");
+                //names.push_back("sum-square-joint");
                 names.push_back("execution-time");
-                names.push_back("end-effector-clearance");
-                names.push_back("held-obj-clearance"); // NA for reach
-                names.push_back("weighted-avg-clearance");
+                //names.push_back("end-effector-clearance");
+                //names.push_back("held-obj-clearance"); // NA for reach
+                //names.push_back("weighted-avg-clearance");
                 names.push_back("min-clear-subset");
-                names.push_back("min-clearance");
+                //names.push_back("min-clearance");
                 names.push_back("time-over");
-                names.push_back("proportion-over");
-                names.push_back("avg-occlusion");
+                //names.push_back("proportion-over");
+                //names.push_back("avg-occlusion");
                 names.push_back("occlusion-time");
-                names.push_back("proportion-occluded");
-                names.push_back("end-effector-combo");
-                names.push_back("time-clear-combo");
-                names.push_back("endpoint-centrality"); // NA for reach
-                names.push_back("endpoint-distance"); // NA for reach
+                //names.push_back("proportion-occluded");
+                //names.push_back("end-effector-combo");
+                //names.push_back("time-clear-combo");
+                //names.push_back("endpoint-centrality"); // NA for reach
+                //names.push_back("endpoint-distance"); // NA for reach
 
                 std::ofstream df;
                 df.open("objectives.txt", std::ios::out | std::ios::app);
