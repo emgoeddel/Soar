@@ -1,3 +1,9 @@
+# SVS+T
+
+My fork of Soar now has the version of SVS+T described in [my dissertation](https://deepblue.lib.umich.edu/handle/2027.42/194610) in the master branch. It is necessary to build this version of Soar to use the features and agents described in my thesis.
+
+A detailed description of this version of SVS is provided in Chapter 5 of the dissertation, and documentation of its software features is provided in Appendix C.
+
 # Soar
 
 This is the code base for Soar, a cognitive architecture for developing systems that exhibit intelligent behavior. For more information about this project, please visit:
